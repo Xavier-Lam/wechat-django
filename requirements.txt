@@ -4,6 +4,7 @@ Django==1.11
 idna==2.8
 jsonfield==2.0.2
 optionaldict==0.1.1
+pycrypto==2.6.1
 python-dateutil==2.7.5
 pytz==2018.9
 requests==2.21.0

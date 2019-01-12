@@ -1,5 +1,9 @@
+import datetime
+
 from django.db import models
 from wechatpy import WeChatClient
+
+from . import EventType
 
 class WechatApp(models.Model):
     class EncodingMode(object):
@@ -22,15 +26,11 @@ class WechatApp(models.Model):
         (EncodingMode.SAFE, "safe")
     ), default=EncodingMode.PLAIN)
 
+    # api用key 当不想暴露secretkey 给第三方时
+    # secretkey = models.CharField(max_length=32)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-
-    def sync_replies(self):
-        replies = self.client.message.get_autoreply_info()
-        
-
-    def sync_menus(self):
-        pass
 
     def match(self, message):
         if not message: return

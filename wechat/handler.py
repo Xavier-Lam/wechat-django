@@ -1,6 +1,5 @@
 from functools import wraps
 
-from django.conf.urls import url
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from wechatpy import parse_message
@@ -30,18 +29,27 @@ def handler(request, appname):
 
     raw = request.body
     try:
+        if app.encoding_mode == WechatApp.EncodingMode.SAFE:
+            crypto = WeChatCrypto(
+                app.token, 
+                app.encoding_aes_key, 
+                app.appid
+            )
+            raw = crypto.decrypt_message(
+                raw,
+                request.GET["signature"],
+                request.GET["timestamp"],
+                request.GET["nonce"]
+            )
         msg = parse_message(raw)
     except:
         # TODO: 异常处理
         return ""
 
     msg.raw = raw
+    msg.request = request
     handler = app.match(msg)
     if not handler:
         return HttpResponse()
     xml = handler.reply(msg)
     return HttpResponse(xml, content_type="text/xml")
-
-urls = (
-    url(r"^(?P<appname>[-_a-zA-Z]+)$", handler, name="handler"),
-)

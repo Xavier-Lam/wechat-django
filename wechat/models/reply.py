@@ -1,5 +1,4 @@
 import importlib
-import json
 
 from django.db import models
 from jsonfield import JSONField
@@ -13,7 +12,7 @@ class Reply(models.Model):
         related_name="replies")
 
     msg_type = models.CharField(max_length=16)
-    content = models.TextField()
+    content = JSONField()
     ext_info = JSONField() # json
 
     def reply(self, message):
@@ -24,7 +23,8 @@ class Reply(models.Model):
         """
         if self.msg_type == ReplyMsgType.FORWARD:
             # 转发业务
-            resp = requests.post(self.content, message.raw, timeout=4.5)
+            resp = requests.post(self.content, message.raw, 
+                params=message.request.GET, timeout=4.5)
             resp.raise_for_status()
             return resp.content
         elif self.msg_type == ReplyMsgType.CUSTOM:
@@ -40,19 +40,19 @@ class Reply(models.Model):
                 reply = func(message)
                 if not reply:
                     return ""
+                elif isinstance(reply, str):
+                    reply = replies.TextReply(content=reply)
                 reply.source = message.target
                 reply.target = message.source
         else:
             # 正常回复类型
             if self.msg_type == ReplyMsgType.NEWS:
                 klass = replies.ArticlesReply
-                data = dict(articles=json.loads(self.content))
+                data = dict(articles=self.content)
             elif self.msg_type == ReplyMsgType.MUSIC:
                 klass = replies.MusicReply
-                data = dict(
-                    **json.loads(self.content),
-                    **self.ext_info
-                )
+                data = dict(**self.content)
+                data.update(**self.ext_info)
             elif self.msg_type == ReplyMsgType.VIDEO:
                 klass = replies.VideoReply
                 data = dict(
@@ -80,16 +80,38 @@ class Reply(models.Model):
         if type in (ReplyMsgType.TEXT, ReplyMsgType.IMAGE, ReplyMsgType.VOICE, 
             ReplyMsgType.VIDEO):
             # TODO: 图片回复说是img
+            # TODO: 按照文档 是临时素材 需要转换为永久素材
             reply.content = content
         elif type == ReplyMsgType.NEWS:
-            news = list(map(lambda o: dict(
-                title=o["title"],
-                description=o.get("digest") or "",
-                image=o["cover_url"],
-                url=o["content_url"]
-            ), data["news_info"]["list"]))
-            reply.content = json.dumps(news)
+            # TODO: 应该处理成永久素材保存
+            reply.content = cls.mpnews2replynews(data["news_info"]["list"])
         else:
             # TODO: unknown type
             raise Exception()
-        reply.save()
+        return reply
+
+    @classmethod
+    def from_menu(cls, data):
+        type = data["type"]
+        rv = cls(msg_type=type)
+        if type in (ReplyMsgType.TEXT, ReplyMsgType.IMAGE, ReplyMsgType.VOICE, 
+            ReplyMsgType.VIDEO):
+            # TODO: video存的时下载链接
+            content = data["value"]
+        elif type == ReplyMsgType.NEWS:
+            content = cls.mpnews2replynews(data["news_info"])
+            rv.ext_info = data["value"]
+        else:
+            # TODO: unknown type
+            raise Exception()
+        rv.content = content
+        return rv
+
+    @staticmethod
+    def mpnews2replynews(mpnews):
+        return list(map(lambda o: dict(
+            title=o["title"],
+            description=o.get("digest") or "",
+            image=o["cover_url"],
+            url=o["content_url"]
+        ), mpnews))
