@@ -23,7 +23,7 @@ class MessageHandler(models.Model):
         (Source.MENU, "menu")
     ), default=Source.SELF)
     strategy = models.CharField(max_length=10, choices=(
-        (ReplyStrategy.ALL, "reply_all"),
+        (ReplyStrategy.ALL, "reply_all"), # 待实现
         (ReplyStrategy.RANDOM, "random_one")
     ))
 
@@ -37,9 +37,9 @@ class MessageHandler(models.Model):
 
     class Meta:
         ordering = ("-weight", "-created")
-        # index_together = (
-        #     ("app", "weight"),
-        # )
+        index_together = (
+            ("app", "weight", "created"),
+        )
 
     def match(self, message):
         if not self.available:

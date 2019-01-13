@@ -74,6 +74,7 @@ class Menu(models.Model):
         else:
             # 要当作回复处理了
             menu.type = Menu.Event.CLICK
+            # 生成一个唯一key
             menu.content = md5(json.dumps(self.raw).encode()).hexdigest()
             handler = MessageHandler.from_menu(menu, data, app)
         menu.sub_button = [mp2menu(sub) for sub in data.get("sub_button") or []]

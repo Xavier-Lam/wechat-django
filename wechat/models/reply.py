@@ -13,7 +13,7 @@ class Reply(models.Model):
 
     msg_type = models.CharField(max_length=16)
     content = JSONField()
-    ext_info = JSONField() # json
+    ext_info = JSONField()
 
     def reply(self, message):
         """
