@@ -8,7 +8,7 @@ from ..handler import handler
 from ..models import WechatApp
 
 class WechatAppAdmin(admin.ModelAdmin):
-    list_display = ("title", "name", "appid", "short_desc", "_interactable", 
+    list_display = ("title", "name", "appid", "short_desc", "interactable", 
         "created", "updated")
 
     fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",

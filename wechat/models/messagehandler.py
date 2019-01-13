@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models, transaction
+from django.utils.translation import ugettext as _
 
 from . import EventType, WechatApp
 
@@ -15,25 +16,25 @@ class MessageHandler(models.Model):
         RANDOM = "random_one"
 
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE,
-        related_name="message_handlers")
-    name = models.CharField(max_length=60)
+        related_name="message_handlers", null=False, editable=False)
+    name = models.CharField(_("name"), max_length=60)
     src = models.PositiveSmallIntegerField(choices=(
         (Source.MP, "wechat"),
         (Source.SELF, "self"),
         (Source.MENU, "menu")
-    ), default=Source.SELF)
-    strategy = models.CharField(max_length=10, choices=(
+    ), default=Source.SELF, editable=False)
+    strategy = models.CharField(_("strategy"), max_length=10, choices=(
         (ReplyStrategy.ALL, "reply_all"), # 待实现
         (ReplyStrategy.RANDOM, "random_one")
-    ))
+    ), default=ReplyStrategy.RANDOM)
 
-    starts = models.DateTimeField(null=True, blank=True)
-    ends = models.DateTimeField(null=True, blank=True)
-    available = models.BooleanField(null=False, default=True)
+    starts = models.DateTimeField(_("starts"), null=True, blank=True)
+    ends = models.DateTimeField(_("ends"), null=True, blank=True)
+    available = models.BooleanField(_("available"), null=False, default=True)
 
-    weight = models.IntegerField(default=0, null=False)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
+    weight = models.IntegerField(_("weight"), default=0, null=False)
+    created = models.DateTimeField(_("created"), auto_now_add=True)
+    updated = models.DateTimeField(_("updated"), auto_now=True)
 
     class Meta:
         ordering = ("-weight", "-created")
@@ -67,7 +68,6 @@ class MessageHandler(models.Model):
     def sync(app):
         from . import Reply, Rule
         resp = app.client.message.get_autoreply_info()
-        # 查找所有同步的自动回复与规则
         
         # 处理自动回复
         handlers = []
@@ -135,3 +135,6 @@ class MessageHandler(models.Model):
             )],
             replies=[Reply.from_menu(data)]
         )
+
+    def __str__(self):
+        return self.name

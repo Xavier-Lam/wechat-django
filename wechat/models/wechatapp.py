@@ -40,6 +40,14 @@ class WechatApp(models.Model):
     created = models.DateTimeField(_("created"), auto_now_add=True)
     updated = models.DateTimeField(_("updated"), auto_now=True)
 
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.objects.filter(id=id).first()
+
+    @classmethod
+    def get_by_name(cls, name):
+        return cls.objects.filter(name=name).first()
+
     @property
     def client(self):
         if not self._client:
@@ -50,11 +58,10 @@ class WechatApp(models.Model):
             )
         return self._client
 
-    def _interactable(self):
+    def interactable(self):
         return bool(self.token and self.encoding_aes_key)
-    _interactable.boolean = True
-    _interactable.short_description = _("interactable")
-    interactable = property(_interactable)
+    interactable.boolean = True
+    interactable.short_description = _("interactable")
 
     def match(self, message):
         if not message: return
@@ -62,11 +69,14 @@ class WechatApp(models.Model):
             if handler.match(message):
                 return handler
 
+    def __str__(self):
+        return "{title} ({name})".format(title=self.title, name=self.name)
+
 # TODO: 管理权限
 permissions = (
-    "wechat_{appname}_manage",
-    "wechat_{appname}_menu",
-    "wechat_{appname}_handlemessage",
+    "{appname}_manage",
+    "{appname}_menu",
+    "{appname}_handlemessage",
 )
 
 @receiver(models.signals.post_save, sender=WechatApp)

@@ -1,6 +1,7 @@
 import re
 
 from django.db import models
+from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 from wechatpy.events import BaseEvent
 
@@ -11,20 +12,21 @@ class Rule(models.Model):
     class Type(object):
         MSGTYPE = "msg_type" # 类型匹配
         EVENT = "event" # 事件
-        EVENTKEY = "eventkey" # 菜单
+        EVENTKEY = "eventkey" # 指定事件
         CONTAIN = "contain" # 包含
         EQUAL = "equal" # 匹配
         REGEX = "regex" # 正则
         ALL = "all" # 全部
 
     handler = models.ForeignKey(MessageHandler, on_delete=models.CASCADE, 
-        related_name="rules")
+        related_name="rules", null=False)
 
-    type = models.CharField(max_length=16) # 规则类型
-    rule = JSONField() # 规则内容
+    type = models.CharField(_("type"), max_length=16,
+        choices=utils.enum2choices(Type)) # 规则类型
+    rule = JSONField(blank=True) # 规则内容
 
-    weight = models.IntegerField(default=0, null=False)
-    created = models.DateTimeField(auto_now_add=True)
+    weight = models.IntegerField(_("weight"), default=0, null=False)
+    created = models.DateTimeField(_("created"), auto_now_add=True)
 
     class Meta:
         ordering = ("-weight", )
