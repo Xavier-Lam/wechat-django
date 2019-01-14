@@ -13,18 +13,18 @@ class WechatAppAdmin(admin.ModelAdmin):
 
     fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",
         "encoding_mode", "desc", "callback", "created", "updated")
-    readonly_fields = ("callback", )
 
     def short_desc(self ,obj):
         return truncatechars(obj.desc, 35)
     short_desc.short_description = _("description")
 
     def callback(self, obj):
-        return self.request.build_absolute_uri(reverse(handler, kwargs=dict(appname=obj.name)))
+        return obj and self.request.build_absolute_uri(reverse(handler, kwargs=dict(appname=obj.name)))
 
     def get_fields(self, request, obj=None):
         fields = list(super().get_fields(request, obj))
         if not obj:
+            fields.remove("callback")
             fields.remove("created")
             fields.remove("updated")
         return fields
@@ -32,7 +32,7 @@ class WechatAppAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         rv = super().get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("name", "appid", "created", "updated")
+            rv = rv + ("name", "appid", "created", "updated", "callback")
         return rv
 
     def get_queryset(self, request):

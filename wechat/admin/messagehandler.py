@@ -4,14 +4,14 @@ from django import forms
 from django.contrib import admin
 from django.utils.translation import ugettext as _
 
-from ..models import EventType, MessageHandler, ReceiveMsgType, Reply, Rule
+from ..models import (EventType, MessageHandler, ReceiveMsgType, 
+    Reply, ReplyMsgType, Rule)
 from ..utils import check_wechat_permission, enum2choices
 
 class RuleInline(admin.StackedInline):
     model = Rule
     extra = 0
     min_num = 1
-    template = "admin/rule.html"
 
     class RuleForm(forms.ModelForm):
         msg_type = forms.ChoiceField(label=_("message type"), 
@@ -60,9 +60,20 @@ class RuleInline(admin.StackedInline):
             return model
     form = RuleForm
 
+
 class ReplyInline(admin.StackedInline):
     model = Reply
     extra = 0
+
+    class ReplyForm(forms.ModelForm):
+        program = forms.CharField(label=_("program"))
+        url = forms.URLField(label=_("url"))
+        content = forms.CharField(label=_("content"))
+
+        class Meta(object):
+            model = Reply
+            fields = ("msg_type", )
+    form = ReplyForm
 
 class MessageHandlerAdmin(admin.ModelAdmin):
     inlines = (RuleInline, ReplyInline)

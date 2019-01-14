@@ -1,17 +1,20 @@
 import importlib
 
 from django.db import models
+from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 import requests
 from wechatpy import replies
 
 from . import MessageHandler, ReplyMsgType
+from .. import utils
 
 class Reply(models.Model):
     handler = models.ForeignKey(MessageHandler, on_delete=models.CASCADE,
         related_name="replies")
 
-    msg_type = models.CharField(max_length=16)
+    msg_type = models.CharField(_("type"), max_length=16,
+        choices=utils.enum2choices(ReplyMsgType))
     content = JSONField()
     ext_info = JSONField()
 
