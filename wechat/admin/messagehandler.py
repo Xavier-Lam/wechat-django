@@ -19,7 +19,8 @@ class RuleInline(admin.StackedInline):
         event = forms.ChoiceField(label=_("event"), 
             choices=enum2choices(EventType), required=False)
         key = forms.CharField(label=_("event key"), required=False)
-        content = forms.CharField(label=_("value"), required=False)
+        pattern = forms.CharField(label=_("pattern"), required=False)
+        # media_id = forms.CharField(label=_("media_id"), required=False)
 
         class Meta(object):
             model = Rule
@@ -30,31 +31,34 @@ class RuleInline(admin.StackedInline):
             if inst:
                 type = inst.type
                 initial = kwargs.get("initial", {})
-                if type in (Rule.Type.CONTAIN, Rule.Type.REGEX, Rule.Type.EQUAL):
-                    initial["content"] = inst.rule
-                elif type == Rule.Type.MSGTYPE:
-                    initial["msg_type"] = inst.rule
-                elif type == Rule.Type.EVENT:
-                    initial["event"] = inst.rule
-                elif type == Rule.Type.EVENTKEY:
-                    initial["event"] = inst.rule["event"]
-                    initial["content"] = inst.rule["key"]
+                initial.update(inst.rule)
                 kwargs["initial"] = initial
             super().__init__(*args, **kwargs)
 
+        def clean(self):
+            cleaned_data = super().clean()
+            type = cleaned_data["type"]
+            if type in (Rule.Type.CONTAIN, Rule.Type.REGEX, Rule.Type.EQUAL):
+                fields = ("pattern", )
+            elif type == Rule.Type.EVENT:
+                fields = ("event", )
+            elif type == Rule.Type.EVENTKEY:
+                fields = ("event", "key")
+            elif type == Rule.Type.MSGTYPE:
+                fields = ("msg_type", )
+            else:
+                fields = tuple()
+            rule = dict()
+            for k in set(cleaned_data.keys()).difference(("type", "weight")):
+                if k in fields:
+                    rule[k] = cleaned_data[k]
+                del cleaned_data[k]
+            cleaned_data["rule"] = rule
+            return cleaned_data
+
         def save(self, commit=True, *args, **kwargs):
             model = super().save(False, *args, **kwargs)
-            type = self.cleaned_data["type"]
-            if type in (Rule.Type.CONTAIN, Rule.Type.REGEX, Rule.Type.EQUAL):
-                model.rule = self.cleaned_data["content"]
-            elif type == Rule.Type.MSGTYPE:
-                model.rule = self.cleaned_data["msg_type"]
-            elif type == Rule.Type.EVENT:
-                model.rule = self.cleaned_data["event"]
-            elif type == Rule.Type.EVENTKEY:
-                model.rule = dict()
-                model.rule["event"] = self.cleaned_data["event"]
-                model.rule["key"] = self.cleaned_data["content"]
+            model.rule = self.cleaned_data["rule"]
             if commit:
                 model.save()
             return model

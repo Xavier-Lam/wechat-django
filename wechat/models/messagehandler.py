@@ -1,11 +1,11 @@
 import datetime
 
-from django.db import models, transaction
+from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 
 from . import EventType, WechatApp
 
-class MessageHandler(models.Model):
+class MessageHandler(m.Model):
     class Source(object):
         MP = 0 # 微信后台
         MENU = 1 # 菜单
@@ -15,26 +15,26 @@ class MessageHandler(models.Model):
         ALL = "reply_all"
         RANDOM = "random_one"
 
-    app = models.ForeignKey(WechatApp, on_delete=models.CASCADE,
+    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
         related_name="message_handlers", null=False, editable=False)
-    name = models.CharField(_("name"), max_length=60)
-    src = models.PositiveSmallIntegerField(choices=(
+    name = m.CharField(_("name"), max_length=60)
+    src = m.PositiveSmallIntegerField(choices=(
         (Source.MP, "wechat"),
         (Source.SELF, "self"),
         (Source.MENU, "menu")
     ), default=Source.SELF, editable=False)
-    strategy = models.CharField(_("strategy"), max_length=10, choices=(
+    strategy = m.CharField(_("strategy"), max_length=10, choices=(
         (ReplyStrategy.ALL, "reply_all"), # 待实现
         (ReplyStrategy.RANDOM, "random_one")
     ), default=ReplyStrategy.RANDOM)
 
-    starts = models.DateTimeField(_("starts"), null=True, blank=True)
-    ends = models.DateTimeField(_("ends"), null=True, blank=True)
-    available = models.BooleanField(_("available"), null=False, default=True)
+    starts = m.DateTimeField(_("starts"), null=True, blank=True)
+    ends = m.DateTimeField(_("ends"), null=True, blank=True)
+    available = m.BooleanField(_("available"), null=False, default=True)
 
-    weight = models.IntegerField(_("weight"), default=0, null=False)
-    created = models.DateTimeField(_("created"), auto_now_add=True)
-    updated = models.DateTimeField(_("updated"), auto_now=True)
+    weight = m.IntegerField(_("weight"), default=0, null=False)
+    created = m.DateTimeField(_("created"), auto_now_add=True)
+    updated = m.DateTimeField(_("updated"), auto_now=True)
 
     class Meta:
         ordering = ("-weight", "-created")
@@ -78,7 +78,9 @@ class MessageHandler(models.Model):
                 src=MessageHandler.Source.MP,
                 replies=Reply.from_mp(resp["add_friend_autoreply_info"]),
                 available=bool(resp.get("is_add_friend_reply_open")),
-                rules=[Rule(type=Rule.Type.EVENT, rule=EventType.SUBSCRIBE)],
+                rules=[
+                    Rule(type=Rule.Type.EVENT, rule=dict(event=EventType.SUBSCRIBE))
+                ],
                 created=datetime.datetime.fromtimestamp(0)
             ))
         if resp.get("message_default_autoreply_info"):
@@ -88,7 +90,9 @@ class MessageHandler(models.Model):
                 src=MessageHandler.Source.MP,
                 replies=Reply.from_mp(resp["message_default_autoreply_info"]),
                 available=bool(resp.get("is_autoreply_open")),
-                rules=[Rule(type=Rule.Type.ALL)],
+                rules=[
+                    Rule(type=Rule.Type.ALL)
+                ],
                 created=datetime.datetime.fromtimestamp(0)
             ))
         if (resp.get("keyword_autoreply_info")

@@ -11,14 +11,14 @@
                 $row.find(".form-row.field-msg_type").show();
                 break;
             case "eventkey":
-                $row.find(".form-row.field-content").show();
+                $row.find(".form-row.field-key").show();
             case "event":
                 $row.find(".form-row.field-event").show();
                 break;
             case "contain":
             case "equal":
             case "regex":
-                $row.find(".form-row.field-content").show();
+                $row.find(".form-row.field-pattern").show();
                 break;
         }
     };
