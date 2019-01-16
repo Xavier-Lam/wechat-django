@@ -1,1 +1,1 @@
-from . import wechatapp, messagehandler
+from . import wechatapp, menu, messagehandler

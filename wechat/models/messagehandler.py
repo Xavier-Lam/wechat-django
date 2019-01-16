@@ -1,6 +1,5 @@
-import datetime
-
 from django.db import models as m, transaction
+from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from . import EventType, WechatApp
@@ -30,7 +29,7 @@ class MessageHandler(m.Model):
 
     starts = m.DateTimeField(_("starts"), null=True, blank=True)
     ends = m.DateTimeField(_("ends"), null=True, blank=True)
-    available = m.BooleanField(_("available"), null=False, default=True)
+    enabled = m.BooleanField(_("enabled"), null=False, default=True)
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created = m.DateTimeField(_("created"), auto_now_add=True)
@@ -42,17 +41,23 @@ class MessageHandler(m.Model):
             ("app", "weight", "created"),
         )
 
-    def match(self, message):
-        if not self.available:
+    def available(self):
+        if not self.enabled:
             return False
-        now = datetime.datetime.now()
+        now = timezone.now()
         if self.starts and self.starts > now:
             return False
         if self.ends and self.ends < now:
             return False
-        for rule in self.rules:
-            if rule.match(message):
-                return True
+        return True
+    available.short_description = _("available")
+    available.boolean = True
+
+    def match(self, message):
+        if self.available():
+            for rule in self.rules:
+                if rule.match(message):
+                    return True
         return False
 
     def reply(self, message):
@@ -77,11 +82,11 @@ class MessageHandler(m.Model):
                 name="微信配置关注回复",
                 src=MessageHandler.Source.MP,
                 replies=Reply.from_mp(resp["add_friend_autoreply_info"]),
-                available=bool(resp.get("is_add_friend_reply_open")),
+                enabled=bool(resp.get("is_add_friend_reply_open")),
                 rules=[
                     Rule(type=Rule.Type.EVENT, rule=dict(event=EventType.SUBSCRIBE))
                 ],
-                created=datetime.datetime.fromtimestamp(0)
+                created=timezone.datetime.fromtimestamp(0)
             ))
         if resp.get("message_default_autoreply_info"):
             handlers.append(MessageHandler(
@@ -89,11 +94,11 @@ class MessageHandler(m.Model):
                 name="微信配置自动回复",
                 src=MessageHandler.Source.MP,
                 replies=Reply.from_mp(resp["message_default_autoreply_info"]),
-                available=bool(resp.get("is_autoreply_open")),
+                enabled=bool(resp.get("is_autoreply_open")),
                 rules=[
                     Rule(type=Rule.Type.ALL)
                 ],
-                created=datetime.datetime.fromtimestamp(0)
+                created=timezone.datetime.fromtimestamp(0)
             ))
         if (resp.get("keyword_autoreply_info")
             and resp["keyword_autoreply_info"].get("list")):
@@ -114,7 +119,7 @@ class MessageHandler(m.Model):
         from . import Reply, Rule
         return cls(
             name=handler["rule_name"],
-            created_at=datetime.datetime.fromtimestamp(handler["create_time"]),
+            created_at=timezone.datetime.fromtimestamp(handler["create_time"]),
             replies=[Reply.from_mp(reply) for reply in handler["reply_list_info"]],
             rules=[Rule.from_mp(rule) for rule in handler["reply_list_info"]],
             strategy=handler["reply_mode"]

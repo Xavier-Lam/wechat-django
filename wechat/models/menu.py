@@ -2,12 +2,13 @@ import datetime
 from hashlib import md5
 import json
 
-from django.db import models, transaction
+from django.db import models as m, transaction
 from jsonfield import JSONField
 
 from . import MessageHandler, ReplyMsgType, WechatApp
+from .. import utils
 
-class Menu(models.Model):
+class Menu(m.Model):
     class Event(object):
         CLICK = "click"
         VIEW = "view"
@@ -22,20 +23,21 @@ class Menu(models.Model):
 
         MINIPROGRAM = "miniprogram"
 
-    app = models.ForeignKey(WechatApp, on_delete=models.CASCADE,
+    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
         related_name="menus")
-    name = models.CharField(max_length=16)
-    menuid = models.IntegerField(null=True)
-    pid = models.ForeignKey("Menu", on_delete=models.CASCADE,
-        null=True, related_name="sub_button")
-    type = models.CharField(max_length=20)
+    name = m.CharField(max_length=16)
+    menuid = m.IntegerField(null=True, blank=True)
+    parent = m.ForeignKey("Menu", on_delete=m.CASCADE,
+        null=True, blank=True, related_name="sub_button")
+    type = m.CharField(max_length=20, choices=utils.enum2choices(Event),
+        null=True, blank=True)
     content = JSONField()
     ext_info = JSONField()
 
-    weight = models.IntegerField(default=0, null=False)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    
+    weight = m.IntegerField(default=0, null=False)
+    created = m.DateTimeField(auto_now_add=True)
+    updated = m.DateTimeField(auto_now=True)
+
     @staticmethod
     def sync(app):
         """
@@ -108,3 +110,6 @@ class Menu(models.Model):
         else:
             rv["sub_button"] = [button.to_json() for button in self.sub_button]
         return rv
+
+    def __str__(self):
+        return self.name

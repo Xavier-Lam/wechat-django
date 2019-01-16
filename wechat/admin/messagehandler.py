@@ -118,9 +118,10 @@ class ReplyInline(admin.StackedInline):
 
 class MessageHandlerAdmin(admin.ModelAdmin):
     inlines = (RuleInline, ReplyInline)
+    list_display = ("name", "available", "enabled", "starts", "ends")
     list_filter = ("app", )
 
-    fields = ("name", "strategy", "starts", "ends", "available",
+    fields = ("name", "strategy", "starts", "ends", "enabled",
         "weight", "created", "updated")
 
     def get_fields(self, request, obj=None):
