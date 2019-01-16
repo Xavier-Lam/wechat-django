@@ -63,3 +63,8 @@ class Rule(m.Model):
             type=data["match_mode"],
             rule=dict(pattern=data["content"])
         )
+
+    def __str__(self):
+        if self.handler:
+            return self.handler.name
+        return super().__str__()

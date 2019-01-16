@@ -8,12 +8,54 @@ from ..models import (EventType, MessageHandler, ReceiveMsgType,
     Reply, ReplyMsgType, Rule)
 from ..utils import check_wechat_permission, enum2choices
 
+class MessageHandlerForm(forms.ModelForm):
+    content_field = ""
+    type_field = ""
+    origin_fields = tuple()
+
+    def __init__(self, *args, **kwargs):
+        inst = kwargs.get("instance")
+        if inst:
+            type = getattr(inst, self.type_field)
+            initial = kwargs.get("initial", {})
+            initial.update(getattr(inst, self.content_field))
+            kwargs["initial"] = initial
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        type = cleaned_data[self.type_field]
+        fields = self.allowed_fields(type, cleaned_data)
+        
+        content = dict()
+        for k in set(cleaned_data.keys()).difference(self.origin_fields):
+            if k in fields:
+                content[k] = cleaned_data[k]
+            del cleaned_data[k]
+        cleaned_data[self.content_field] = content
+        return cleaned_data
+
+    def allowed_fields(self, type, cleaned_data):
+        raise NotImplementedError()
+
+    def save(self, commit=True, *args, **kwargs):
+        model = super().save(False, *args, **kwargs)
+        setattr(model, self.content_field, 
+            self.cleaned_data[self.content_field])
+        if commit:
+            model.save()
+        return model
+
 class RuleInline(admin.StackedInline):
     model = Rule
     extra = 0
     min_num = 1
 
-    class RuleForm(forms.ModelForm):
+    class RuleForm(MessageHandlerForm):
+        content_field = "rule"
+        origin_fields = ("type", "weight")
+        type_field = "type"
+
         msg_type = forms.ChoiceField(label=_("message type"), 
             choices=enum2choices(ReceiveMsgType), required=False)
         event = forms.ChoiceField(label=_("event"), 
@@ -26,18 +68,7 @@ class RuleInline(admin.StackedInline):
             model = Rule
             fields = ("type", "weight")
 
-        def __init__(self, *args, **kwargs):
-            inst = kwargs.get("instance")
-            if inst:
-                type = inst.type
-                initial = kwargs.get("initial", {})
-                initial.update(inst.rule)
-                kwargs["initial"] = initial
-            super().__init__(*args, **kwargs)
-
-        def clean(self):
-            cleaned_data = super().clean()
-            type = cleaned_data["type"]
+        def allowed_fields(self, type, cleaned_data):
             if type in (Rule.Type.CONTAIN, Rule.Type.REGEX, Rule.Type.EQUAL):
                 fields = ("pattern", )
             elif type == Rule.Type.EVENT:
@@ -48,20 +79,7 @@ class RuleInline(admin.StackedInline):
                 fields = ("msg_type", )
             else:
                 fields = tuple()
-            rule = dict()
-            for k in set(cleaned_data.keys()).difference(("type", "weight")):
-                if k in fields:
-                    rule[k] = cleaned_data[k]
-                del cleaned_data[k]
-            cleaned_data["rule"] = rule
-            return cleaned_data
-
-        def save(self, commit=True, *args, **kwargs):
-            model = super().save(False, *args, **kwargs)
-            model.rule = self.cleaned_data["rule"]
-            if commit:
-                model.save()
-            return model
+            return fields
     form = RuleForm
 
 
@@ -69,14 +87,33 @@ class ReplyInline(admin.StackedInline):
     model = Reply
     extra = 0
 
-    class ReplyForm(forms.ModelForm):
-        program = forms.CharField(label=_("program"))
-        url = forms.URLField(label=_("url"))
-        content = forms.CharField(label=_("content"))
+    class ReplyForm(MessageHandlerForm):
+        content_field = "content"
+        origin_fields = ("msg_type",)
+        type_field = "msg_type"
+
+        program = forms.CharField(label=_("program"), required=False)
+        url = forms.URLField(label=_("url"), required=False)
+        content = forms.CharField(label=_("content"), required=False)
+        media_id = forms.CharField(label=_("media_id"), required=False)
 
         class Meta(object):
             model = Reply
             fields = ("msg_type", )
+        
+        def allowed_fields(self, type, cleaned_data):
+            if type == ReplyMsgType.FORWARD:
+                fields = ("url", )
+            elif type == ReplyMsgType.CUSTOM:
+                fields = ("program", )
+            elif type == ReplyMsgType.NEWS:
+                fields = ("content", "media_id")
+            elif type in (ReplyMsgType.MUSIC, ReplyMsgType.VIDEO, 
+                ReplyMsgType.VOICE, ReplyMsgType.IMAGE):
+                fields = ("media_id", )
+            elif type == ReplyMsgType.TEXT:
+                fields = ("content", )
+            return fields
     form = ReplyForm
 
 class MessageHandlerAdmin(admin.ModelAdmin):

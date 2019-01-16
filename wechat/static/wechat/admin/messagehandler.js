@@ -59,12 +59,13 @@
                 $row.find(".form-row.field-url").show();
                 break;
             case "news":
-                break;
+                $row.find(".form-row.field-content").show();
             case "video":
-                ;
             case "music":
             case "image":
             case "voice":
+                $row.find(".form-row.field-media_id").show();
+                break;
             case "text":
                 $row.find(".form-row.field-content").show();
                 break;
