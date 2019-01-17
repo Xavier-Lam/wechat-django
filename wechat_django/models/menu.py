@@ -3,6 +3,7 @@ from hashlib import md5
 import json
 
 from django.db import models as m, transaction
+from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
 from . import MessageHandler, ReplyMsgType, WechatApp
@@ -25,16 +26,15 @@ class Menu(m.Model):
 
     app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
         related_name="menus")
-    name = m.CharField(max_length=16)
-    menuid = m.IntegerField(null=True, blank=True)
+    name = m.CharField(_("name"), max_length=16)
+    menuid = m.IntegerField(_("menuid"), null=True, blank=True)
     parent = m.ForeignKey("Menu", on_delete=m.CASCADE,
         null=True, blank=True, related_name="sub_button")
-    type = m.CharField(max_length=20, choices=utils.enum2choices(Event),
+    type = m.CharField(_("type"), max_length=20, choices=utils.enum2choices(Event),
         null=True, blank=True)
     content = JSONField()
-    ext_info = JSONField()
 
-    weight = m.IntegerField(default=0, null=False)
+    weight = m.IntegerField(_("weight"), default=0, null=False)
     created = m.DateTimeField(auto_now_add=True)
     updated = m.DateTimeField(auto_now=True)
 
@@ -59,25 +59,18 @@ class Menu(m.Model):
         :type app: .WeChatApp
         """
         menu = Menu(name=data["name"], app=app)
-        menu.raw = data
         menu.type = data.get("type")
         if not menu.type:
-            pass
-        elif menu.type == Menu.Event.VIEW:
-            menu.content = data["url"]
-        elif menu.type == Menu.Event.CLICK:
-            menu.content = data["key"]
-        elif menu.type == Menu.Event.MINIPROGRAM:
-            menu.content = data["url"]
-            menu.ext_info = dict(
-                appid=data["appid"],
-                pagepath=data["pagepath"]
-            )
+            menu.data = data
+        elif menu.type in (Menu.Event.VIEW, Menu.Event.CLICK, 
+            Menu.Event.MINIPROGRAM):
+            menu.content = data
         else:
             # 要当作回复处理了
             menu.type = Menu.Event.CLICK
             # 生成一个唯一key
-            menu.content = md5(json.dumps(self.raw).encode()).hexdigest()
+            key = md5(json.dumps(self.raw).encode()).hexdigest()
+            menu.content = dict(key=key)
             handler = MessageHandler.from_menu(menu, data, app)
         menu.sub_button = [mp2menu(sub) for sub in data.get("sub_button") or []]
         return menu

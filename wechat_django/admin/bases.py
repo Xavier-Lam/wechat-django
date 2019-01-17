@@ -1,5 +1,6 @@
 from urllib.parse import parse_qsl
 
+from django import forms
 from django.contrib import admin
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
@@ -35,3 +36,44 @@ class WechatAdmin(admin.ModelAdmin):
         return (request.GET.get("app_id") 
             or preserved_filters.get("app_id") 
             or request.resolver_match.kwargs.get("app_id"))
+
+class DynamicChoiceForm(forms.ModelForm):
+    content_field = ""
+    type_field = ""
+    origin_fields = tuple()
+
+    def __init__(self, *args, **kwargs):
+        inst = kwargs.get("instance")
+        if inst:
+            type = getattr(inst, self.type_field)
+            initial = kwargs.get("initial", {})
+            initial.update(getattr(inst, self.content_field))
+            kwargs["initial"] = initial
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.type_field not in cleaned_data:
+            self.add_error(self.type_field, "")
+            return
+        type = cleaned_data[self.type_field]
+        fields = self.allowed_fields(type, cleaned_data)
+        
+        content = dict()
+        for k in set(cleaned_data.keys()).difference(self.origin_fields):
+            if k in fields:
+                content[k] = cleaned_data[k]
+            del cleaned_data[k]
+        cleaned_data[self.content_field] = content
+        return cleaned_data
+
+    def allowed_fields(self, type, cleaned_data):
+        raise NotImplementedError()
+
+    def save(self, commit=True, *args, **kwargs):
+        model = super().save(False, *args, **kwargs)
+        setattr(model, self.content_field, 
+            self.cleaned_data[self.content_field])
+        if commit:
+            model.save()
+        return model
