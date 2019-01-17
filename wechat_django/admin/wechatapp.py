@@ -38,6 +38,10 @@ class WechatAppAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         self.request = request
         return super().get_queryset(request)
+
+    def get_model_perms(self, request):
+        return ({} if request.resolver_match.kwargs.get("app_id") 
+            else super().get_model_perms(request))
     
     class WechatAppForm(forms.ModelForm):
         class Meta(object):

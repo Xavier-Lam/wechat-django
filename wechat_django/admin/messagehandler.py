@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
     Reply, ReplyMsgType, Rule)
 from ..utils import check_wechat_permission, enum2choices
-from .bases import WechatAdminMixin
+from .bases import WechatAdmin
 
 class MessageHandlerForm(forms.ModelForm):
     content_field = ""
@@ -119,7 +119,7 @@ class ReplyInline(admin.StackedInline):
             return fields
     form = ReplyForm
 
-class MessageHandlerAdmin(WechatAdminMixin, admin.ModelAdmin):
+class MessageHandlerAdmin(WechatAdmin):
     inlines = (RuleInline, ReplyInline)
     list_display = ("name", "available", "enabled", "starts", "ends")
 

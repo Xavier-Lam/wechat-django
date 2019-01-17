@@ -7,7 +7,7 @@ from django.db import models as m
 # from mptt.models import TreeForeignKey
 
 from ..models import Menu
-from .bases import WechatAdminMixin
+from .bases import WechatAdmin
 
 # TreeForeignKey(
 #     Menu, 
@@ -15,8 +15,8 @@ from .bases import WechatAdminMixin
 # ).contribute_to_class(Menu, "parent")
 # mptt.register(Menu, order_insertion_by=["-weight"])
 
-class MenuAdmin(WechatAdminMixin, admin.ModelAdmin):
-    fields = ("name", "menuid", "parent", "type", "weight", "created", "updated")
+class MenuAdmin(WechatAdmin):
+    fields = ("name", "menuid", "type", "weight", "created", "updated")
 
     def changelist_view(self, request, *args, **kwargs):
         self.app_id = kwargs.pop("app_id", None)
@@ -46,28 +46,5 @@ class MenuAdmin(WechatAdminMixin, admin.ModelAdmin):
         if obj:
             rv = rv + ("created", "updated")
         return rv
-
-    def get_queryset(self, request):
-        rv = super().get_queryset(request)
-        id = self.app_id
-        if not id:
-            rv = rv.none()
-        # TODO: 检查权限
-        return rv
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.app_id = self.app_id
-        # TODO: 检查权限
-        return super().save_model(request, obj, form, change)
-
-    # def _get_appid(self, request):
-    #     try:
-    #         query = request.GET.get("_changelist_filters")
-    #         if query:
-    #             query = dict(parse_qsl(query))
-    #             return query.get("app__id__exact")
-    #     except:
-    #         return None
 
 admin.site.register(Menu, MenuAdmin)
