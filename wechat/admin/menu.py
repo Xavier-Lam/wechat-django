@@ -7,6 +7,7 @@ from django.db import models as m
 # from mptt.models import TreeForeignKey
 
 from ..models import Menu
+from .bases import WechatAdminMixin
 
 # TreeForeignKey(
 #     Menu, 
@@ -14,8 +15,7 @@ from ..models import Menu
 # ).contribute_to_class(Menu, "parent")
 # mptt.register(Menu, order_insertion_by=["-weight"])
 
-class MenuAdmin(admin.ModelAdmin):
-    list_filter = ("app", )
+class MenuAdmin(WechatAdminMixin, admin.ModelAdmin):
     fields = ("name", "menuid", "parent", "type", "weight", "created", "updated")
 
     def get_fields(self, request, obj=None):

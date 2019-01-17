@@ -1,12 +1,12 @@
-from urllib.parse import parse_qsl
-
 from django import forms
 from django.contrib import admin
+# from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
     Reply, ReplyMsgType, Rule)
 from ..utils import check_wechat_permission, enum2choices
+from .bases import WechatAdminMixin
 
 class MessageHandlerForm(forms.ModelForm):
     content_field = ""
@@ -24,6 +24,9 @@ class MessageHandlerForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        if self.type_field not in cleaned_data:
+            self.add_error(self.type_field, "")
+            return
         type = cleaned_data[self.type_field]
         fields = self.allowed_fields(type, cleaned_data)
         
@@ -116,10 +119,9 @@ class ReplyInline(admin.StackedInline):
             return fields
     form = ReplyForm
 
-class MessageHandlerAdmin(admin.ModelAdmin):
+class MessageHandlerAdmin(WechatAdminMixin, admin.ModelAdmin):
     inlines = (RuleInline, ReplyInline)
     list_display = ("name", "available", "enabled", "starts", "ends")
-    list_filter = ("app", )
 
     fields = ("name", "strategy", "starts", "ends", "enabled",
         "weight", "created", "updated")
@@ -136,33 +138,5 @@ class MessageHandlerAdmin(admin.ModelAdmin):
         if obj:
             rv = rv + ("created", "updated")
         return rv
-
-    def get_queryset(self, request):
-        rv = super().get_queryset(request)
-        try:
-            id = request.GET.get("app__id__exact")
-            if not id:
-                id = self._get_appid(request)
-                if not id:
-                    rv = rv.none()
-        except:
-            rv = rv.none()
-        # TODO: 检查权限
-        return rv
-    
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.app_id = self._get_appid(request)
-        # TODO: 检查权限
-        return super().save_model(request, obj, form, change)
-
-    def _get_appid(self, request):
-        try:
-            query = request.GET.get("_changelist_filters")
-            if query:
-                query = dict(parse_qsl(query))
-                return query.get("app__id__exact")
-        except:
-            return None
 
 admin.site.register(MessageHandler, MessageHandlerAdmin)
