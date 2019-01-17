@@ -1,6 +1,5 @@
-import importlib
-
 from django.db import models as m
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 import requests
@@ -32,9 +31,7 @@ class Reply(m.Model):
         elif self.msg_type == ReplyMsgType.CUSTOM:
             # 自定义业务
             try:
-                mod_name, func_name = self.content["program"].rsplit('.', 1)
-                mod = importlib.import_module(mod_name)
-                func = getattr(mod, func_name)
+                func = import_string(self.content["program"])
             except:
                 pass # TODO: 404
                 return ""
