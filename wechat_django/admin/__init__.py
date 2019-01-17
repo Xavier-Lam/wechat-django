@@ -1,8 +1,7 @@
-from functools import update_wrapper
-
 from django.conf import settings
 from django.conf.urls import url, include
 from django.urls import NoReverseMatch, reverse
+from django.utils.http import urlencode
 from django.utils.module_loading import import_string
 
 def patch_admin(admin):
@@ -33,24 +32,10 @@ def patch_admin(admin):
             if app_id:
                 # 管理菜单
                 for model in rv["models"]:
-                    if model["perms"].get("change"):
-                        try:
-                            model['admin_url'] = reverse(
-                                'admin:%s_%s_changelist' % (app_label, model["object_name"].lower()), 
-                                current_app=self.name,
-                                kwargs=dict(app_id=app_id)
-                            )
-                        except NoReverseMatch:
-                            pass
-                    if model["perms"].get("add"):
-                        try:
-                            model['add_url'] = reverse(
-                                'admin:%s_%s_add' % (app_label, model["object_name"].lower()), 
-                                current_app=self.name, 
-                                kwargs=dict(app_id=app_id)
-                            )
-                        except NoReverseMatch:
-                            pass
+                    if model["perms"].get("change") and model.get("admin_url"):
+                        model['admin_url'] += "?" + urlencode(dict(app_id=app_id))
+                    if model["perms"].get("add") and model.get("add_url"):
+                        model['add_url'] += "?" + urlencode(dict(app_id=app_id))
             else:
                 # 原始菜单
                 pass
@@ -85,40 +70,9 @@ def patch_admin(admin):
             ],
         }
 
-    def _wechat_admin_iters(admin):
-        return (
-            (model, model_admin)
-            for model, model_admin in admin._registry.items()
-            if isinstance(model_admin, WechatAdmin)
-        )
-
     def get_urls(self):
         rv = origin_get_urls(self)
-
-        # 重新注册所有wechatadmin url
-        registered_urls = [
-            rule for rule in rv
-            if rule.regex.pattern.startswith(r"^%s/"%app_label)
-            and not rule.regex.pattern.startswith(r"^%s/%s"%(app_label, wechatapp.WechatApp._meta.model_name))
-        ]
-        # 移除原有pattern
-        rv = list(set(rv)^set(registered_urls))
-        # 添加包含app_id的wechatadmin url
-        rv += [
-            url(
-                r"^%s/apps/(?P<app_id>\d+)/%s/" % (app_label, model._meta.model_name), 
-                include(model_admin.urls)
-            )
-            for model, model_admin in _wechat_admin_iters(self)
-        ]        
-
-        # 注册微信号首页
-        def wrap(view, cacheable=False):
-            def wrapper(*args, **kwargs):
-                return self.admin_view(view, cacheable)(*args, **kwargs)
-            wrapper.admin_site = self
-            return update_wrapper(wrapper, view)
-        # TODO: 修订app_label
+        
         rv += [url(
             r"^(?P<app_label>%s)/apps/(?P<app_id>\d+)/$"%app_label, 
             wechat_index,
