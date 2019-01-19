@@ -67,24 +67,25 @@ class Reply(m.Model):
         return reply.render()
 
     @classmethod
-    def from_mp(cls, data):
+    def from_mp(cls, data, handler=None):
         type = data["type"]
+        if type == ReplyMsgType.IMG:
+            type = ReplyMsgType.IMAGE
         reply = cls(
-            msg_type=type
+            msg_type=type,
+            handler=handler
         )
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
         elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE, 
             ReplyMsgType.VIDEO):
-            # TODO: 图片回复说是img
             # TODO: 按照文档 是临时素材 需要转换为永久素材
-            content = dict(media_id=content)
+            content = dict(media_id=data["content"])
         elif type == ReplyMsgType.NEWS:
             # TODO: 应该处理成永久素材保存
             content = dict(content=cls.mpnews2replynews(data["news_info"]["list"]))
         else:
-            # TODO: unknown type
-            raise Exception("unknown type")
+            raise ValueError("unknown type %s"%type)
         reply.content = content
         return reply
 
@@ -105,7 +106,7 @@ class Reply(m.Model):
             )
         else:
             # TODO: unknown type
-            raise Exception("unknown type")
+            raise Exception("unknown type %s"%type)
         rv.content = content
         return rv
 

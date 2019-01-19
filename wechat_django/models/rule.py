@@ -58,8 +58,10 @@ class Rule(m.Model):
         return False
 
     @classmethod
-    def from_mp(cls, data):
+    def from_mp(cls, data, handler=None):
+        print(data)
         return cls(
+            handler=handler,
             type=data["match_mode"],
             rule=dict(pattern=data["content"])
         )

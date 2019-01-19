@@ -97,4 +97,8 @@ class MessageHandlerAdmin(WechatAdmin):
             rv = rv + ("created", "updated")
         return rv
 
+    def save_model(self, request, obj, form, change):
+        obj.src = MessageHandler.Source.SELF
+        return super().save_model(request, obj, form, change)
+
 admin.site.register(MessageHandler, MessageHandlerAdmin)

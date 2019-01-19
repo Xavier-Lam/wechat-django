@@ -15,8 +15,9 @@ class WechatApp(m.Model):
         BOTH = 1
         SAFE = 2
 
-    title = m.CharField(_("title"), max_length=16, null=False)
-    name = m.CharField(_("name"), help_text=_("公众号标识"),
+    title = m.CharField(_("title"), max_length=16, null=False,
+        help_text=_("公众号名称"))
+    name = m.CharField(_("name"), help_text=_("公众号唯一标识,可采用微信号"),
         max_length=16, blank=False, null=False, 
         unique=True)
     desc = m.TextField(_("description"), default="", blank=True)
@@ -46,16 +47,22 @@ class WechatApp(m.Model):
 
     @classmethod
     def get_by_name(cls, name):
-        return cls.objects.filter(name=name).first()
+        return cls.objects.get(name=name)
 
     @property
     def client(self):
-        if not self._client:
+        """:rtype: wechatpy.WeChatClient"""
+        if not hasattr(self, "_client"):
             self._client = WeChatClient(
                 self.appid,
-                self.secret
+                self.appsecret
                 # TODO: 配置session
             )
+            self._client._http.proxies = dict(
+                http="localhost:12580",
+                https="localhost:12580"
+            )
+            self._client._http.verify=r"C:\Users\LamXa\Desktop\FiddlerRoot.pem"
         return self._client
 
     def interactable(self):

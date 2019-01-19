@@ -76,54 +76,69 @@ class MessageHandler(m.Model):
         
         # 处理自动回复
         handlers = []
-        if resp.get("add_friend_autoreply_info"):
-            handlers.append(MessageHandler(
-                app=app,
-                name="微信配置关注回复",
-                src=MessageHandler.Source.MP,
-                replies=Reply.from_mp(resp["add_friend_autoreply_info"]),
-                enabled=bool(resp.get("is_add_friend_reply_open")),
-                rules=[
-                    Rule(type=Rule.Type.EVENT, rule=dict(event=EventType.SUBSCRIBE))
-                ],
-                created=timezone.datetime.fromtimestamp(0)
-            ))
-        if resp.get("message_default_autoreply_info"):
-            handlers.append(MessageHandler(
-                app=app,
-                name="微信配置自动回复",
-                src=MessageHandler.Source.MP,
-                replies=Reply.from_mp(resp["message_default_autoreply_info"]),
-                enabled=bool(resp.get("is_autoreply_open")),
-                rules=[
-                    Rule(type=Rule.Type.ALL)
-                ],
-                created=timezone.datetime.fromtimestamp(0)
-            ))
-        if (resp.get("keyword_autoreply_info")
-            and resp["keyword_autoreply_info"].get("list")):
-            for handler in resp["keyword_autoreply_info"]["list"]:
-                handlers.append(
-                    MessageHandler.from_mp(handler)
-                )
 
         # 成功后移除之前的自动回复并保存新加入的自动回复
         with transaction.atomic():
             app.message_handlers.filter(
                 src=MessageHandler.Source.MP
-            ).all()
-            MessageHandler.objects.bulk_create(handlers)           
+            ).delete()
+            if resp.get("message_default_autoreply_info"):
+                handler = MessageHandler(
+                    app=app,
+                    name="微信配置自动回复",
+                    src=MessageHandler.Source.MP,
+                    enabled=bool(resp.get("is_autoreply_open")),
+                    created=timezone.datetime.fromtimestamp(0)
+                )
+                handlers.append(handler)
+                handler.save()
+                reply = Reply.from_mp(resp["message_default_autoreply_info"], handler)
+                rule = Rule(type=Rule.Type.ALL, handler=handler)
+                reply.save()
+                rule.save()
+            if resp.get("add_friend_autoreply_info"):
+                handler = MessageHandler(
+                    app=app,
+                    name="微信配置关注回复",
+                    src=MessageHandler.Source.MP,
+                    enabled=bool(resp.get("is_add_friend_reply_open")),
+                    created=timezone.datetime.fromtimestamp(0)
+                )
+                handlers.append(handler)
+                handler.save()
+                reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
+                rule = Rule(
+                    type=Rule.Type.EVENT, 
+                    rule=dict(event=EventType.SUBSCRIBE),
+                    handler=handler
+                )
+                reply.save()
+                rule.save()
+            if (resp.get("keyword_autoreply_info")
+                and resp["keyword_autoreply_info"].get("list")):
+                for handler in resp["keyword_autoreply_info"]["list"]:
+                    MessageHandler.from_mp(handler, app)     
 
     @classmethod
-    def from_mp(cls, handler):
+    def from_mp(cls, handler, app):
         from . import Reply, Rule
-        return cls(
+        rv = cls(
+            app=app,
             name=handler["rule_name"],
-            created_at=timezone.datetime.fromtimestamp(handler["create_time"]),
-            replies=[Reply.from_mp(reply) for reply in handler["reply_list_info"]],
-            rules=[Rule.from_mp(rule) for rule in handler["reply_list_info"]],
+            src=MessageHandler.Source.MP,
+            created=timezone.datetime.fromtimestamp(handler["create_time"]),
             strategy=handler["reply_mode"]
         )
+        rv.save()
+        rv.rules.bulk_create([
+            Rule.from_mp(rule, rv) 
+            for rule in handler["keyword_list_info"]
+        ])
+        rv.replies.bulk_create([
+            Reply.from_mp(reply, rv) 
+            for reply in handler["reply_list_info"]
+        ])
+        return rv
 
     @classmethod
     def from_menu(cls, menu, data, app):
