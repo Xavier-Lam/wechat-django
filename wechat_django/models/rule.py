@@ -59,7 +59,6 @@ class Rule(m.Model):
 
     @classmethod
     def from_mp(cls, data, handler=None):
-        print(data)
         return cls(
             handler=handler,
             type=data["match_mode"],

@@ -1,9 +1,9 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.translation import ugettext as _
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
-    Reply, ReplyMsgType, Rule)
+    Reply, ReplyMsgType, Rule, WechatApp)
 from ..utils import check_wechat_permission, enum2choices
 from .bases import DynamicChoiceForm, WechatAdmin
 
@@ -55,7 +55,8 @@ class ReplyInline(admin.StackedInline):
 
         program = forms.CharField(label=_("program"), required=False)
         url = forms.URLField(label=_("url"), required=False)
-        content = forms.CharField(label=_("content"), required=False)
+        content = forms.CharField(label=_("content"), widget=forms.Textarea,
+            required=False)
         media_id = forms.CharField(label=_("media_id"), required=False)
 
         class Meta(object):
@@ -78,11 +79,31 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 class MessageHandlerAdmin(WechatAdmin):
-    inlines = (RuleInline, ReplyInline)
+    actions = ("sync", )
     list_display = ("name", "available", "enabled", "starts", "ends")
 
+    inlines = (RuleInline, ReplyInline)
     fields = ("name", "strategy", "starts", "ends", "enabled",
         "weight", "created", "updated")
+
+    def sync(self, request, queryset):
+        app_id = self.get_request_app_id(request)
+        app = WechatApp.get_by_id(app_id)
+        try:
+            handlers = MessageHandler.sync(app)
+            self.message_user(request, 
+                "%d handlers successfully synchronized"%len(handlers))
+        except Exception as e:
+            self.message_user(request, 
+                "sync failed with %s"%str(e), level=messages.ERROR)
+    sync.short_description = _("sync")
+
+    def changelist_view(self, request, extra_context=None):
+        post = request.POST.copy()
+        if admin.helpers.ACTION_CHECKBOX_NAME not in post:
+            post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
+            request._set_post(post)
+        return super().changelist_view(request, extra_context)
 
     def get_fields(self, request, obj=None):
         fields = list(super().get_fields(request, obj))

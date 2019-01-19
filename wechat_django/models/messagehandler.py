@@ -117,7 +117,8 @@ class MessageHandler(m.Model):
             if (resp.get("keyword_autoreply_info")
                 and resp["keyword_autoreply_info"].get("list")):
                 for handler in resp["keyword_autoreply_info"]["list"]:
-                    MessageHandler.from_mp(handler, app)     
+                    handlers.append(MessageHandler.from_mp(handler, app))
+            return handlers 
 
     @classmethod
     def from_mp(cls, handler, app):

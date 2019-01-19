@@ -5,7 +5,7 @@ from jsonfield import JSONField
 import requests
 from wechatpy import replies
 
-from . import MessageHandler, ReplyMsgType
+from . import Material, MessageHandler, ReplyMsgType
 from .. import utils
 
 class Reply(m.Model):
@@ -77,15 +77,20 @@ class Reply(m.Model):
         )
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
-        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE, 
-            ReplyMsgType.VIDEO):
-            # TODO: 按照文档 是临时素材 需要转换为永久素材
+        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
+            # 按照文档 是临时素材 需要转换为永久素材
+            content = dict(media_id=Material.as_permenant(
+                data["content"], app, False))
+        elif type == ReplyMsgType.VIDEO:
+            # TODO: 按照文档 这个为链接
             content = dict(media_id=data["content"])
         elif type == ReplyMsgType.NEWS:
-            # TODO: 应该处理成永久素材保存
-            content = dict(content=cls.mpnews2replynews(data["news_info"]["list"]))
+            content = dict(
+                media_id=data["content"],
+                content=cls.mpnews2replynews(data["news_info"]["list"])
+            )
         else:
-            raise ValueError("unknown type %s"%type)
+            raise ValueError("unknown reply type %s"%type)
         reply.content = content
         return reply
 
