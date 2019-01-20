@@ -10,6 +10,7 @@ from ..models import WechatApp
 class WechatAppAdmin(admin.ModelAdmin):
     list_display = ("title", "name", "appid", "short_desc", "interactable", 
         "created", "updated")
+    search_fields = ("title", "name", "appid", "short_desc")
 
     fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",
         "encoding_mode", "desc", "callback", "created", "updated")

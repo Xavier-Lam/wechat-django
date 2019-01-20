@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin, messages
+from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
@@ -79,8 +80,24 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 class MessageHandlerAdmin(WechatAdmin):
+    class AvailableFilter(admin.SimpleListFilter):
+        title = _("available")
+        parameter_name = "available"
+        
+        def lookups(self, request, model_admin):
+            return [(True, "available")]
+        
+        def queryset(self, request, queryset):
+            if self.value():
+                now = timezone.now()
+                queryset = (queryset.filter(enabled=True)
+                    .exclude(starts__gt=now).exclude(ends__lte=now))
+            return queryset
+
     actions = ("sync", )
-    list_display = ("name", "available", "enabled", "starts", "ends")
+    list_display = ("name", "is_sync", "available", "enabled", "starts", "ends")
+    list_filter = (AvailableFilter, )
+    search_fields = ("name", "rules__rule", "replies__content")
 
     inlines = (RuleInline, ReplyInline)
     fields = ("name", "strategy", "starts", "ends", "enabled",
@@ -97,6 +114,11 @@ class MessageHandlerAdmin(WechatAdmin):
             self.message_user(request, 
                 "sync failed with %s"%str(e), level=messages.ERROR)
     sync.short_description = _("sync")
+
+    def is_sync(self, obj):
+        return obj.src == MessageHandler.Source.MP
+    is_sync.boolean = True
+    is_sync.short_description = _("synchronized from wechat")
 
     def changelist_view(self, request, extra_context=None):
         post = request.POST.copy()

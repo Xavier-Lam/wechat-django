@@ -52,7 +52,8 @@ class Material(m.Model):
                 offset=offset,
                 count=count
             )
-            updates.extend(map(lambda o: Material(app=app, **o), data["item"]))
+            updates.extend(map(lambda o: Material(app=app, type=type, **o), 
+                data["item"]))
             if data["total_count"] <= offset + count:
                 break
             offset += count
