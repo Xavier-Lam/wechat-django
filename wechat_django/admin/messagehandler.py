@@ -80,6 +80,8 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 class MessageHandlerAdmin(WechatAdmin):
+    change_form_template = "admin/wechat_django/messagehandler/change_form.html"
+
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")
         parameter_name = "available"

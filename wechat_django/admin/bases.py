@@ -5,7 +5,26 @@ from django.contrib import admin
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 
+from ..models import WechatApp
+
 class WechatAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        extra_context = self._update_context(request, extra_context)
+        return super().changelist_view(request, extra_context)
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        context = self._update_context(request, context)
+        return super().render_change_form(request, context, *args, **kwargs)
+
+    def _update_context(self, request, context):
+        app_id = self.get_request_app_id(request)
+        context = context or dict()
+        context.update(dict(
+            app_id=app_id,
+            app=WechatApp.get_by_id(app_id)
+        ))
+        return context
+
     def get_queryset(self, request):
         rv = super().get_queryset(request)
         id = self.get_request_app_id(request)

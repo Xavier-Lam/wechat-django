@@ -9,6 +9,8 @@ from ..models import Menu
 from .bases import DynamicChoiceForm, WechatAdmin
 
 class MenuAdmin(WechatAdmin):
+    change_form_template = "admin/wechat_django/menu/change_form.html"
+
     fields = ("name", "menuid", "type", "key", "url", "appid", "pagepath",
         "weight", "created", "updated")
 

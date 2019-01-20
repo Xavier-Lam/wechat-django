@@ -1,0 +1,15 @@
+{% extends 'admin/change_form.html' %}
+{% load i18n admin_urls admin_modify %}
+
+{% block breadcrumbs %}
+{% if app_id %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label app_id=app_id %}">{{ app.title }}</a>
+&rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}?app_id={{ app_id }}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+</div>
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
