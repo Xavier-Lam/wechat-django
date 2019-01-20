@@ -80,8 +80,6 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 class MessageHandlerAdmin(WechatAdmin):
-    change_form_template = "admin/wechat_django/messagehandler/change_form.html"
-
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")
         parameter_name = "available"
@@ -118,7 +116,7 @@ class MessageHandlerAdmin(WechatAdmin):
     sync.short_description = _("sync")
 
     def is_sync(self, obj):
-        return obj.src == MessageHandler.Source.MP
+        return obj.src in (MessageHandler.Source.MP, MessageHandler.Source.MENU)
     is_sync.boolean = True
     is_sync.short_description = _("synchronized from wechat")
 

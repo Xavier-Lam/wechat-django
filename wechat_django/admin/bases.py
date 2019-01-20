@@ -9,6 +9,10 @@ from ..models import WechatApp
 
 class WechatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
+        post = request.POST.copy()
+        if admin.helpers.ACTION_CHECKBOX_NAME not in post:
+            post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
+            request._set_post(post)
         extra_context = self._update_context(request, extra_context)
         return super().changelist_view(request, extra_context)
 

@@ -1,18 +1,29 @@
-from urllib.parse import parse_qsl
-
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db import models as m
 from django.utils.translation import ugettext as _
 
-from ..models import Menu
+from ..models import Menu, WechatApp
 from .bases import DynamicChoiceForm, WechatAdmin
 
 class MenuAdmin(WechatAdmin):
-    change_form_template = "admin/wechat_django/menu/change_form.html"
+    # change_form_template = "admin/wechat_django/menu/change_form.html"
+    actions = ("sync", )
 
     fields = ("name", "menuid", "type", "key", "url", "appid", "pagepath",
         "weight", "created", "updated")
+
+    def sync(self, request, queryset):
+        app_id = self.get_request_app_id(request)
+        app = WechatApp.get_by_id(app_id)
+        try:
+            Menu.sync(app)
+            self.message_user(request, "menus successfully synchronized")
+        except Exception as e:
+            raise
+            self.message_user(request, 
+                "sync failed with %s"%str(e), level=messages.ERROR)
+    sync.short_description = _("sync")
 
     def get_fields(self, request, obj=None):
         fields = list(super().get_fields(request, obj))
@@ -52,5 +63,9 @@ class MenuAdmin(WechatAdmin):
                 fields = tuple()
             return fields
     form = MenuForm
+
+    def has_add_permission(self, request):
+        return (super().has_add_permission(request) 
+            and self.get_queryset(request).count() < 3)
 
 admin.site.register(Menu, MenuAdmin)

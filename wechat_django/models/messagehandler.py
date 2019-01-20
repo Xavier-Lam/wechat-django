@@ -147,19 +147,22 @@ class MessageHandler(m.Model):
         :type menu: .Menu
         """
         from . import Reply, Rule
-        return cls(
+        handler = cls(
             app=app,
             name="菜单[{0}]事件".format(data["name"]),
-            src=cls.Source.MENU,
-            rules=[Rule(
-                type=Rule.Type.EVENTKEY,
-                rule=dict(
-                    event=EventType.CLICK,
-                    key=menu.content
-                ),
-            )],
-            replies=[Reply.from_menu(data)]
+            src=cls.Source.MENU
         )
+        handler.save()
+        Rule(
+            type=Rule.Type.EVENTKEY,
+            rule=dict(
+                event=EventType.CLICK,
+                key=menu.content
+            ),
+            handler=handler
+        ).save()
+        Reply.from_menu(data, handler).save()
+        return handler
 
     def __str__(self):
         return self.name

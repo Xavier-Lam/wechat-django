@@ -71,10 +71,7 @@ class Reply(m.Model):
         type = data["type"]
         if type == ReplyMsgType.IMG:
             type = ReplyMsgType.IMAGE
-        reply = cls(
-            msg_type=type,
-            handler=handler
-        )
+        reply = cls(msg_type=type, handler=handler)
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
         elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
@@ -95,23 +92,26 @@ class Reply(m.Model):
         return reply
 
     @classmethod
-    def from_menu(cls, data):
+    def from_menu(cls, data, handler=None):
         type = data["type"]
-        rv = cls(msg_type=type)
+        if type == ReplyMsgType.IMG:
+            type = ReplyMsgType.IMAGE
+        rv = cls(msg_type=type, handler=handler)
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
-        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE, 
-            ReplyMsgType.VIDEO):
-            # TODO: video存的时下载链接
+        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
+            content = dict(media_id=Material.as_permenant(
+                data["value"], handler.app, False)) if handler else data["value"]
+        elif type == ReplyMsgType.VIDEO:
+            # TODO: 按照文档 这个为链接
             content = dict(media_id=data["value"])
         elif type == ReplyMsgType.NEWS:
             content = dict(
-                content=cls.mpnews2replynews(data["news_info"]),
+                content=cls.mpnews2replynews(data["news_info"]["list"]),
                 media_id=data["value"]
             )
         else:
-            # TODO: unknown type
-            raise Exception("unknown type %s"%type)
+            raise ValueError("unknown menu reply type %s"%type)
         rv.content = content
         return rv
 

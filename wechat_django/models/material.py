@@ -18,7 +18,7 @@ class Material(m.Model):
     type = m.CharField(_("type"), max_length=5,
         choices=(utils.enum2choices(Type)))
     media_id = m.CharField(_("media_id"), max_length=64)
-    name = m.CharField(_("name"), max_length=64, blank=True, null=True)
+    name = m.CharField(_("filename"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)
     update_time = m.IntegerField(_("update time"), editable=False, 
         null=True)
@@ -98,3 +98,11 @@ class Material(m.Model):
             return rv.save()
         else:
             return media_id
+
+    def delete(self, *args, **kwargs):
+        rv = super().delete(*args, **kwargs)
+        self.app.client.material.delete(self.media_id)
+        return rv
+
+    def __str__(self):
+        return "{type}:{media_id}".format(type=self.type, media_id=self.media_id)

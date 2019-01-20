@@ -44,35 +44,38 @@ class Menu(m.Model):
         :type app: .WeChatApp
         """
         resp = app.client.menu.get_menu_info()
-        menus = [Menu.mp2menu(menu) for menu in resp["selfmenu_info"]["button"]]
         
         # 旧menu 旧handler
         with transaction.atomic():
-            app.menus.delete()
-            app.message_handlers.filter(
-                src=MessageHandler.Source.MENU
-            ).delete()
+            app.menus.all().delete()
+            # 移除同步菜单产生的message handler
+            app.message_handlers.filter(src=MessageHandler.Source.MENU).delete()
+            return [Menu.mp2menu(menu, app) for menu in resp["selfmenu_info"]["button"]]
 
-    @staticmethod
-    def mp2menu(data, app):
+    @classmethod
+    def mp2menu(cls, data, app):
         """
         :type app: .WeChatApp
         """
-        menu = Menu(name=data["name"], app=app)
+        menu = cls(name=data["name"], app=app)
         menu.type = data.get("type")
         if not menu.type:
-            menu.data = data
-        elif menu.type in (Menu.Event.VIEW, Menu.Event.CLICK, 
-            Menu.Event.MINIPROGRAM):
+            menu.save()
+            menu.sub_button.add(*[
+                cls.mp2menu(sub, app) for sub in 
+                (data.get("sub_button") or dict(list=[])).get("list")
+            ])
+        elif menu.type in (cls.Event.VIEW, cls.Event.CLICK, 
+            cls.Event.MINIPROGRAM):
             menu.content = data
         else:
             # 要当作回复处理了
-            menu.type = Menu.Event.CLICK
+            menu.type = cls.Event.CLICK
             # 生成一个唯一key
-            key = md5(json.dumps(self.raw).encode()).hexdigest()
+            key = md5(json.dumps(data).encode()).hexdigest()
             menu.content = dict(key=key)
             handler = MessageHandler.from_menu(menu, data, app)
-        menu.sub_button = [mp2menu(sub) for sub in data.get("sub_button") or []]
+        menu.save()
         return menu
 
     @staticmethod
