@@ -30,6 +30,7 @@ class Material(m.Model):
 
     class Meta(object):
         unique_together = (("app", "media_id"),)
+        ordering = ("app", "-update_time")
 
     @classmethod
     def sync(cls, app):

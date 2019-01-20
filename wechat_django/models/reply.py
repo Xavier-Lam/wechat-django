@@ -28,7 +28,21 @@ class Reply(m.Model):
                 params=message.request.GET, timeout=4.5)
             resp.raise_for_status()
             return resp.content
-        elif self.msg_type == ReplyMsgType.CUSTOM:
+        else:
+            reply = self._reply(message)
+            return reply.render()
+        
+    def send(self, message):
+        if self.msg_type == ReplyMsgType.FORWARD:
+            raise NotImplementedError()
+        else:
+            reply = self._reply(message)
+            funcname, kwargs = self.reply2send(reply)
+            return getattr(self.app.client.message, funcname)(**kwargs)
+
+    def _reply(self, message):
+        assert self.msg_type != ReplyMsgType.FORWARD
+        if self.msg_type == ReplyMsgType.CUSTOM:
             # 自定义业务
             try:
                 func = import_string(self.content["program"])
@@ -63,9 +77,39 @@ class Reply(m.Model):
             else:
                 klass = replies.TextReply
                 data = dict(content=self.content["content"])
-            reply = klass(message=message, **data)
-        return reply.render()
+            reply = klass(message=message, **data)    
+        return reply
 
+    @staticmethod
+    def reply2send(reply):
+        """
+        :type reply: wechatpy.replies.BaseReply
+        """
+        type = ""
+        kwargs = dict(user_id=reply.target)
+        if isinstance(reply, replies.ArticlesReply):
+            kwargs["articles"] = reply.articles
+            type = "articles"
+        elif isinstance(reply, replies.MusicReply):
+            kwargs["url"] = reply.music_url
+            kwargs["hq_url"] = reply.hq_music_url
+            kwargs["thumb_media_id"] = reply.thumb_media_id
+            kwargs["title"] = reply.title
+            kwargs["description"] = reply.description
+        elif isinstance(reply, replies.VideoReply):
+            kwargs["media_id"] = reply.media_id
+            kwargs["title"] = reply.title
+            kwargs["description"] = reply.description
+        elif isinstance(reply, (replies.ImageReply, replies.VoiceReply)):
+            kwargs["media_id"] = reply.media_id
+        elif isinstance(reply, replies.TextReply):
+            kwargs["content"] = reply.content
+        else:
+            raise ValueError("unknown reply type")
+        type = type or reply.type
+        funcname = "send_" + type
+        return funcname, kwargs
+    
     @classmethod
     def from_mp(cls, data, handler=None):
         type = data["type"]

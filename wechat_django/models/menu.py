@@ -38,6 +38,9 @@ class Menu(m.Model):
     created = m.DateTimeField(auto_now_add=True)
     updated = m.DateTimeField(auto_now=True)
 
+    class Meta(object):
+        ordering = ("app", "-weight", "created")
+
     @staticmethod
     def sync(app):
         """

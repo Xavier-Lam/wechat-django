@@ -71,8 +71,11 @@ class ReplyInline(admin.StackedInline):
                 fields = ("program", )
             elif type == ReplyMsgType.NEWS:
                 fields = ("content", "media_id")
-            elif type in (ReplyMsgType.MUSIC, ReplyMsgType.VIDEO, 
-                ReplyMsgType.VOICE, ReplyMsgType.IMAGE):
+            elif type in (ReplyMsgType.VIDEO, ReplyMsgType.VOICE, 
+                ReplyMsgType.IMAGE):
+                fields = ("media_id", )
+            elif type == ReplyMsgType.MUSIC:
+                # TODO: 是错的
                 fields = ("media_id", )
             elif type == ReplyMsgType.TEXT:
                 fields = ("content", )
@@ -95,7 +98,9 @@ class MessageHandlerAdmin(WechatAdmin):
             return queryset
 
     actions = ("sync", )
-    list_display = ("name", "is_sync", "available", "enabled", "starts", "ends")
+    list_display = ("name", "is_sync", "available", "enabled", "weight", 
+        "starts", "ends", "updated", "created")
+    list_editable = ("weight",)
     list_filter = (AvailableFilter, )
     search_fields = ("name", "rules__rule", "replies__content")
 

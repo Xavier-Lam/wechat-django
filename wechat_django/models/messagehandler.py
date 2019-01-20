@@ -1,3 +1,5 @@
+import random
+
 from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
@@ -13,6 +15,7 @@ class MessageHandler(m.Model):
     class ReplyStrategy(object):
         ALL = "reply_all"
         RANDOM = "random_one"
+        NONE = "none"
 
     app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
         related_name="message_handlers", null=False, editable=False)
@@ -24,7 +27,8 @@ class MessageHandler(m.Model):
     ), default=Source.SELF, editable=False)
     strategy = m.CharField(_("strategy"), max_length=10, choices=(
         (ReplyStrategy.ALL, "reply_all"), # 待实现
-        (ReplyStrategy.RANDOM, "random_one")
+        (ReplyStrategy.RANDOM, "random_one"),
+        (ReplyStrategy.NONE, "none")
     ), default=ReplyStrategy.RANDOM)
 
     starts = m.DateTimeField(_("starts"), null=True, blank=True)
@@ -64,10 +68,18 @@ class MessageHandler(m.Model):
         """
         :type message: wechatpy.messages.BaseMessage
         """
-        reply = self.replies and self.replies[0]
-        if reply:
-            return reply.reply(message)
-        return ""
+        reply = None
+        if self.strategy == self.ReplyStrategy.NONE:
+            pass
+        elif self.strategy == self.ReplyStrategy.ALL:
+            for reply in self.replies[1:]:
+                reply.send(message)
+            reply = self.replies and self.replies[0]
+        elif self.strategy == self.ReplyStrategy.RANDOM:
+            reply = self.replies and random.choice(self.replies)
+        else:
+            raise ValueError("incorrect reply strategy")
+        return reply.reply() if reply else ""
 
     @staticmethod
     def sync(app):
@@ -157,7 +169,7 @@ class MessageHandler(m.Model):
             type=Rule.Type.EVENTKEY,
             rule=dict(
                 event=EventType.CLICK,
-                key=menu.content
+                key=menu.content["key"]
             ),
             handler=handler
         ).save()
