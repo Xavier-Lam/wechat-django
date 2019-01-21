@@ -114,7 +114,7 @@ class Migration(migrations.Migration):
                 ('nickname', models.CharField(max_length=24, null=True, verbose_name='nickname')),
                 ('sex', models.SmallIntegerField(choices=[('2', 'FEMALE'), ('1', 'MALE'), ('0', 'UNKNOWN')], null=True, verbose_name='gender')),
                 ('city', models.CharField(max_length=24, null=True, verbose_name='city')),
-                ('provice', models.CharField(max_length=24, null=True, verbose_name='province')),
+                ('province', models.CharField(max_length=24, null=True, verbose_name='province')),
                 ('country', models.CharField(max_length=24, null=True, verbose_name='country')),
                 ('headimgurl', models.CharField(max_length=256, null=True, verbose_name='avatar')),
                 ('subscribe_time', models.IntegerField(null=True, verbose_name='subscribe time')),

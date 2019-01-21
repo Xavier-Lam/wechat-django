@@ -8,6 +8,7 @@ from ..handler import handler
 from ..models import WeChatApp
 
 class WeChatAppAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ("title", "name", "appid", "short_desc", "interactable", 
         "created", "updated")
     search_fields = ("title", "name", "appid", "short_desc")

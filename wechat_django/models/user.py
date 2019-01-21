@@ -1,4 +1,5 @@
 import math
+import re
             
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
@@ -30,18 +31,20 @@ class WeChatUser(m.Model):
     nickname = m.CharField(_("nickname"), max_length=24, null=True)
     sex = m.SmallIntegerField(_("gender"), choices=utils.enum2choices(Gender), 
         null=True)
-    city = m.CharField(_("city"), max_length=24, null=True)
-    provice = m.CharField(_("province"), max_length=24, null=True)
-    country = m.CharField(_("country"), max_length=24, null=True)
     headimgurl = m.CharField(_("avatar"), max_length=256, null=True)
+    city = m.CharField(_("city"), max_length=24, null=True)
+    province = m.CharField(_("province"), max_length=24, null=True)
+    country = m.CharField(_("country"), max_length=24, null=True)
+    language = m.CharField(_("language"), max_length=24, null=True)
 
+    subscribe = m.NullBooleanField(_("is subscribed"), null=True)
     subscribe_time = m.IntegerField(_("subscribe time"), null=True)
     subscribe_scene = m.CharField(_("subscribe scene"), max_length=32,
         null=True, choices=utils.enum2choices(SubscribeScene))
     qr_scene = m.IntegerField(_("qr scene"), null=True)
     qr_scene_str = m.CharField(_("qr_scene_str"), max_length=64, null=True)
 
-    remark = m.TextField(_("remark"), null=True)
+    remark = m.TextField(_("remark"), blank=True, null=True)
     groupid = m.IntegerField(_("group id"), null=True)
 
     created = m.DateTimeField(_("created"), auto_now_add=True)
@@ -51,21 +54,33 @@ class WeChatUser(m.Model):
         ordering = ("app", "-created")
         unique_together = (("app", "openid"), ("app", "unionid"))
 
+    def avatar(self, size=132):
+        assert size in (0, 46, 64, 96, 132)
+        return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
+
     @classmethod
     def sync(cls, app, all=False, detail=True):
         rv = []
         first_openid = None
         if not all:
-            user = cls.objects.filter(app=app).latest("created")
+            try:
+                user = cls.objects.filter(app=app).latest("created")
+            except cls.DoesNotExist:
+                user = None
             first_openid = user and user.openid
         for openids in cls._iter_followers_list(app, first_openid):
             if detail:
-                user_dicts = app.client.get_batch(openids)
+                allowed_fields = list(map(lambda o: o.name, cls._meta.fields))
+                user_dicts = map(
+                    lambda o: {k: v for k, v in o.items() if k in allowed_fields},
+                    app.client.user.get_batch(openids))
             else:
-                user_dicts = list(map(lambda openid: dict(openid=openid), openids))
-            users = map(lambda o: cls(app=app, **o), user_dicts)
+                user_dicts = map(lambda openid: dict(openid=openid), openids)
+            params = map(lambda o: dict(app=app, openid=o["openid"], defaults=o), 
+                user_dicts)
             with transaction.atomic():
-                map(cls.objects.update_or_create, users)
+                users = map(lambda kwargs: cls.objects.update_or_create(**kwargs)[0], 
+                    params)
             rv.extend(users)
         return rv
 
@@ -80,7 +95,7 @@ class WeChatUser(m.Model):
             openids = follower_data["data"]["openid"]
             pages = math.ceil(len(openids)/count)
             for page in range(pages):
-                yield openids[page*count, page*count+count]
+                yield openids[page*count: page*count+count]
             if not first_user_id:
                 raise StopIteration
         
