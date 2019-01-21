@@ -2,7 +2,7 @@ from django.db import models as m
 from django.utils.translation import ugettext as _
 
 from .. import utils
-from . import WechatApp
+from . import WeChatApp
 
 class WeChatUser(m.Model):
     class Gender(object):
@@ -10,7 +10,7 @@ class WeChatUser(m.Model):
         MALE = "1"
         FEMALE = "2"
 
-    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="users", null=False, editable=False)
     openid = m.CharField(_("openid"), max_length=36, null=False)
 

@@ -9,7 +9,7 @@ from wechatpy import WeChatClient
 
 from . import EventType
 
-class WechatApp(m.Model):
+class WeChatApp(m.Model):
     class EncodingMode(object):
         PLAIN = 0
         BOTH = 1
@@ -86,11 +86,11 @@ permissions = (
     "{appname}_handlemessage",
 )
 
-@receiver(m.signals.post_save, sender=WechatApp)
+@receiver(m.signals.post_save, sender=WeChatApp)
 def execute_after_save(sender, instance, created, *args, **kwargs):
     if created:
         # 添加
-        content_type = ContentType.objects.get_for_model(WechatApp)
+        content_type = ContentType.objects.get_for_model(WeChatApp)
         Permission.objects.bulk_create(
             Permission(
                 codename=permission.format(appname=instance.name),
@@ -100,9 +100,9 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
             for permission in permissions
         )
 
-@receiver(m.signals.post_delete, sender=WechatApp)
+@receiver(m.signals.post_delete, sender=WeChatApp)
 def execute_after_delete(sender, instance, *args, **kwargs):
-    content_type = ContentType.objects.get_for_model(WechatApp)
+    content_type = ContentType.objects.get_for_model(WeChatApp)
     Permission.objects.filter(
         content_type=content_type,
         codename__in=[permission.format(appname=instance.name) \

@@ -3,10 +3,10 @@ from django.contrib import admin, messages
 from django.db import models as m
 from django.utils.translation import ugettext as _
 
-from ..models import Menu, WechatApp
-from .bases import DynamicChoiceForm, WechatAdmin
+from ..models import Menu, WeChatApp
+from .bases import DynamicChoiceForm, WeChatAdmin
 
-class MenuAdmin(WechatAdmin):
+class MenuAdmin(WeChatAdmin):
     # change_form_template = "admin/wechat_django/menu/change_form.html"
     actions = ("sync", )
 
@@ -15,7 +15,7 @@ class MenuAdmin(WechatAdmin):
 
     def sync(self, request, queryset):
         app_id = self.get_request_app_id(request)
-        app = WechatApp.get_by_id(app_id)
+        app = WeChatApp.get_by_id(app_id)
         try:
             Menu.sync(app)
             self.message_user(request, "menus successfully synchronized")

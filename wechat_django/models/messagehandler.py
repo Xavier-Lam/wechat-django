@@ -4,7 +4,7 @@ from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from . import EventType, WechatApp
+from . import EventType, WeChatApp
 
 class MessageHandler(m.Model):
     class Source(object):
@@ -17,7 +17,7 @@ class MessageHandler(m.Model):
         RANDOM = "random_one"
         NONE = "none"
 
-    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="message_handlers", null=False, editable=False)
     name = m.CharField(_("name"), max_length=60)
     src = m.PositiveSmallIntegerField(choices=(

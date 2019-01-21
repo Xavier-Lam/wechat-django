@@ -14,8 +14,8 @@ def check_wechat_permission(request, permission, appid):
     """
     :type request: django.http.request.HttpRequest
     """
-    from .models import WechatApp
-    app = WechatApp.get_by_id(appid)
+    from .models import WeChatApp
+    app = WeChatApp.get_by_id(appid)
     if not app:
         return False
     return request.user.has_perm("wechat.{appname}_{permission}".format(

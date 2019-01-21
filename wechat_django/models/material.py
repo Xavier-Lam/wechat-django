@@ -4,7 +4,7 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 
 from .. import utils
-from . import WechatApp
+from . import WeChatApp
 
 class Material(m.Model):
     class Type(object):
@@ -13,7 +13,7 @@ class Material(m.Model):
         # NEWS = "news"
         VOICE = "voice"
 
-    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="materials")
     type = m.CharField(_("type"), max_length=5,
         choices=(utils.enum2choices(Type)))

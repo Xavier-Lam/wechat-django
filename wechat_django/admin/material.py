@@ -4,10 +4,10 @@ from django.db import models as m
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from ..models import Material, WechatApp
-from .bases import DynamicChoiceForm, WechatAdmin
+from ..models import Material, WeChatApp
+from .bases import DynamicChoiceForm, WeChatAdmin
 
-class MaterialAdmin(WechatAdmin):
+class MaterialAdmin(WeChatAdmin):
     actions = ("delete_selected", "sync", )
     list_display = ("media_id", "type", "comment", "updatetime")
     list_filter = ("type", )
@@ -28,7 +28,7 @@ class MaterialAdmin(WechatAdmin):
 
     def sync(self, request, queryset):
         app_id = self.get_request_app_id(request)
-        app = WechatApp.get_by_id(app_id)
+        app = WeChatApp.get_by_id(app_id)
         try:
             materials = Material.sync(app)
             self.message_user(request, 

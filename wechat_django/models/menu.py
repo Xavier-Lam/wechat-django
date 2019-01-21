@@ -6,7 +6,7 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
-from . import MessageHandler, ReplyMsgType, WechatApp
+from . import MessageHandler, ReplyMsgType, WeChatApp
 from .. import utils
 
 class Menu(m.Model):
@@ -24,7 +24,7 @@ class Menu(m.Model):
 
         MINIPROGRAM = "miniprogram"
 
-    app = m.ForeignKey(WechatApp, on_delete=m.CASCADE,
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="menus")
     name = m.CharField(_("name"), max_length=16)
     menuid = m.IntegerField(_("menuid"), null=True, blank=True)

@@ -8,10 +8,10 @@ def patch_admin(admin):
     """
     :type admin: django.contrib.admin.sites.AdminSite
     """
-    from ..apps import WechatConfig
-    from ..models import WechatApp
-    from .bases import WechatAdmin
-    app_label = WechatConfig.name
+    from ..apps import WeChatConfig
+    from ..models import WeChatApp
+    from .bases import WeChatAdmin
+    app_label = WeChatConfig.name
     fake_app_label = app_label + "_apps"
 
     origin_build_app_dict = admin.__class__._build_app_dict
@@ -44,7 +44,7 @@ def patch_admin(admin):
         return rv
 
     def _build_wechat_app_dict(self, request):
-        apps = WechatApp.objects.all()
+        apps = WeChatApp.objects.all()
         return {
             'name': app_label,
             'app_label': app_label,

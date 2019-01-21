@@ -5,9 +5,9 @@ from django.contrib import admin
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 
-from ..models import WechatApp
+from ..models import WeChatApp
 
-class WechatAdmin(admin.ModelAdmin):
+class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         post = request.POST.copy()
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
@@ -25,7 +25,7 @@ class WechatAdmin(admin.ModelAdmin):
         context = context or dict()
         context.update(dict(
             app_id=app_id,
-            app=WechatApp.get_by_id(app_id)
+            app=WeChatApp.get_by_id(app_id)
         ))
         return context
 

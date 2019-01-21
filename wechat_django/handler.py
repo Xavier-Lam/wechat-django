@@ -6,14 +6,14 @@ from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
 
-from .models import WechatApp
+from .models import WeChatApp
 
 def handler(request, appname):
     """接收及处理微信发来的消息
     
     :type request: django.http.request.HttpRequest
     """
-    app = get_object_or_404(WechatApp, name=appname)
+    app = get_object_or_404(WeChatApp, name=appname)
 
     try:
         check_signature(
@@ -29,7 +29,7 @@ def handler(request, appname):
 
     raw = request.body
     try:
-        if app.encoding_mode == WechatApp.EncodingMode.SAFE:
+        if app.encoding_mode == WeChatApp.EncodingMode.SAFE:
             crypto = WeChatCrypto(
                 app.token, 
                 app.encoding_aes_key, 

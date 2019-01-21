@@ -5,9 +5,9 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from ..handler import handler
-from ..models import WechatApp
+from ..models import WeChatApp
 
-class WechatAppAdmin(admin.ModelAdmin):
+class WeChatAppAdmin(admin.ModelAdmin):
     list_display = ("title", "name", "appid", "short_desc", "interactable", 
         "created", "updated")
     search_fields = ("title", "name", "appid", "short_desc")
@@ -44,15 +44,15 @@ class WechatAppAdmin(admin.ModelAdmin):
         return ({} if request.resolver_match.kwargs.get("app_id") 
             else super().get_model_perms(request))
     
-    class WechatAppForm(forms.ModelForm):
+    class WeChatAppForm(forms.ModelForm):
         class Meta(object):
-            model = WechatApp
+            model = WeChatApp
             fields = "__all__"
             widgets = dict(
                 appsecret=forms.PasswordInput(render_value=True),
                 encoding_aes_key=forms.PasswordInput(render_value=True)
             )
 
-    form = WechatAppForm
+    form = WeChatAppForm
 
-admin.site.register(WechatApp, WechatAppAdmin)
+admin.site.register(WeChatApp, WeChatAppAdmin)

@@ -4,9 +4,9 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
-    Reply, ReplyMsgType, Rule, WechatApp)
+    Reply, ReplyMsgType, Rule, WeChatApp)
 from ..utils import check_wechat_permission, enum2choices
-from .bases import DynamicChoiceForm, WechatAdmin
+from .bases import DynamicChoiceForm, WeChatAdmin
 
 class RuleInline(admin.StackedInline):
     model = Rule
@@ -82,7 +82,7 @@ class ReplyInline(admin.StackedInline):
             return fields
     form = ReplyForm
 
-class MessageHandlerAdmin(WechatAdmin):
+class MessageHandlerAdmin(WeChatAdmin):
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")
         parameter_name = "available"
@@ -110,7 +110,7 @@ class MessageHandlerAdmin(WechatAdmin):
 
     def sync(self, request, queryset):
         app_id = self.get_request_app_id(request)
-        app = WechatApp.get_by_id(app_id)
+        app = WeChatApp.get_by_id(app_id)
         try:
             handlers = MessageHandler.sync(app)
             self.message_user(request, 
