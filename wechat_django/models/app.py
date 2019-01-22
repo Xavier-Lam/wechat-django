@@ -2,6 +2,7 @@ import datetime
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.db import models as m
 from django.dispatch import receiver
 from django.utils.translation import ugettext as _
@@ -55,8 +56,8 @@ class WeChatApp(m.Model):
         if not hasattr(self, "_client"):
             self._client = WeChatClient(
                 self.appid,
-                self.appsecret
-                # TODO: 配置session
+                self.appsecret,
+                session=cache
             )
             self._client._http.proxies = dict(
                 http="localhost:12580",
