@@ -48,6 +48,7 @@ class WeChatApp(m.Model):
 
     @classmethod
     def get_by_name(cls, name):
+        """:rtype: WeChatApp"""
         return cls.objects.get(name=name)
 
     @property
