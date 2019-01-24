@@ -21,6 +21,7 @@
 
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行manage.py migrate 来更新数据库结构
+4. 在urls.py 中引入wechat_django.urls.urls, 将其配置到urlpatterns中
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
 

@@ -33,13 +33,18 @@ class Material(m.Model):
         ordering = ("app", "-update_time")
 
     @classmethod
-    def sync(cls, app):
-        updated = []        
-        for type, _ in utils.enum2choices(cls.Type):
+    def sync(cls, app, id=None):
+        if id:
+            data = app.client.material.get(id)
             with transaction.atomic():
-                updates = cls.sync_type(type, app)
-                updated.extend(updates)
-        return updated
+                return cls.create(app=app, **kwargs)
+        else:
+            updated = []
+            for type, _ in utils.enum2choices(cls.Type):
+                with transaction.atomic():
+                    updates = cls.sync_type(type, app)
+                    updated.extend(updates)
+            return updated
 
     @classmethod
     def sync_type(cls, type, app):
@@ -53,15 +58,15 @@ class Material(m.Model):
                 offset=offset,
                 count=count
             )
-            updates.extend(map(lambda o: Material(app=app, type=type, **o), 
-                data["item"]))
+            updates.extend(data["item"])
             if data["total_count"] <= offset + count:
                 break
             offset += count
-        # TODO: 优化为删除被删除的 更新或新增获取的
-        cls.objects.filter(app=app, type=type).delete()
-        cls.objects.bulk_create(updates)
-        return updates
+        # 优化为删除被删除的 更新或新增获取的
+        (cls.objects.filter(app=app, type=type)
+            .exclude(media_id__in=map(lambda o: o["media_id"], updates))
+            .delete())
+        return [cls.create(app=app, type=type, **item) for item in updates]
 
     @classmethod
     def as_permenant(cls, media_id, app, save=True):
@@ -99,6 +104,27 @@ class Material(m.Model):
             return rv.save()
         else:
             return media_id
+
+    @classmethod
+    def create(cls, app, type=None, **kwargs):
+        # TODO: type为None的情况
+        if type is None:
+            pass
+        if type == cls.Type.NEWS:
+            pass
+        else:
+            allowed_keys = map(lambda o: o.name, cls._meta.fields)
+            kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
+            return cls.objects.update_or_create(app=app, type=type, **kwargs)[0]
+    
+    # @classmethod
+    # def from_json(cls, app, type, **kwargs):
+    #     if type == cls.Type.NEWS:
+    #         pass
+    #     else:
+    #         allowed_keys = map(lambda o: o.name, cls._meta.fields)
+    #         kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
+    #         return cls(app=app, type=type, **kwargs)
 
     def delete(self, *args, **kwargs):
         rv = super().delete(*args, **kwargs)
