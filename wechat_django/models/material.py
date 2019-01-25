@@ -10,7 +10,7 @@ class Material(m.Model):
     class Type(object):
         IMAGE = "image"
         VIDEO = "video"
-        # NEWS = "news"
+        NEWS = "news"
         VOICE = "voice"
 
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
@@ -33,11 +33,14 @@ class Material(m.Model):
         ordering = ("app", "-update_time")
 
     @classmethod
-    def sync(cls, app, id=None):
+    def get_by_media(cls, app, media_id):
+        return cls.objects.get(app=app, media_id=media_id)
+
+    @classmethod
+    def sync(cls, app, id=None, type=None):
         if id:
             data = app.client.material.get(id)
-            with transaction.atomic():
-                return cls.create(app=app, **kwargs)
+            return cls.create(app=app, type=type, media_id=id, **kwargs)
         else:
             updated = []
             for type, _ in utils.enum2choices(cls.Type):
@@ -51,7 +54,6 @@ class Material(m.Model):
         count = 20
         offset = 0
         updates = []
-        # 对于图文 单独处理
         while True:
             data = app.client.material.batchget(
                 media_type=type,
@@ -62,7 +64,7 @@ class Material(m.Model):
             if data["total_count"] <= offset + count:
                 break
             offset += count
-        # 优化为删除被删除的 更新或新增获取的
+        # 删除被删除的 更新或新增获取的
         (cls.objects.filter(app=app, type=type)
             .exclude(media_id__in=map(lambda o: o["media_id"], updates))
             .delete())
@@ -107,24 +109,30 @@ class Material(m.Model):
 
     @classmethod
     def create(cls, app, type=None, **kwargs):
+        from . import Article
         # TODO: type为None的情况
         if type is None:
             pass
         if type == cls.Type.NEWS:
-            pass
+            # 移除所有article重新插入
+            record = dict(app=app, type=type, media_id=kwargs["media_id"])
+            obj, created = cls.objects.update_or_create(record, **record)
+            if not created:
+                obj.articles.delete()
+            articles = (kwargs.get("content") or kwargs)["news_item"]
+            # 同步thumb_media_id 日
+            for article in articles:
+                thumb_media_id = article.get("thumb_media_id")
+                image = cls.sync(app, thumb_media_id, cls.Type.IMAGE)
+                article["img_url"] = image.url
+            obj.articles.add(**[Article(index=idx, **article) 
+                for idx, article in enumerate(articles)])
+            return obj
         else:
             allowed_keys = map(lambda o: o.name, cls._meta.fields)
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
-            return cls.objects.update_or_create(app=app, type=type, **kwargs)[0]
-    
-    # @classmethod
-    # def from_json(cls, app, type, **kwargs):
-    #     if type == cls.Type.NEWS:
-    #         pass
-    #     else:
-    #         allowed_keys = map(lambda o: o.name, cls._meta.fields)
-    #         kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
-    #         return cls(app=app, type=type, **kwargs)
+            record = dict(app=app, type=type, **kwargs)
+            return cls.objects.update_or_create(record, **record)[0]
 
     def delete(self, *args, **kwargs):
         rv = super().delete(*args, **kwargs)

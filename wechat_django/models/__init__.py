@@ -2,6 +2,7 @@ from .msgtype import EventType, MsgType, ReceiveMsgType, ReplyMsgType
 
 from .app import WeChatApp
 from .material import Material
+from .article import Article
 from .messagehandler import MessageHandler
 from .reply import Reply
 from .rule import Rule

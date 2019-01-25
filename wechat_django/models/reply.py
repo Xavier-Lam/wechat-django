@@ -5,7 +5,7 @@ from jsonfield import JSONField
 import requests
 from wechatpy import replies
 
-from . import Material, MessageHandler, ReplyMsgType
+from . import Article, Material, MessageHandler, ReplyMsgType
 from .. import utils
 
 class Reply(m.Model):
@@ -61,7 +61,15 @@ class Reply(m.Model):
             # 正常回复类型
             if self.msg_type == ReplyMsgType.NEWS:
                 klass = replies.ArticlesReply
-                data = dict(content=self.content["content"])
+                articles = Material.get_by_media(self.content["media_id"]).articles
+                article_dicts = list(map(lambda o: dict(
+                    title=o.title,
+                    description=o.digest,
+                    image=o.img_url,
+                    url=o.url
+                ), articles))
+                # 将media_id转为content
+                data = dict(articles=article_dicts)
             elif self.msg_type == ReplyMsgType.MUSIC:
                 klass = replies.MusicReply
                 data = dict(**self.content)
@@ -111,7 +119,7 @@ class Reply(m.Model):
         return funcname, kwargs
     
     @classmethod
-    def from_mp(cls, data, handler=None):
+    def from_mp(cls, data, handler):
         type = data["type"]
         if type == ReplyMsgType.IMG:
             type = ReplyMsgType.IMAGE
@@ -126,9 +134,12 @@ class Reply(m.Model):
             # TODO: 按照文档 这个为链接
             content = dict(media_id=data["content"])
         elif type == ReplyMsgType.NEWS:
+            media_id = data["content"]
+            # 同步图文
+            Article.sync(handler.app, media_id)
             content = dict(
-                media_id=data["content"],
-                content=cls.mpnews2replynews(data["news_info"]["list"])
+                media_id=media_id,
+                content=data["news_info"]["list"]
             )
         else:
             raise ValueError("unknown reply type %s"%type)
@@ -136,7 +147,7 @@ class Reply(m.Model):
         return reply
 
     @classmethod
-    def from_menu(cls, data, handler=None):
+    def from_menu(cls, data, handler):
         type = data["type"]
         if type == ReplyMsgType.IMG:
             type = ReplyMsgType.IMAGE
@@ -150,23 +161,17 @@ class Reply(m.Model):
             # TODO: 按照文档 这个为链接
             content = dict(media_id=data["value"])
         elif type == ReplyMsgType.NEWS:
+            media_id = data["value"]
+            # 同步图文
+            Article.sync(handler.app, media_id)
             content = dict(
-                content=cls.mpnews2replynews(data["news_info"]["list"]),
-                media_id=data["value"]
+                media_id=media_id,
+                content=data["news_info"]["list"]
             )
         else:
             raise ValueError("unknown menu reply type %s"%type)
         rv.content = content
         return rv
-
-    @staticmethod
-    def mpnews2replynews(mpnews):
-        return list(map(lambda o: dict(
-            title=o["title"],
-            description=o.get("digest") or "",
-            image=o["cover_url"],
-            url=o["content_url"]
-        ), mpnews))
 
     def __str__(self):
         if self.handler:
