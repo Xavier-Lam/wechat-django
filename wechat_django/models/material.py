@@ -2,6 +2,7 @@ import re
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatClientException
 
 from .. import utils
 from . import WeChatApp
@@ -40,7 +41,7 @@ class Material(m.Model):
     def sync(cls, app, id=None, type=None):
         if id:
             data = app.client.material.get(id)
-            return cls.create(app=app, type=type, media_id=id, **kwargs)
+            return cls.create(app=app, type=type, media_id=id, **data)
         else:
             updated = []
             for type, _ in utils.enum2choices(cls.Type):
@@ -115,19 +116,34 @@ class Material(m.Model):
             pass
         if type == cls.Type.NEWS:
             # 移除所有article重新插入
-            record = dict(app=app, type=type, media_id=kwargs["media_id"])
-            obj, created = cls.objects.update_or_create(record, **record)
+            query = dict(app=app, media_id=kwargs["media_id"])
+            record = dict(type=type, update_time=kwargs["update_time"])
+            record.update(query)
+            news, created = cls.objects.update_or_create(record, **query)
             if not created:
-                obj.articles.delete()
+                news.articles.all().delete()
             articles = (kwargs.get("content") or kwargs)["news_item"]
             # 同步thumb_media_id 日
             for article in articles:
-                thumb_media_id = article.get("thumb_media_id")
-                image = cls.sync(app, thumb_media_id, cls.Type.IMAGE)
-                article["img_url"] = image.url
-            obj.articles.add(**[Article(index=idx, **article) 
-                for idx, article in enumerate(articles)])
-            return obj
+                if not "thumb_url" in article:
+                    thumb_media_id = article.get("thumb_media_id")
+                    if thumb_media_id:
+                        image = cls.objects.filter(
+                            app=app, media_id=thumb_media_id).first()
+                        if not image:
+                            try:
+                                image = cls.sync(app, thumb_media_id, cls.Type.IMAGE)
+                                article["thumb_url"] = image.url
+                            except WeChatClientException as e:
+                                # 可能存在封面不存在的情况
+                                if e.errcode != 400007:
+                                    raise
+            
+            Article.objects.bulk_create([
+                Article(index=idx, material=news, **article) # TODO: 过滤article fields
+                for idx, article in enumerate(articles)
+            ])
+            return news
         else:
             allowed_keys = map(lambda o: o.name, cls._meta.fields)
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}

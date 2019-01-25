@@ -18,8 +18,12 @@ class Article(m.Model):
     url = m.CharField(_("url"), max_length=256)
     content_source_url = m.CharField(_("content source url"), max_length=256)
 
+    need_open_comment = m.NullBooleanField(_("need open comment"), default=None)
+    only_fans_can_comment = m.NullBooleanField(_("need open comment"), 
+        default=None)
+
     index = m.PositiveSmallIntegerField(_("index"))
-    img_url = m.CharField(max_length=256)
+    thumb_url = m.CharField(max_length=256, null=True, default="")
 
     synced_at = m.DateTimeField(_("updated"), auto_now_add=True)
 
@@ -32,6 +36,8 @@ class Article(m.Model):
             title=self.title,
             thumb_media_id=self.thumb_media_id,
             show_cover_pic=1 if self.show_cover_pic else 0,
+            need_open_comment=1 if self.need_open_comment else 0,
+            only_fans_can_comment=1 if self.only_fans_can_comment else 0,
             author=self.author,
             digest=self.digest,
             content=self.content,

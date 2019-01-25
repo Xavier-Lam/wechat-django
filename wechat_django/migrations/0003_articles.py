@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('url', models.CharField(max_length=256, verbose_name='url')),
                 ('content_source_url', models.CharField(max_length=256, verbose_name='content source url')),
                 ('index', models.PositiveSmallIntegerField(verbose_name='index')),
-                ('img_url', models.CharField(max_length=256)),
+                ('thumb_url', models.CharField(max_length=256)),
                 ('synced_at', models.DateTimeField(auto_now_add=True, verbose_name='updated')),
             ],
             options={

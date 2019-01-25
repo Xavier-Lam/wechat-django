@@ -7,8 +7,19 @@ from django.utils.translation import gettext_lazy as _
 
 from ..models import WeChatApp
 
+def _endswith_appid(d):
+    for k in d:
+        if k.endswith("__app_id"):
+            return d[k]
+
 class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
+        request.GET._mutable = True
+        self._app_id = request.GET.get("app_id")
+        print(1, self._app_id, request)
+        request.GET.pop("app_id", None)
+        request.GET._mutable = False
+
         post = request.POST.copy()
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
             post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
@@ -31,11 +42,12 @@ class WeChatAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         rv = super().get_queryset(request)
-        id = self.get_request_app_id(request)
-        if not id:
-            rv = rv.none()
         # TODO: 检查权限
-        return rv
+        app_id = self.get_request_app_id(request)
+        return self._filter_app_id(rv, app_id) if app_id else rv.none()
+
+    def _filter_app_id(self, queryset, app_id):
+        return queryset.filter(app_id=app_id)
     
     def save_model(self, request, obj, form, change):
         if not change:
@@ -50,15 +62,24 @@ class WeChatAdmin(admin.ModelAdmin):
             return super().get_model_perms(request)
         return {}
 
+    _app_id = None
     def get_request_app_id(self, request):
-        preserved_filters_str = request.GET.get('_changelist_filters')
-        if preserved_filters_str:
-            preserved_filters = dict(parse_qsl(preserved_filters_str))
-        else:
-            preserved_filters = dict()
-        return (request.GET.get("app_id") 
-            or preserved_filters.get("app_id") 
-            or request.resolver_match.kwargs.get("app_id"))
+        print(2, self._app_id, request)
+        if not self._app_id:
+            preserved_filters_str = request.GET.get('_changelist_filters')
+            if preserved_filters_str:
+                preserved_filters = dict(parse_qsl(preserved_filters_str))
+            else:
+                preserved_filters = dict()
+            self._app_id = (request.GET.get("app_id") 
+                or preserved_filters.get("app_id") 
+                or request.resolver_match.kwargs.get("app_id"))
+            # if not app_id:
+            #     app_id = _endswith_appid(request.GET)
+            # if not app_id:
+            #     app_id = _endswith_appid(preserved_filters)
+            # self._app_id = app_id
+        return self._app_id
 
 class DynamicChoiceForm(forms.ModelForm):
     content_field = ""

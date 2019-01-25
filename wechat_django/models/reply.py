@@ -65,7 +65,7 @@ class Reply(m.Model):
                 article_dicts = list(map(lambda o: dict(
                     title=o.title,
                     description=o.digest,
-                    image=o.img_url,
+                    image=o.thumb_url,
                     url=o.url
                 ), articles))
                 # 将media_id转为content
