@@ -28,7 +28,8 @@
 ## 配置
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
-| ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
+| WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
+| WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收`wechat_django.models.WeChatApp`对象并返回`wechatpy.session.SessionStorage`对象的callable或指向该callable的字符串 | 
 
 ## 部分功能使用说明
 ### 网页授权

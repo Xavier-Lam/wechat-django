@@ -1,8 +1,9 @@
-from django.conf import settings
 from django.conf.urls import url, include
 from django.urls import NoReverseMatch, reverse
 from django.utils.http import urlencode
 from django.utils.module_loading import import_string
+
+from .. import settings
 
 def patch_admin(admin):
     """
@@ -85,7 +86,7 @@ def patch_admin(admin):
     admin._build_app_dict = types.MethodType(_build_app_dict, admin)
     admin.get_urls = types.MethodType(get_urls, admin)
 
-admin_site_paths = getattr(settings, "ADMINSITE", "django.contrib.admin.site")
+admin_site_paths = settings.ADMINSITE
 if not isinstance(admin_site_paths, list):
     admin_site_paths = [admin_site_paths]
 for site in admin_site_paths:

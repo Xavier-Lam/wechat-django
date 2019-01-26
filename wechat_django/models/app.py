@@ -2,12 +2,13 @@ import datetime
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
 from django.db import models as m
 from django.dispatch import receiver
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from wechatpy import WeChatClient
 
+from .. import settings
 from . import EventType
 
 class WeChatApp(m.Model):
@@ -61,10 +62,18 @@ class WeChatApp(m.Model):
     def client(self):
         """:rtype: wechatpy.WeChatClient"""
         if not hasattr(self, "_client"):
+            # session
+            if isinstance(settings.SESSIONSTORAGE, str):
+                settings.SESSIONSTORAGE = import_string(settings.SESSIONSTORAGE)
+            if callable(settings.SESSIONSTORAGE):
+                session = settings.SESSIONSTORAGE(self)
+            else:
+                session = settings.SESSIONSTORAGE
+            
             self._client = WeChatClient(
                 self.appid,
                 self.appsecret,
-                session=cache
+                session=session
             )
             self._client._http.proxies = dict(
                 http="localhost:12580",

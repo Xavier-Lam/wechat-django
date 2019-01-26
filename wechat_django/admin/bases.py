@@ -16,7 +16,6 @@ class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         request.GET._mutable = True
         self._app_id = request.GET.get("app_id")
-        print(1, self._app_id, request)
         request.GET.pop("app_id", None)
         request.GET._mutable = False
 
@@ -64,7 +63,6 @@ class WeChatAdmin(admin.ModelAdmin):
 
     _app_id = None
     def get_request_app_id(self, request):
-        print(2, self._app_id, request)
         if not self._app_id:
             preserved_filters_str = request.GET.get('_changelist_filters')
             if preserved_filters_str:
@@ -74,11 +72,6 @@ class WeChatAdmin(admin.ModelAdmin):
             self._app_id = (request.GET.get("app_id") 
                 or preserved_filters.get("app_id") 
                 or request.resolver_match.kwargs.get("app_id"))
-            # if not app_id:
-            #     app_id = _endswith_appid(request.GET)
-            # if not app_id:
-            #     app_id = _endswith_appid(preserved_filters)
-            # self._app_id = app_id
         return self._app_id
 
 class DynamicChoiceForm(forms.ModelForm):
