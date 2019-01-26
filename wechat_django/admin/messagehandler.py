@@ -105,7 +105,7 @@ class MessageHandlerAdmin(WeChatAdmin):
     search_fields = ("name", "rules__rule", "replies__content")
 
     inlines = (RuleInline, ReplyInline)
-    fields = ("name", "strategy", "starts", "ends", "enabled",
+    fields = ("name", "strategy", "starts", "ends", "enabled", "log",
         "weight", "created", "updated")
 
     def sync(self, request, queryset):

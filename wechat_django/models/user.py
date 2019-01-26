@@ -57,6 +57,13 @@ class WeChatUser(m.Model):
     def avatar(self, size=132):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
+    
+    @classmethod
+    def get_by_openid(cls, app, openid):
+        user = cls.objects.filter(app=app, openid=openid).first()
+        if not user:
+            pass
+        return user
 
     @classmethod
     def sync(cls, app, all=False, detail=True):

@@ -4,7 +4,7 @@ from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from . import EventType, WeChatApp
+from . import EventType, MessageLog, WeChatApp
 
 class MessageHandler(m.Model):
     class Source(object):
@@ -26,10 +26,11 @@ class MessageHandler(m.Model):
         (Source.MENU, "menu")
     ), default=Source.SELF, editable=False)
     strategy = m.CharField(_("strategy"), max_length=10, choices=(
-        (ReplyStrategy.ALL, "reply_all"), # 待实现
+        (ReplyStrategy.ALL, "reply_all"),
         (ReplyStrategy.RANDOM, "random_one"),
         (ReplyStrategy.NONE, "none")
-    ), default=ReplyStrategy.RANDOM)
+    ), default=ReplyStrategy.ALL)
+    log = m.BooleanField(_("log"), default=False)
 
     starts = m.DateTimeField(_("starts"), null=True, blank=True)
     ends = m.DateTimeField(_("ends"), null=True, blank=True)
@@ -68,6 +69,9 @@ class MessageHandler(m.Model):
         """
         :type message: wechatpy.messages.BaseMessage
         """
+        if self.log:
+            # log message
+            MessageLog.from_msg(message)
         reply = None
         if self.strategy == self.ReplyStrategy.NONE:
             pass
@@ -135,14 +139,13 @@ class MessageHandler(m.Model):
     @classmethod
     def from_mp(cls, handler, app):
         from . import Reply, Rule
-        rv = cls(
+        rv = cls.objects.create(
             app=app,
             name=handler["rule_name"],
             src=MessageHandler.Source.MP,
             created=timezone.datetime.fromtimestamp(handler["create_time"]),
             strategy=handler["reply_mode"]
         )
-        rv.save()
         rv.rules.bulk_create([
             Rule.from_mp(rule, rv) 
             for rule in handler["keyword_list_info"]

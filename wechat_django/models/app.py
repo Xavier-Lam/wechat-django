@@ -39,6 +39,8 @@ class WeChatApp(m.Model):
     # api用key 当不想暴露secretkey 给第三方时
     # secretkey = m.CharField(max_length=32)
 
+    flags = m.IntegerField(_("flags"), default=0)
+
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
 
@@ -50,6 +52,10 @@ class WeChatApp(m.Model):
     def get_by_name(cls, name):
         """:rtype: WeChatApp"""
         return cls.objects.get(name=name)
+
+    @classmethod
+    def get_by_appid(cls, appid):
+        return cls.objects.get(appid=appid)
 
     @property
     def client(self):

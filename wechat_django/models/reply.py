@@ -113,6 +113,7 @@ class Reply(m.Model):
         elif isinstance(reply, replies.TextReply):
             kwargs["content"] = reply.content
         else:
+            # TODO: 自定义业务等
             raise ValueError("unknown reply type")
         type = type or reply.type
         funcname = "send_" + type

@@ -18,6 +18,7 @@ class ReplyMsgType(MsgType):# 响应
     IMG = "img"
 
     # 自定义业务
+    # LOG = "log"
     CUSTOM = "custom"
     FORWARD = "forward" # 转发
 
