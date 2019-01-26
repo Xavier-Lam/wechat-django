@@ -9,9 +9,9 @@ from . import WeChatApp
 
 class WeChatUser(m.Model):
     class Gender(object):
-        UNKNOWN = "0"
-        MALE = "1"
-        FEMALE = "2"
+        UNKNOWN = 0
+        MALE = 1
+        FEMALE = 2
     
     class SubscribeScene(object):
         ADD_SCENE_SEARCH = "ADD_SCENE_SEARCH" # 公众号搜索
@@ -62,12 +62,20 @@ class WeChatUser(m.Model):
     def get_by_openid(cls, app, openid):
         user = cls.objects.filter(app=app, openid=openid).first()
         if not user:
-            pass
+            # 同步该用户
+            user = cls.fetch_user(app, openid)
         return user
 
     @classmethod
     def sync(cls, app, all=False, detail=True):
-        rv = []
+        """
+        :param all: 是否重新同步所有用户
+        :param detail: 是否同步用户详情
+        """
+        # 只有重新同步详情的才能全量同步
+        all = all and detail
+
+        users = []
         first_openid = None
         if not all:
             try:
@@ -75,41 +83,56 @@ class WeChatUser(m.Model):
             except cls.DoesNotExist:
                 user = None
             first_openid = user and user.openid
+
         for openids in cls._iter_followers_list(app, first_openid):
             if detail:
-                allowed_fields = list(map(lambda o: o.name, cls._meta.fields))
-                user_dicts = map(
-                    lambda o: {k: v for k, v in o.items() if k in allowed_fields},
-                    app.client.user.get_batch(openids))
+                users.extend(cls.fetch_users(app, openids))
             else:
-                user_dicts = map(lambda openid: dict(openid=openid), openids)
-            params = map(lambda o: dict(app=app, openid=o["openid"], defaults=o), 
-                user_dicts)
-            with transaction.atomic():
-                users = map(lambda kwargs: cls.objects.update_or_create(**kwargs)[0], 
-                    params)
-            rv.extend(users)
-        return rv
+                with transaction.atomic():
+                    users.extend(
+                        cls.objects.create(app=app, openid=openid)
+                        for openid in openids
+                    )
+        return users
 
     @classmethod
-    def _iter_followers_list(cls, app, first_user_id=None):
+    def fetch_user(cls, app, openid):
+        # TODO: NotFound重新抛出异常
+        return cls.fetch_users(app, [openid]).pop()
+
+    @classmethod
+    def fetch_users(cls, app, openids):
+        fields = list(map(lambda o: o.name, cls._meta.fields))
+        update_dicts = map(
+            lambda o: {k: v for k, v in o.items() if k in fields},
+            app.client.user.get_batch(openids)
+        )
+        with transaction.atomic():
+            return list(map(
+                lambda o: cls.objects.update_or_create(
+                    defaults=o,
+                    app=app,
+                    openid=o["openid"]
+                )[0], 
+                update_dicts
+            ))
+
+    @classmethod
+    def _iter_followers_list(cls, app, next_openid=None):
         count = 100
         while True:
-            follower_data = app.client.user.get_followers(first_user_id)
-            first_user_id = follower_data["next_openid"]
+            follower_data = app.client.user.get_followers(next_openid)
+            next_openid = follower_data["next_openid"]
             if "data" not in follower_data:
                 raise StopIteration
             openids = follower_data["data"]["openid"]
+            # 每100个1个列表返回openid
             pages = math.ceil(len(openids)/count)
             for page in range(pages):
                 yield openids[page*count: page*count+count]
-            if not first_user_id:
+            if not next_openid:
                 raise StopIteration
         
     def __str__(self):
         return "{nickname}({openid})".format(nickname=self.nickname or "",
             openid=self.openid)
-
-# class WeChatUserTag(object):
-#     user = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
-#         related_name="users", null=False, editable=False)

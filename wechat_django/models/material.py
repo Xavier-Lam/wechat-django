@@ -1,3 +1,4 @@
+import mimetypes
 import re
 
 from django.db import models as m, transaction
@@ -92,8 +93,9 @@ class Material(m.Model):
             disposition = resp.headers["Content-Disposition"]
             filename = re.findall(r'filename="(.+?)"', disposition)[0]
         except:
-            # TODO: 默认文件名
-            filename = None
+            # 默认文件名
+            ext = mimetypes.guess_extension(content_type)
+            filename = (media_id + ext) if ext else media_id
         
         return cls.upload_permenant((filename, resp.content), type, app, save)
 

@@ -45,14 +45,21 @@ class WeChatAdmin(admin.ModelAdmin):
         app_id = self.get_request_app_id(request)
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
+    def get_preserved_filters(self, request):
+        request.GET._mutable = True
+        request.GET["app_id"] = self.get_request_app_id(request)
+        try:
+            return super().get_preserved_filters(request)
+        finally:
+            request.GET.pop("app_id", None)
+            request.GET._mutable = False
+
     def _filter_app_id(self, queryset, app_id):
         return queryset.filter(app_id=app_id)
     
     def save_model(self, request, obj, form, change):
         if not change:
             obj.app_id = self.get_request_app_id(request)
-        # TODO: 没有app_id 应该404
-        # TODO: 检查权限
         return super().save_model(request, obj, form, change)
 
     def get_model_perms(self, request):
