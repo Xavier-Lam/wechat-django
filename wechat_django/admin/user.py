@@ -10,11 +10,12 @@ class WeChatUserAdmin(WeChatAdmin):
     actions = ("sync", "sync_all", "update")
     list_display = ("openid", "nickname", "avatar", "subscribe", "remark",# "groupid", 
         "created")
+    search_fields = ("=openid", "=unionid", "nickname", "remark")
     
     fields = ("avatar", "nickname", "openid", "unionid", "sex",
         "city", "province", "country", "language", "subscribe",
         "subscribetime", "subscribe_scene", "qr_scene", "qr_scene_str", 
-        "remark", "groupid", "created", "updated")
+        "remark", "comment", "groupid", "created", "updated")
     
     def avatar(self, obj):
         return u'<img src="%s" />'%obj.avatar(46)
@@ -26,6 +27,7 @@ class WeChatUserAdmin(WeChatAdmin):
     subscribetime.short_description = "subscribe time"
     
     def sync(self, request, queryset, method="sync", kwargs=None):
+        # 可能抛出48001 没有api权限
         kwargs = kwargs or dict()
         app_id = self.get_request_app_id(request)
         app = WeChatApp.get_by_id(app_id)
@@ -53,10 +55,11 @@ class WeChatUserAdmin(WeChatAdmin):
         return actions
 
     def get_readonly_fields(self, request, obj=None):
-        return tuple(o for o in self.fields if o != "remark")
+        return tuple(o for o in self.fields if o not in ("remark", "comment"))
 
     def save_model(self, request, obj, form, change):
-        obj.app.client.user.update_remark(obj.openid, obj.remark)
+        if "remark" in form.changed_data:
+            obj.app.client.user.update_remark(obj.openid, obj.remark)
         return super().save_model(request, obj, form, change)
     
     def has_delete_permission(self, request, obj=None):

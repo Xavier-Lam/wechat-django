@@ -17,3 +17,5 @@
 {% if action_form and actions_on_top and not cl.show_admin_actions %}{% admin_actions %}{% endif %}
 {{ block.super }}
 {% endblock %}
+
+{% block search %}{% search_form cl %}{% endblock %}

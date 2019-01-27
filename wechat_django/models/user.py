@@ -44,7 +44,9 @@ class WeChatUser(m.Model):
     qr_scene = m.IntegerField(_("qr scene"), null=True)
     qr_scene_str = m.CharField(_("qr_scene_str"), max_length=64, null=True)
 
-    remark = m.TextField(_("remark"), blank=True, null=True)
+    remark = m.CharField(_("remark"), max_length=30, 
+        blank=True, null=True)
+    comment = m.TextField(_("remark"), blank=True, null=True)
     groupid = m.IntegerField(_("group id"), null=True)
 
     created = m.DateTimeField(_("created"), auto_now_add=True)

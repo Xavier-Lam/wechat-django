@@ -1,23 +1,53 @@
+from contextlib import contextmanager
 from urllib.parse import parse_qsl
 
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.templatetags import admin_list
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 
 from ..models import WeChatApp
 
-def _endswith_appid(d):
-    for k in d:
-        if k.endswith("__app_id"):
-            return d[k]
+from django.contrib.admin.views.main import ChangeList as _ChangeList
+
+@contextmanager
+def mutable_GET(GET):
+    GET._mutable = True
+    try:
+        yield GET
+    finally:
+        GET._mutable = False
+
+@admin_list.register.inclusion_tag('admin/wechat_django/search_form.html')
+def search_form(cl):
+    """
+    搜索form带app_id
+    """
+    return admin_list.search_form(cl)
+
+class ChangeList(_ChangeList):
+    def __init__(self, request, *args, **kwargs):
+        self.app_id = request.GET.get("app_id")
+        with mutable_GET(request.GET) as GET:
+            GET.pop("app_id", None)
+
+        super().__init__(request, *args, **kwargs)
+
+        with mutable_GET(request.GET) as GET:
+            GET["app_id"] = self.app_id
+
+    def get_query_string(self, new_params=None, remove=None):
+        query = super().get_query_string(new_params, remove).replace("?", "&")
+        prefix = "?app_id={0}".format(self.app_id)
+        return prefix + query
 
 class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
-        request.GET._mutable = True
-        self._app_id = request.GET.get("app_id")
-        request.GET.pop("app_id", None)
-        request.GET._mutable = False
+        # request.GET._mutable = True
+        # self._app_id = request.GET.get("app_id")
+        # request.GET.pop("app_id", None)
+        # request.GET._mutable = False
 
         post = request.POST.copy()
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
@@ -29,6 +59,9 @@ class WeChatAdmin(admin.ModelAdmin):
     def render_change_form(self, request, context, *args, **kwargs):
         context = self._update_context(request, context)
         return super().render_change_form(request, context, *args, **kwargs)
+
+    def get_changelist(self, request, **kwargs):
+        return ChangeList
 
     def _update_context(self, request, context):
         app_id = self.get_request_app_id(request)
