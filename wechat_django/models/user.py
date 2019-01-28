@@ -99,7 +99,7 @@ class WeChatUser(m.Model):
 
     @classmethod
     def fetch_user(cls, app, openid):
-        # TODO: NotFound重新抛出异常
+        # NotFound重新抛出40003异常
         return cls.fetch_users(app, [openid]).pop()
 
     @classmethod

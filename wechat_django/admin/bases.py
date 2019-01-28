@@ -28,6 +28,7 @@ def search_form(cl):
 
 class ChangeList(_ChangeList):
     def __init__(self, request, *args, **kwargs):
+        # app_id在changelist中会抛出IncorrectLookupParameters异常
         self.app_id = request.GET.get("app_id")
         with mutable_GET(request.GET) as GET:
             GET.pop("app_id", None)
@@ -38,17 +39,14 @@ class ChangeList(_ChangeList):
             GET["app_id"] = self.app_id
 
     def get_query_string(self, new_params=None, remove=None):
+        # filter的链接会掉querystring
         query = super().get_query_string(new_params, remove).replace("?", "&")
         prefix = "?app_id={0}".format(self.app_id)
         return prefix + query
 
 class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
-        # request.GET._mutable = True
-        # self._app_id = request.GET.get("app_id")
-        # request.GET.pop("app_id", None)
-        # request.GET._mutable = False
-
+        # 允许没有选中的actions
         post = request.POST.copy()
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
             post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
@@ -79,13 +77,12 @@ class WeChatAdmin(admin.ModelAdmin):
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
     def get_preserved_filters(self, request):
-        request.GET._mutable = True
-        request.GET["app_id"] = self.get_request_app_id(request)
-        try:
-            return super().get_preserved_filters(request)
-        finally:
-            request.GET.pop("app_id", None)
-            request.GET._mutable = False
+        with mutable_GET(request.GET) as GET:
+            GET["app_id"] = self.get_request_app_id(request)
+            try:
+                return super().get_preserved_filters(request)
+            finally:
+                GET.pop("app_id", None)
 
     def _filter_app_id(self, queryset, app_id):
         return queryset.filter(app_id=app_id)

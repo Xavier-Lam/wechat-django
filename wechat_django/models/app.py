@@ -76,11 +76,11 @@ class WeChatApp(m.Model):
                 session=session
             )
 
-            self._client._http.proxies = dict(
-                http="localhost:12580",
-                https="localhost:12580"
-            )
-            self._client._http.verify=r"C:\Users\LamXa\Desktop\FiddlerRoot.pem"
+            # self._client._http.proxies = dict(
+            #     http="localhost:12580",
+            #     https="localhost:12580"
+            # )
+            # self._client._http.verify=r"C:\Users\LamXa\Desktop\FiddlerRoot.pem"
         return self._client
 
     def interactable(self):
