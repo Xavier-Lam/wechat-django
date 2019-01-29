@@ -1,15 +1,15 @@
 from contextlib import contextmanager
+import logging
 from urllib.parse import parse_qsl
 
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.templatetags import admin_list
+from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 
 from ..models import WeChatApp
-
-from django.contrib.admin.views.main import ChangeList as _ChangeList
 
 @contextmanager
 def mutable_GET(GET):
@@ -71,6 +71,7 @@ class WeChatAdmin(admin.ModelAdmin):
         return context
 
     def get_queryset(self, request):
+        self.request = request
         rv = super().get_queryset(request)
         # TODO: 检查权限
         app_id = self.get_request_app_id(request)
@@ -98,18 +99,21 @@ class WeChatAdmin(admin.ModelAdmin):
             return super().get_model_perms(request)
         return {}
 
-    _app_id = None
     def get_request_app_id(self, request):
-        if not self._app_id:
+        if not hasattr(request, "app_id"):
             preserved_filters_str = request.GET.get('_changelist_filters')
             if preserved_filters_str:
                 preserved_filters = dict(parse_qsl(preserved_filters_str))
             else:
                 preserved_filters = dict()
-            self._app_id = (request.GET.get("app_id") 
+            request.app_id = (request.GET.get("app_id") 
                 or preserved_filters.get("app_id") 
                 or request.resolver_match.kwargs.get("app_id"))
-        return self._app_id
+        return request.app_id
+    
+    def logger(self, request):
+        name = "wechat.admin.{0}".format(self.get_request_app_id(request))
+        return logging.getLogger(name)
 
 class DynamicChoiceForm(forms.ModelForm):
     content_field = ""

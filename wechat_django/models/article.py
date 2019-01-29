@@ -24,7 +24,7 @@ class Article(m.Model):
         default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
-    _thumb_url = m.CharField(max_length=256, null=True, default="")
+    _thumb_url = m.CharField(db_column="thumb_url", max_length=256, null=True, default="")
 
     synced_at = m.DateTimeField(_("updated"), auto_now_add=True)
 
@@ -33,8 +33,16 @@ class Article(m.Model):
         ordering = ("material", "index")
 
     @property
+    def app(self):
+        return self.material and self.material.app
+
+    @property
+    def app_id(self):
+        return self.material and self.material.app_id
+
+    @property
     def thumb_url(self):
-        if not self._thumb_url and self.thumb_media_id:
+        if self._thumb_url is None and self.thumb_media_id:
             # 不存在url时通过thumb_media_id同步
             app = self.material.app
             media_id = self.thumb_media_id
@@ -46,10 +54,11 @@ class Article(m.Model):
                     image = Material.sync(app, media_id, Material.Type.IMAGE)
                 except WeChatClientException as e:
                     # 可能存在封面不存在的情况
-                    if e.errcode != 400007:
+                    if e.errcode != 40007:
                         raise
-                self._thumb_url = image and image.url
-                self._thumb_url and self.save()
+                    image = ""
+            self._thumb_url = image and image.url
+            self._thumb_url is not None and self.save()
         return self._thumb_url
     
     @thumb_url.setter
@@ -77,3 +86,6 @@ class Article(m.Model):
             url=self.url,
             content_source_url=self.content_source_url
         )
+
+    def __str__(self):
+        return self.title

@@ -47,9 +47,10 @@
 ## 日志
 | logger | 说明 |
 | --- | --- |
-| wechat.api.req.{appid} | api请求日志 请求响应级别debug |
-| wechat.api.resp.{appid} | api响应日志 请求响应级别debug |
-| wechat.api.excs.{appid} | api异常日志 请求响应级别warning |
+| wechat.admin.{appid} | admin异常日志 最低级别warning |
+| wechat.api.req.{appid} | api请求日志 级别debug |
+| wechat.api.resp.{appid} | api响应日志 级别debug |
+| wechat.api.excs.{appid} | api异常日志 最低级别warning |
 
 ## TODOS:
 * 完整的素材管理

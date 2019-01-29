@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatException
 
 from ..models import WeChatApp, WeChatUser
 from .bases import DynamicChoiceForm, WeChatAdmin
@@ -18,7 +19,7 @@ class WeChatUserAdmin(WeChatAdmin):
         "remark", "comment", "groupid", "created", "updated")
     
     def avatar(self, obj):
-        return u'<img src="%s" />'%obj.avatar(46)
+        return obj.headimgurl and '<img src="{0}" />'.format(obj.avatar(46))
     avatar.short_description = _("avatar")
     avatar.allow_tags = True
 
@@ -36,8 +37,12 @@ class WeChatUserAdmin(WeChatAdmin):
             self.message_user(request, 
                 "%d users successfully synchronized"%len(users))
         except Exception as e:
-            self.message_user(request, 
-                method + " failed with %s"%str(e), level=messages.ERROR)
+            msg = method + " failed with {0}".format(e)
+            if isinstance(e, WeChatException):
+                self.logger(request).warning(msg, exc_info=True)
+            else:
+                self.logger(request).error(msg, exc_info=True)
+            self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
     sync_all = lambda self, request, queryset: self.sync(
         request, queryset, kwargs=dict(all=True))

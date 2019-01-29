@@ -125,9 +125,10 @@ class Material(m.Model):
 
     @classmethod
     def create_news(cls, app, **kwargs):
+        from . import Article
         # 插入media
         query = dict(app=app, media_id=kwargs["media_id"])
-        record = dict(type=type, update_time=kwargs["update_time"])
+        record = dict(type=cls.Type.NEWS, update_time=kwargs["update_time"])
         record.update(query)
         news, created = cls.objects.update_or_create(record, **query)
         if not created:
@@ -136,9 +137,12 @@ class Material(m.Model):
 
         articles = (kwargs.get("content") or kwargs)["news_item"]
         fields = list(map(lambda o: o.name, Article._meta.fields))
-        updates = {k: v for k, v in article.items() if k in fields}
         Article.objects.bulk_create([
-            Article(index=idx, material=news, **updates) # 过滤article fields
+            Article(
+                index=idx, 
+                material=news, 
+                **{k: v for k, v in article.items() if k in fields} # 过滤article fields
+            )
             for idx, article in enumerate(articles)
         ])
         return news
@@ -149,4 +153,5 @@ class Material(m.Model):
         return rv
 
     def __str__(self):
-        return "{type}:{media_id}".format(type=self.type, media_id=self.media_id)
+        media = "{type}:{media_id}".format(type=self.type, media_id=self.media_id)
+        return "{0} ({1})".format(self.comment, media) if self.comment else media
