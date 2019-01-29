@@ -1,5 +1,6 @@
-from django.db import models as m
+from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatClientException
 
 from . import Material, WeChatApp
 
@@ -23,13 +24,45 @@ class Article(m.Model):
         default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
-    thumb_url = m.CharField(max_length=256, null=True, default="")
+    _thumb_url = m.CharField(max_length=256, null=True, default="")
 
     synced_at = m.DateTimeField(_("updated"), auto_now_add=True)
 
     class Meta(object):
         unique_together = ("material", "index")
         ordering = ("material", "index")
+
+    @property
+    def thumb_url(self):
+        if not self._thumb_url and self.thumb_media_id:
+            # 不存在url时通过thumb_media_id同步
+            app = self.material.app
+            media_id = self.thumb_media_id
+            image = None
+            try:
+                image = Material.objects.get(app=app, media_id=media_id)
+            except:
+                try:
+                    image = Material.sync(app, media_id, Material.Type.IMAGE)
+                except WeChatClientException as e:
+                    # 可能存在封面不存在的情况
+                    if e.errcode != 400007:
+                        raise
+                self._thumb_url = image and image.url
+                self._thumb_url and self.save()
+        return self._thumb_url
+    
+    @thumb_url.setter
+    def thumb_url_setter(self, value):
+        self._thumb_url = value
+
+    @classmethod
+    def sync(cls, app, id=None):
+        if id:
+            return Material.sync(app, id, Material.Type.NEWS)
+        else:
+            with transaction.atomic():
+                return Material.sync_type(Material.Type.NEWS, app)
 
     def to_json(self):
         return dict(
@@ -44,10 +77,3 @@ class Article(m.Model):
             url=self.url,
             content_source_url=self.content_source_url
         )
-
-    @classmethod
-    def sync(cls, app, id=None):
-        if id:
-            return Material.sync(app, id, Material.Type.NEWS)
-        else:
-            return Material.sync_type(Material.Type.NEWS, app)

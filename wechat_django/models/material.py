@@ -3,7 +3,6 @@ import re
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
-from wechatpy.exceptions import WeChatClientException
 
 from .. import utils
 from . import WeChatApp
@@ -117,40 +116,32 @@ class Material(m.Model):
         if type is None:
             pass
         if type == cls.Type.NEWS:
-            # 移除所有article重新插入
-            query = dict(app=app, media_id=kwargs["media_id"])
-            record = dict(type=type, update_time=kwargs["update_time"])
-            record.update(query)
-            news, created = cls.objects.update_or_create(record, **query)
-            if not created:
-                news.articles.all().delete()
-            articles = (kwargs.get("content") or kwargs)["news_item"]
-            # 同步thumb_media_id 日
-            for article in articles:
-                if not "thumb_url" in article:
-                    thumb_media_id = article.get("thumb_media_id")
-                    if thumb_media_id:
-                        image = cls.objects.filter(
-                            app=app, media_id=thumb_media_id).first()
-                        if not image:
-                            try:
-                                image = cls.sync(app, thumb_media_id, cls.Type.IMAGE)
-                                article["thumb_url"] = image.url
-                            except WeChatClientException as e:
-                                # 可能存在封面不存在的情况
-                                if e.errcode != 400007:
-                                    raise
-            
-            Article.objects.bulk_create([
-                Article(index=idx, material=news, **article) # TODO: 过滤article fields
-                for idx, article in enumerate(articles)
-            ])
-            return news
+            cls.create_news(app, **kwargs)
         else:
             allowed_keys = map(lambda o: o.name, cls._meta.fields)
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
             record = dict(app=app, type=type, **kwargs)
             return cls.objects.update_or_create(record, **record)[0]
+
+    @classmethod
+    def create_news(cls, app, **kwargs):
+        # 插入media
+        query = dict(app=app, media_id=kwargs["media_id"])
+        record = dict(type=type, update_time=kwargs["update_time"])
+        record.update(query)
+        news, created = cls.objects.update_or_create(record, **query)
+        if not created:
+            # 移除所有article重新插入
+            news.articles.all().delete()
+
+        articles = (kwargs.get("content") or kwargs)["news_item"]
+        fields = list(map(lambda o: o.name, Article._meta.fields))
+        updates = {k: v for k, v in article.items() if k in fields}
+        Article.objects.bulk_create([
+            Article(index=idx, material=news, **updates) # 过滤article fields
+            for idx, article in enumerate(articles)
+        ])
+        return news
 
     def delete(self, *args, **kwargs):
         rv = super().delete(*args, **kwargs)
