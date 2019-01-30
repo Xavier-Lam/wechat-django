@@ -42,7 +42,7 @@ class Material(m.Model):
         if id:
             if type not in (cls.Type.NEWS, cls.Type.VIDEO):
                 raise NotImplementedError()
-            data = app.client.material.get(id)
+            data = app.client.material.get_raw(id)
             return cls.create(app=app, type=type, media_id=id, **data)
         else:
             updated = []

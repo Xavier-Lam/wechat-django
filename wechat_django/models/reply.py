@@ -136,7 +136,7 @@ class Reply(m.Model):
         elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
             # 按照文档 是临时素材 需要转换为永久素材
             content = dict(media_id=Material.as_permenant(
-                data["content"], app, False))
+                data["content"], handler.app, False))
         elif type == ReplyMsgType.NEWS:
             media_id = data["content"]
             # 同步图文

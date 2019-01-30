@@ -1,8 +1,21 @@
 import logging
 
 from wechatpy import exceptions as excs, WeChatClient as _WeChatClient
+from wechatpy.client import api
+
+class WeChatMaterial(api.WeChatMaterial):
+    def get_raw(self, media_id):
+        return self._post(
+            'material/get_material',
+            data={
+                'media_id': media_id
+            }
+        )
 
 class WeChatClient(_WeChatClient):
+    # 增加raw_get方法
+    material = WeChatMaterial()
+
     """继承原有WeChatClient添加日志功能"""
     def _request(self, method, url_or_endpoint, **kwargs):
         msg = self._log_msg(method, url_or_endpoint, **kwargs)
@@ -38,3 +51,7 @@ class WeChatClient(_WeChatClient):
         if kwargs.get("data"):
             msg += "\tdata:{0}".format(kwargs["data"])
         return msg
+
+def get_wechat_client(wechat_app):
+    """:type wechat_app: wechat_django.models.WeChatApp"""
+    return WeChatClient

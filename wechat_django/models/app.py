@@ -8,7 +8,7 @@ from django.dispatch import receiver
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
-from .. import settings, wechat
+from .. import settings
 from . import EventType
 
 class WeChatApp(m.Model):
@@ -70,7 +70,8 @@ class WeChatApp(m.Model):
             else:
                 session = settings.SESSIONSTORAGE
             
-            self._client = wechat.WeChatClient(
+            client_factory = import_string(settings.WECHATCLIENTFACTORY)
+            self._client = client_factory(self)(
                 self.appid,
                 self.appsecret,
                 session=session
