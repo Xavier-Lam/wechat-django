@@ -24,7 +24,7 @@ class Article(m.Model):
         default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
-    _thumb_url = m.CharField(db_column="thumb_url", max_length=256, null=True, default="")
+    _thumb_url = m.CharField(db_column="thumb_url", max_length=256, null=True, default=None)
 
     synced_at = m.DateTimeField(_("updated"), auto_now_add=True)
 
@@ -45,24 +45,26 @@ class Article(m.Model):
         if self._thumb_url is None and self.thumb_media_id:
             # 不存在url时通过thumb_media_id同步
             app = self.material.app
-            media_id = self.thumb_media_id
-            image = None
-            try:
-                image = Material.objects.get(app=app, media_id=media_id)
-            except:
-                try:
-                    image = Material.sync(app, media_id, Material.Type.IMAGE)
-                except WeChatClientException as e:
-                    # 可能存在封面不存在的情况
-                    if e.errcode != 40007:
-                        raise
-                    image = ""
+            # media_id = self.thumb_media_id
+            # image = None
+            # try:
+            #     image = Material.objects.get(app=app, media_id=media_id)
+            # except:
+            #     try:
+            #         image = Material.sync(app, media_id, Material.Type.IMAGE)
+            #     except WeChatClientException as e:
+            #         # 可能存在封面不存在的情况
+            #         if e.errcode != 40007:
+            #             raise
+            #         image = ""
+            image = Material.objects.filter(
+                app=app, media_id=self.thumb_media_id).first()
             self._thumb_url = image and image.url
             self._thumb_url is not None and self.save()
         return self._thumb_url
     
     @thumb_url.setter
-    def thumb_url_setter(self, value):
+    def thumb_url(self, value):
         self._thumb_url = value
 
     @classmethod
@@ -72,7 +74,7 @@ class Article(m.Model):
         else:
             with transaction.atomic():
                 return Material.sync_type(Material.Type.NEWS, app)
-
+                
     def to_json(self):
         return dict(
             title=self.title,

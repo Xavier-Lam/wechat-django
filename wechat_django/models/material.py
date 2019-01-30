@@ -19,7 +19,7 @@ class Material(m.Model):
     type = m.CharField(_("type"), max_length=5,
         choices=(utils.enum2choices(Type)))
     media_id = m.CharField(_("media_id"), max_length=64)
-    name = m.CharField(_("filename"), max_length=64, blank=True, null=True)
+    name = m.CharField(_("name"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)
     update_time = m.IntegerField(_("update time"), editable=False, 
         null=True)
@@ -40,6 +40,8 @@ class Material(m.Model):
     @classmethod
     def sync(cls, app, id=None, type=None):
         if id:
+            if type not in (cls.Type.NEWS, cls.Type.VIDEO):
+                raise NotImplementedError()
             data = app.client.material.get(id)
             return cls.create(app=app, type=type, media_id=id, **data)
         else:
@@ -112,16 +114,21 @@ class Material(m.Model):
     @classmethod
     def create(cls, app, type=None, **kwargs):
         from . import Article
-        # TODO: type为None的情况
         if type is None:
-            pass
+            raise NotImplementedError()
         if type == cls.Type.NEWS:
             cls.create_news(app, **kwargs)
         else:
-            allowed_keys = map(lambda o: o.name, cls._meta.fields)
+            media_id = kwargs["media_id"]
+            allowed_keys = list(map(lambda o: o.name, cls._meta.fields))
+            if type == cls.Type.VIDEO and "url" not in kwargs:
+                data = app.client.material.get(media_id)
+                kwargs["url"] = data.get("down_url")
+            
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
             record = dict(app=app, type=type, **kwargs)
-            return cls.objects.update_or_create(record, **record)[0]
+            return cls.objects.update_or_create(defaults=record, 
+                app=app, type=type, media_id=media_id)[0]
 
     @classmethod
     def create_news(cls, app, **kwargs):
@@ -140,7 +147,8 @@ class Material(m.Model):
         Article.objects.bulk_create([
             Article(
                 index=idx, 
-                material=news, 
+                material=news,
+                _thumb_url=article.get("thumb_url"),
                 **{k: v for k, v in article.items() if k in fields} # 过滤article fields
             )
             for idx, article in enumerate(articles)
@@ -148,8 +156,8 @@ class Material(m.Model):
         return news
 
     def delete(self, *args, **kwargs):
-        rv = super().delete(*args, **kwargs)
         self.app.client.material.delete(self.media_id)
+        rv = super().delete(*args, **kwargs)
         return rv
 
     def __str__(self):

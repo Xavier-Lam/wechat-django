@@ -122,6 +122,11 @@ STATIC_URL = '/static/'
 
 LOGGING = {
     'version': 1,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s]- %(message)s'}
+
+    },
     'filters': {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
@@ -132,13 +137,18 @@ LOGGING = {
             'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
+            'formatter': 'standard'
         }
     },
     'loggers': {
-        'django.db.backends': {
+        'django': {
             'level': 'DEBUG',
             'handlers': ['console'],
         },
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        # },
         "wechat.api": {
             "level": "DEBUG",
             "handlers": ["console"]

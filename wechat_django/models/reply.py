@@ -124,6 +124,12 @@ class Reply(m.Model):
         type = data["type"]
         if type == ReplyMsgType.IMG:
             type = ReplyMsgType.IMAGE
+        elif type == ReplyMsgType.VIDEO:
+            # video是链接
+            type = ReplyMsgType.TEXT
+            content = dict(content='<a href="{0}">{1}</a>'.format(
+                data["content"], _("video")))
+
         reply = cls(msg_type=type, handler=handler)
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
@@ -131,9 +137,6 @@ class Reply(m.Model):
             # 按照文档 是临时素材 需要转换为永久素材
             content = dict(media_id=Material.as_permenant(
                 data["content"], app, False))
-        elif type == ReplyMsgType.VIDEO:
-            # TODO: 按照文档 这个为链接
-            content = dict(media_id=data["content"])
         elif type == ReplyMsgType.NEWS:
             media_id = data["content"]
             # 同步图文
@@ -152,15 +155,18 @@ class Reply(m.Model):
         type = data["type"]
         if type == ReplyMsgType.IMG:
             type = ReplyMsgType.IMAGE
+        elif type == ReplyMsgType.VIDEO:
+            # video是链接
+            type = ReplyMsgType.TEXT
+            content = dict(content='<a href="{0}">{1}</a>'.format(
+                data["value"], data.get("name", _("video"))))
+
         rv = cls(msg_type=type, handler=handler)
         if type == ReplyMsgType.TEXT:
             content = dict(content=data["content"])
         elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
             content = dict(media_id=Material.as_permenant(
                 data["value"], handler.app, False)) if handler else data["value"]
-        elif type == ReplyMsgType.VIDEO:
-            # TODO: 按照文档 这个为链接
-            content = dict(media_id=data["value"])
         elif type == ReplyMsgType.NEWS:
             media_id = data["value"]
             # 同步图文
