@@ -9,10 +9,12 @@
 * 同步用户及用户查看,备注
 * 最基本的菜单管理
 * 最基本的自动回复管理
-* 最基本的素材管理
+* 素材同步及查看
 * 图文同步及查看
 * 服务号网页授权
 * 主动调用微信api封装
+
+目前没有使用在生产环境的案例,只在python3.4 django-1.11 下进行了徒手测试
 
 ## 安装
 
@@ -52,11 +54,10 @@
 | wechat.api.req.{appid} | api请求日志 级别debug |
 | wechat.api.resp.{appid} | api响应日志 级别debug |
 | wechat.api.excs.{appid} | api异常日志 最低级别warning |
+| wechat.handler.{appid} | 消息处理日志 最低级别debug |
+| wechat.views.{appid} | view异常日志(如素材代理) 最低级别warning |
 
 ## TODOS:
-* 完整的素材管理
-* 完整的图文管理
-* 完整的用户管理
 * 权限管理
-* 文档
 * 单元测试
+* 文档

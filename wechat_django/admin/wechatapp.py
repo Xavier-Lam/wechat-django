@@ -4,7 +4,7 @@ from django.template.defaultfilters import truncatechars
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from ..handler import handler
+from .. import views
 from ..models import WeChatApp
 
 class WeChatAppAdmin(admin.ModelAdmin):
@@ -21,7 +21,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
     short_desc.short_description = _("description")
 
     def callback(self, obj):
-        return obj and self.request.build_absolute_uri(reverse(handler, kwargs=dict(appname=obj.name)))
+        return obj and self.request.build_absolute_uri(reverse(
+            views.handler, kwargs=dict(appname=obj.name)))
 
     def get_fields(self, request, obj=None):
         fields = list(super().get_fields(request, obj))
