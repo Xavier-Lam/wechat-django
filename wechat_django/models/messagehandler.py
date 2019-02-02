@@ -8,9 +8,9 @@ from . import EventType, MessageLog, WeChatApp
 
 class MessageHandler(m.Model):
     class Source(object):
-        MP = 0 # 微信后台
+        SELF = 0 # 自己的后台
         MENU = 1 # 菜单
-        SELF = 2 # 自己的后台
+        MP = 2 # 微信后台
 
     class ReplyStrategy(object):
         ALL = "reply_all"
@@ -58,12 +58,20 @@ class MessageHandler(m.Model):
     available.short_description = _("available")
     available.boolean = True
 
-    def match(self, message):
+    @staticmethod
+    def match(app, message):
+        if not message: 
+            return
+        handlers = app.message_handlers.prefetch_related("rules").all()
+        for handler in handlers:
+            if handler.is_match(message):
+                return tuple(handler)
+
+    def is_match(self, message):
         if self.available():
-            for rule in self.rules:
+            for rule in self.rules.all():
                 if rule.match(message):
-                    return True
-        return False
+                    return self
 
     def reply(self, message):
         """
@@ -71,19 +79,23 @@ class MessageHandler(m.Model):
         """
         if self.log:
             # log message
-            MessageLog.from_msg(message)
-        reply = None
+            MessageLog.from_msg(message, self.app)
+        reply = ""
         if self.strategy == self.ReplyStrategy.NONE:
             pass
-        elif self.strategy == self.ReplyStrategy.ALL:
-            for reply in self.replies[1:]:
-                reply.send(message)
-            reply = self.replies and self.replies[0]
-        elif self.strategy == self.ReplyStrategy.RANDOM:
-            reply = self.replies and random.choice(self.replies)
         else:
-            raise ValueError("incorrect reply strategy")
-        return reply.reply() if reply else ""
+            replies = list(self.replies.all())
+            if not replies:
+                pass
+            elif self.strategy == self.ReplyStrategy.ALL:
+                for reply in replies[1:]:
+                    reply.send(message)
+                reply = replies[0]
+            elif self.strategy == self.ReplyStrategy.RANDOM:
+                reply = random.choice(replies)
+            else:
+                raise ValueError("incorrect reply strategy")
+        return reply and reply.reply()
 
     @staticmethod
     def sync(app):
@@ -98,8 +110,10 @@ class MessageHandler(m.Model):
             app.message_handlers.filter(
                 src=MessageHandler.Source.MP
             ).delete()
+
             if resp.get("message_default_autoreply_info"):
-                handler = MessageHandler(
+                # 自动回复
+                handler = MessageHandler.objects.create(
                     app=app,
                     name="微信配置自动回复",
                     src=MessageHandler.Source.MP,
@@ -107,13 +121,14 @@ class MessageHandler(m.Model):
                     created=timezone.datetime.fromtimestamp(0)
                 )
                 handlers.append(handler)
-                handler.save()
-                reply = Reply.from_mp(resp["message_default_autoreply_info"], handler)
-                rule = Rule(type=Rule.Type.ALL, handler=handler)
+                rule = Rule.objects.create(type=Rule.Type.ALL, handler=handler)
+                reply = Reply.from_mp(resp["message_default_autoreply_info"], 
+                    handler)
                 reply.save()
-                rule.save()
+
             if resp.get("add_friend_autoreply_info"):
-                handler = MessageHandler(
+                # 关注回复
+                handler = MessageHandler.objects.create(
                     app=app,
                     name="微信配置关注回复",
                     src=MessageHandler.Source.MP,
@@ -121,18 +136,17 @@ class MessageHandler(m.Model):
                     created=timezone.datetime.fromtimestamp(0)
                 )
                 handlers.append(handler)
-                handler.save()
-                reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
-                rule = Rule(
+                rule = Rule.objects.create(
                     type=Rule.Type.EVENT, 
                     rule=dict(event=EventType.SUBSCRIBE),
                     handler=handler
                 )
+                reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
                 reply.save()
-                rule.save()
+
             if (resp.get("keyword_autoreply_info")
                 and resp["keyword_autoreply_info"].get("list")):
-                for handler in resp["keyword_autoreply_info"]["list"]:
+                for handler in resp["keyword_autoreply_info"]["list"][::-1]:
                     handlers.append(MessageHandler.from_mp(handler, app))
             return handlers 
 
@@ -148,11 +162,11 @@ class MessageHandler(m.Model):
         )
         rv.rules.bulk_create([
             Rule.from_mp(rule, rv) 
-            for rule in handler["keyword_list_info"]
+            for rule in handler["keyword_list_info"][::-1]
         ])
         rv.replies.bulk_create([
             Reply.from_mp(reply, rv) 
-            for reply in handler["reply_list_info"]
+            for reply in handler["reply_list_info"][::-1]
         ])
         return rv
 
@@ -162,20 +176,19 @@ class MessageHandler(m.Model):
         :type menu: .Menu
         """
         from . import Reply, Rule
-        handler = cls(
+        handler = cls.objects.create(
             app=app,
             name="菜单[{0}]事件".format(data["name"]),
             src=cls.Source.MENU
         )
-        handler.save()
-        Rule(
+        Rule.objects.create(
             type=Rule.Type.EVENTKEY,
             rule=dict(
                 event=EventType.CLICK,
                 key=menu.content["key"]
             ),
             handler=handler
-        ).save()
+        )
         Reply.from_menu(data, handler).save()
         return handler
 

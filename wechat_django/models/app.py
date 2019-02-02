@@ -89,12 +89,6 @@ class WeChatApp(m.Model):
     interactable.boolean = True
     interactable.short_description = _("interactable")
 
-    def match(self, message):
-        if not message: return
-        for handler in self.message_handlers:
-            if handler.match(message):
-                return handler
-
     def __str__(self):
         return "{title} ({name})".format(title=self.title, name=self.name)
 

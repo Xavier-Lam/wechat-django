@@ -9,7 +9,7 @@ from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from wechatpy.utils import check_signature
 
-from .models import WeChatApp
+from .models import MessageHandler, WeChatApp
 from . import utils
 
 __all__ = ("handler", "material_proxy", "urls")
@@ -88,10 +88,11 @@ def handler(request, appname):
 
     msg.raw = raw_msg
     msg.request = request
-    handler = app.match(msg)
-    if not handler:
+    handlers = MessageHandler.match(app, msg)
+    if not handlers:
         logger.debug("handler not found: {0}".format(log_args))
         return ""
+    handler = handlers[0]
     try:
         xml = handler.reply(msg)
         log_args["response"] = xml

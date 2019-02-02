@@ -17,11 +17,14 @@ class MessageLog(m.Model):
 
     created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
 
+    class Meta(object):
+        index_together = (("app", "created_at"),)
+
     @classmethod
-    def from_msg(cls, message):
+    def from_msg(cls, message, app=None):
         """
-        :type app: WeChatApp
         :type message: wechatpy.messages.BaseMessage
+        :type app: WeChatApp
         """
         content = {
             key: getattr(message, key)
@@ -29,7 +32,6 @@ class MessageLog(m.Model):
             if key not in ("id", "source", "target", "create_time", "time")
         }
 
-        app = WeChatApp.get_by_appid(message.target)    
         return cls.objects.create(
             app=app,
             user=WeChatUser.get_by_openid(app, message.source),

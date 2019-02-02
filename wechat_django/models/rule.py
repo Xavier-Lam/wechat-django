@@ -45,6 +45,7 @@ class Rule(m.Model):
         elif self.type == self.Type.EVENTKEY:
             return (message.type == ReceiveMsgType.EVENT
                 and message.event == self.rule["event"]
+                and hasattr(message, "key")
                 and message.key == self.rule["key"])
         elif self.type == self.Type.CONTAIN:
             return (message.type == ReceiveMsgType.TEXT 

@@ -18,8 +18,8 @@ class Reply(m.Model):
 
     def reply(self, message):
         """
+        被动回复
         :type message: wechatpy.messages.BaseMessage
-
         :returns: serialized xml response
         """
         if self.msg_type == ReplyMsgType.FORWARD:
@@ -33,6 +33,7 @@ class Reply(m.Model):
             return reply.render()
         
     def send(self, message):
+        """主动回复"""
         if self.msg_type == ReplyMsgType.FORWARD:
             raise NotImplementedError()
         else:
@@ -47,8 +48,7 @@ class Reply(m.Model):
             try:
                 func = import_string(self.content["program"])
             except:
-                pass # TODO: 404
-                return ""
+                raise NotImplementedError("custom bussiness not found")
             else:
                 reply = func(message)
                 if not reply:
@@ -91,6 +91,7 @@ class Reply(m.Model):
     @staticmethod
     def reply2send(reply):
         """
+        将主动回复生成的reply转换为被动回复的方法及变量
         :type reply: wechatpy.replies.BaseReply
         """
         type = ""
@@ -113,7 +114,6 @@ class Reply(m.Model):
         elif isinstance(reply, replies.TextReply):
             kwargs["content"] = reply.content
         else:
-            # TODO: 自定义业务等
             raise ValueError("unknown reply type")
         type = type or reply.type
         funcname = "send_" + type
@@ -127,7 +127,7 @@ class Reply(m.Model):
         elif type == ReplyMsgType.VIDEO:
             # video是链接
             type = ReplyMsgType.TEXT
-            content = dict(content='<a href="{0}">{1}</a>'.format(
+            data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["content"], _("video")))
 
         reply = cls(msg_type=type, handler=handler)

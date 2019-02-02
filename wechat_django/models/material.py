@@ -39,6 +39,7 @@ class Material(m.Model):
 
     @classmethod
     def sync(cls, app, id=None, type=None):
+        """同步所有永久素材"""
         if id:
             if type not in (cls.Type.NEWS, cls.Type.VIDEO):
                 raise NotImplementedError()
@@ -54,6 +55,7 @@ class Material(m.Model):
 
     @classmethod
     def sync_type(cls, type, app):
+        """同步某种类型的永久素材"""
         count = 20
         offset = 0
         updates = []
@@ -75,6 +77,8 @@ class Material(m.Model):
 
     @classmethod
     def as_permenant(cls, media_id, app, save=True):
+        """将临时素材转换为永久素材"""
+        # 下载临时素材
         resp = app.client.media.download(media_id)
         
         try:
@@ -90,6 +94,7 @@ class Material(m.Model):
         else:
             raise ValueError("unknown Content-Type")
 
+        # 找文件名
         try:    
             disposition = resp.headers["Content-Disposition"]
             filename = re.findall(r'filename="(.+?)"', disposition)[0]
@@ -98,26 +103,27 @@ class Material(m.Model):
             ext = mimetypes.guess_extension(content_type)
             filename = (media_id + ext) if ext else media_id
         
+        # 上载素材
         return cls.upload_permenant((filename, resp.content), type, app, save)
 
     @classmethod
     def upload_permenant(cls, file, type, app, save=True):
-        # 上传文件
+        """上传永久素材"""
         data = app.client.material.add(type, file)
         media_id = data["media_id"]
         if save:
-            rv = cls(type=type, media_id=media_id, url=data.get("url"))
-            return rv.save()
+            return cls.objects.create(type=type, media_id=media_id, 
+                url=data.get("url"))
         else:
             return media_id
 
     @classmethod
     def create(cls, app, type=None, **kwargs):
-        from . import Article
+        """创建永久素材"""
         if type is None:
             raise NotImplementedError()
         if type == cls.Type.NEWS:
-            cls.create_news(app, **kwargs)
+            return cls.create_news(app, **kwargs)
         else:
             media_id = kwargs["media_id"]
             allowed_keys = list(map(lambda o: o.name, cls._meta.fields))
@@ -126,12 +132,13 @@ class Material(m.Model):
                 kwargs["url"] = data.get("down_url")
             
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
+            query = dict(app=app, type=type, media_id=media_id)
             record = dict(app=app, type=type, **kwargs)
-            return cls.objects.update_or_create(defaults=record, 
-                app=app, type=type, media_id=media_id)[0]
+            return cls.objects.update_or_create(defaults=record, **query)[0]
 
     @classmethod
     def create_news(cls, app, **kwargs):
+        """创建永久图文素材"""
         from . import Article
         # 插入media
         query = dict(app=app, media_id=kwargs["media_id"])
@@ -156,6 +163,7 @@ class Material(m.Model):
         return news
 
     def delete(self, *args, **kwargs):
+        # 先远程素材删除
         self.app.client.material.delete(self.media_id)
         rv = super().delete(*args, **kwargs)
         return rv
