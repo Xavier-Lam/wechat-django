@@ -3,8 +3,10 @@ import re
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatClientException
 
 from .. import utils
+from ..exceptions import WeChatApiError
 from . import WeChatApp
 
 class Material(m.Model):
@@ -173,7 +175,11 @@ class Material(m.Model):
 
     def delete(self, *args, **kwargs):
         # 先远程素材删除
-        self.app.client.material.delete(self.media_id)
+        try:
+            self.app.client.material.delete(self.media_id)
+        except WeChatClientException as e:
+            if e.errcode != WeChatApiError.INVALIDMEDIAID:
+                raise
         rv = super().delete(*args, **kwargs)
         return rv
 

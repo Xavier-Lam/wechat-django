@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 import logging
-from urllib.parse import parse_qsl
 
 from django import forms
 from django.contrib import admin
@@ -8,6 +7,7 @@ from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
+from six.moves.urllib.parse import parse_qsl
 
 from ..models import WeChatApp
 
@@ -100,16 +100,21 @@ class WeChatAdmin(admin.ModelAdmin):
         return {}
 
     def get_request_app_id(self, request):
-        if not hasattr(request, "app_id"):
+        return self._get_request_params(request, "app_id")
+    
+    @staticmethod
+    def _get_request_params(request, param):
+        if not hasattr(request, param):
             preserved_filters_str = request.GET.get('_changelist_filters')
             if preserved_filters_str:
                 preserved_filters = dict(parse_qsl(preserved_filters_str))
             else:
                 preserved_filters = dict()
-            request.app_id = (request.GET.get("app_id") 
-                or preserved_filters.get("app_id") 
-                or request.resolver_match.kwargs.get("app_id"))
-        return request.app_id
+            value = (request.GET.get(param) 
+                or preserved_filters.get(param) 
+                or request.resolver_match.kwargs.get(param))
+            setattr(request, param, value)
+        return getattr(request, param)
     
     def logger(self, request):
         name = "wechat.admin.{0}".format(self.get_request_app_id(request))

@@ -45,18 +45,6 @@ class Article(m.Model):
         if self._thumb_url is None and self.thumb_media_id:
             # 不存在url时通过thumb_media_id同步
             app = self.material.app
-            # media_id = self.thumb_media_id
-            # image = None
-            # try:
-            #     image = Material.objects.get(app=app, media_id=media_id)
-            # except:
-            #     try:
-            #         image = Material.sync(app, media_id, Material.Type.IMAGE)
-            #     except WeChatClientException as e:
-            #         # 可能存在封面不存在的情况
-            #         if e.errcode != 40007:
-            #             raise
-            #         image = ""
             image = Material.objects.filter(
                 app=app, media_id=self.thumb_media_id).first()
             self._thumb_url = image and image.url

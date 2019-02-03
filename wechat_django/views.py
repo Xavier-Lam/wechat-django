@@ -9,8 +9,9 @@ from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from wechatpy.utils import check_signature
 
-from .models import MessageHandler, WeChatApp
 from . import utils
+from .exceptions import WeChatApiError
+from .models import MessageHandler, WeChatApp
 
 __all__ = ("handler", "material_proxy", "urls")
 
@@ -114,7 +115,7 @@ def material_proxy(request, appname, media_id):
     try:
         resp = app.client.material.get(media_id)
     except WeChatClientException as e:
-        if e.errcode == 40007:
+        if e.errcode == WeChatApiError.INVALIDMEDIAID:
             return response.Http404()
         logging.getLogger("wechat.views." + app.appid).warning(
             "an exception occurred when download material",

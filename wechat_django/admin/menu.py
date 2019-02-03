@@ -62,7 +62,7 @@ class MenuAdmin(WeChatAdmin):
 
     def get_queryset(self, request):
         rv = super().get_queryset(request)
-        if not request.GET.get("menuid"):
+        if not self._get_request_params(request, "menuid"):
             rv = rv.filter(menuid__isnull=True)
         return rv
 
