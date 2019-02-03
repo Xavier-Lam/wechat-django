@@ -2,16 +2,35 @@ from django import forms
 from django.contrib import admin, messages
 from django.db import models as m
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatException
 
 from ..models import Menu, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class MenuAdmin(WeChatAdmin):
-    # change_form_template = "admin/wechat_django/menu/change_form.html"
     actions = ("sync", )
 
-    fields = ("name", "menuid", "type", "key", "url", "appid", "pagepath",
-        "weight", "created", "updated")
+    list_display = ("title", "type", "detail", "weight", "updated")
+    list_editable = ("weight", )
+    fields = ("name", "type", "key", "url", "appid", "pagepath", "weight", 
+        "created", "updated")
+
+    def title(self, obj):
+        if obj.parent:
+            return "|--- " + obj.name
+        return obj.name
+    title.short_description = _("title")
+
+    def detail(self, obj):
+        if obj.type == Menu.Event.CLICK:
+            return obj.content.get("key")
+        elif obj.type == Menu.Event.VIEW:
+            return '<a href="{0}">{1}</a>'.format(
+                obj.content.get("url"), _("link"))
+        elif obj.type == Menu.Event.MINIPROGRAM:
+            return obj.content.get("appid")
+    detail.short_description = _("detail")
+    detail.allow_tags = True
 
     def sync(self, request, queryset):
         app_id = self.get_request_app_id(request)
@@ -20,9 +39,12 @@ class MenuAdmin(WeChatAdmin):
             Menu.sync(app)
             self.message_user(request, "menus successfully synchronized")
         except Exception as e:
-            raise
-            self.message_user(request, 
-                "sync failed with %s"%str(e), level=messages.ERROR)
+            msg = "sync failed with {0}".format(e)
+            if isinstance(e, WeChatException):
+                self.logger(request).warning(msg, exc_info=True)
+            else:
+                self.logger(request).error(msg, exc_info=True)
+            self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
 
     def get_fields(self, request, obj=None):
@@ -36,6 +58,12 @@ class MenuAdmin(WeChatAdmin):
         rv = super().get_readonly_fields(request, obj)
         if obj:
             rv = rv + ("created", "updated")
+        return rv
+
+    def get_queryset(self, request):
+        rv = super().get_queryset(request)
+        if not request.GET.get("menuid"):
+            rv = rv.filter(menuid__isnull=True)
         return rv
 
     class MenuForm(DynamicChoiceForm):

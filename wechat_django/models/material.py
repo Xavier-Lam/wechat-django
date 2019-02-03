@@ -162,6 +162,15 @@ class Material(m.Model):
         ])
         return news
 
+    @property
+    def articles_json(self):
+        return list(map(lambda o: dict(
+            title=o.title,
+            description=o.digest,
+            image=o.thumb_url,
+            url=o.url
+        ), self.articles))
+
     def delete(self, *args, **kwargs):
         # 先远程素材删除
         self.app.client.material.delete(self.media_id)

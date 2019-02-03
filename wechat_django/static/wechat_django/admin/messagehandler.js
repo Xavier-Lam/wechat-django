@@ -58,13 +58,20 @@
             case "forward":
                 $row.find(".form-row.field-url").show();
                 break;
-            case "news":
-                $row.find(".form-row.field-content").show();
             case "video":
-            case "music":
+                $row.find(".form-row.field-title").show();
+                $row.find(".form-row.field-description").show();
+            case "news":
             case "image":
             case "voice":
                 $row.find(".form-row.field-media_id").show();
+                break;
+            case "music":
+                $row.find(".form-row.field-title").show();
+                $row.find(".form-row.field-description").show();
+                $row.find(".form-row.field-music_url").show();
+                $row.find(".form-row.field-hq_music_url").show();
+                $row.find(".form-row.field-thumb_media_id").show();
                 break;
             case "text":
                 $row.find(".form-row.field-content").show();

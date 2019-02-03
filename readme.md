@@ -58,7 +58,12 @@
 | wechat.views.{appid} | view异常日志(如素材代理) 最低级别warning |
 
 ## TODOS:
+* 本地化
+* 用户分组管理
+* 移除未使用的永久素材
+* 将部分actions改为object-tool
 * 转发多回复
+* 回复缓存
 * 权限管理
 * 单元测试
 * 文档

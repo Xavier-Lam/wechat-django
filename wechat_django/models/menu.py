@@ -82,16 +82,18 @@ class Menu(m.Model):
         return menu
 
     @staticmethod
-    def upload(app):
+    def upload(app, menuid=None):
         """
         :type app: .WeChatApp
         """
-        data = dict(
-            button=[menu.to_json() for menu in app.menus]
-        )
+        query = app.menus.prefetch_related("sub_button")
+        if menuid is None:
+            query = query.filter(menuid__isnull=True)
+        else:
+            query = query.filter(menuid=menuid)
+        menus = query.all()
+        data = dict(button=[menu.to_json() for menu in menus])
         resp = app.client.menu.create(data)
-        if resp["errcode"] == 0:
-            pass
 
     def to_json(self):
         rv = dict(name=self.name)

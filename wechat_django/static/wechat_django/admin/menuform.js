@@ -2,7 +2,7 @@
     // ruleform
     var setForm = function(type) {
         var $row = $("fieldset");
-        $row.find(".form-row:not(.field-type,.field-weight,.field-menuid,.field-name)").hide();
+        $row.find(".form-row:not(.field-type,.field-weight,.field-name,.field-updated,.field-created)").hide();
         switch(type) {
             case "miniprogram":
                 $row.find(".form-row.field-appid").show();

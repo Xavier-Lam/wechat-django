@@ -61,15 +61,10 @@ class Reply(m.Model):
             # 正常回复类型
             if self.msg_type == ReplyMsgType.NEWS:
                 klass = replies.ArticlesReply
-                articles = Material.get_by_media(self.content["media_id"]).articles
-                article_dicts = list(map(lambda o: dict(
-                    title=o.title,
-                    description=o.digest,
-                    image=o.thumb_url,
-                    url=o.url
-                ), articles))
+                articles = Material.get_by_media(
+                    self.content["media_id"]).articles_json
                 # 将media_id转为content
-                data = dict(articles=article_dicts)
+                data = dict(articles=articles)
             elif self.msg_type == ReplyMsgType.MUSIC:
                 klass = replies.MusicReply
                 data = dict(**self.content)
@@ -122,7 +117,7 @@ class Reply(m.Model):
     @classmethod
     def from_mp(cls, data, handler):
         type = data["type"]
-        if type == ReplyMsgType.IMG:
+        if type == "img":
             type = ReplyMsgType.IMAGE
         elif type == ReplyMsgType.VIDEO:
             # video是链接
@@ -153,12 +148,12 @@ class Reply(m.Model):
     @classmethod
     def from_menu(cls, data, handler):
         type = data["type"]
-        if type == ReplyMsgType.IMG:
+        if type == "img":
             type = ReplyMsgType.IMAGE
         elif type == ReplyMsgType.VIDEO:
             # video是链接
             type = ReplyMsgType.TEXT
-            content = dict(content='<a href="{0}">{1}</a>'.format(
+            data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["value"], data.get("name", _("video"))))
 
         rv = cls(msg_type=type, handler=handler)

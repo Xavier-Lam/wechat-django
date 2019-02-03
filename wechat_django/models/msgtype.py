@@ -14,9 +14,6 @@ class ReplyMsgType(MsgType):# 响应
     MUSIC = "music"
     NEWS = "news"
 
-    # 由微信同步的自动回复是IMG
-    IMG = "img"
-
     # 自定义业务
     # LOG = "log"
     CUSTOM = "custom"

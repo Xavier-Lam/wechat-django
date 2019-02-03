@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatException
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
     Reply, ReplyMsgType, Rule, WeChatApp)
@@ -59,6 +60,13 @@ class ReplyInline(admin.StackedInline):
         content = forms.CharField(label=_("content"), widget=forms.Textarea,
             required=False)
         media_id = forms.CharField(label=_("media_id"), required=False)
+        title = forms.CharField(label=_("title"), required=False)
+        description = forms.CharField(label=_("description"),
+            widget=forms.Textarea, required=False)
+        music_url = forms.URLField(label=_("url"), required=False)
+        hq_music_url = forms.URLField(label=_("HQ music url"), required=False)
+        thumb_media_id = forms.CharField(label=_("thumb media_id"), 
+            required=False)
 
         class Meta(object):
             model = Reply
@@ -70,16 +78,19 @@ class ReplyInline(admin.StackedInline):
             elif type == ReplyMsgType.CUSTOM:
                 fields = ("program", )
             elif type == ReplyMsgType.NEWS:
-                fields = ("content", "media_id")
-            elif type in (ReplyMsgType.VIDEO, ReplyMsgType.VOICE, 
-                ReplyMsgType.IMAGE):
                 fields = ("media_id", )
+            elif type in (ReplyMsgType.VOICE, ReplyMsgType.IMAGE):
+                fields = ("media_id", )
+            elif type == ReplyMsgType.VIDEO:
+                fields = ("media_id", "title", "description")
             elif type == ReplyMsgType.MUSIC:
-                # TODO: 是错的
-                fields = ("media_id", )
+                fields = ("title", "description", "music_url", "hq_music_url",
+                    "thumb_media_id")
             elif type == ReplyMsgType.TEXT:
                 fields = ("content", )
             return fields
+        
+        # TODO: 表单验证
     form = ReplyForm
 
 class MessageHandlerAdmin(WeChatAdmin):
@@ -116,8 +127,12 @@ class MessageHandlerAdmin(WeChatAdmin):
             self.message_user(request, 
                 "%d handlers successfully synchronized"%len(handlers))
         except Exception as e:
-            self.message_user(request, 
-                "sync failed with %s"%str(e), level=messages.ERROR)
+            msg = "sync failed with {0}".format(e)
+            if isinstance(e, WeChatException):
+                self.logger(request).warning(msg, exc_info=True)
+            else:
+                self.logger(request).error(msg, exc_info=True)
+            self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
 
     def is_sync(self, obj):

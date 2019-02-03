@@ -14,8 +14,9 @@ from .bases import DynamicChoiceForm, WeChatAdmin
 
 class ArticleAdmin(WeChatAdmin):
     actions = ("sync",)
-    list_display = ("title", "author", "material_link", "digest", 
+    list_display = ("title", "author", "material_link", "index", "digest", 
         "link", "source_url", "synced_at")
+    list_editable = ("index",)
     search_fields = ("title", "author", "digest", "content_source_url", "content")
 
     fields = ("title", "author", "digest", "thumb_image", "thumb_media_id",
