@@ -4,6 +4,7 @@ import logging
 from django.conf.urls import url
 from django.http import response
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 import requests
 from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
@@ -21,6 +22,7 @@ def wechat_route(route, methods=None, name=""):
     if not methods:
         methods = ("GET",)
     def decorator(func):
+        func = csrf_exempt(func)
         @wraps(func)
         def decorated_func(request, *args, **kwargs):
             if request.method not in methods:
@@ -74,7 +76,7 @@ def handler(request, appname):
                 app.encoding_aes_key, 
                 app.appid
             )
-            raw_msg = crypto.decrypt_message(
+            raw = crypto.decrypt_message(
                 raw,
                 request.GET["signature"],
                 request.GET["timestamp"],
@@ -88,7 +90,7 @@ def handler(request, appname):
         )
         return ""
 
-    msg.raw = raw_msg
+    msg.raw = raw
     msg.request = request
     handlers = MessageHandler.match(app, msg)
     if not handlers:

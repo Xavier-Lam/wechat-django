@@ -95,7 +95,10 @@ class WeChatApp(m.Model):
         return self._oauth
 
     def interactable(self):
-        return bool(self.token and self.encoding_aes_key)
+        rv = self.appsecret and self.token
+        if self.encoding_mode == self.EncodingMode.SAFE:
+            rv = rv and self.encoding_aes_key
+        return rv
     interactable.boolean = True
     interactable.short_description = _("interactable")
 
