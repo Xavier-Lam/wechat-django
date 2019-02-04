@@ -9,6 +9,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
 from .. import settings
+from ..wechat import WeChatOAuth
 from . import EventType
 
 class WeChatApp(m.Model):
@@ -76,6 +77,7 @@ class WeChatApp(m.Model):
                 self.appsecret,
                 session=session
             )
+            self._client.appname = self.name
 
             self._client._http.proxies = dict(
                 http="localhost:12580",
@@ -83,6 +85,12 @@ class WeChatApp(m.Model):
             )
             self._client._http.verify = False
         return self._client
+    
+    @property
+    def oauth(self):
+        if not hasattr(self, "_oauth"):
+            self._oauth = WeChatOAuth(self.appid, self.appsecret)
+        return self._oauth
 
     def interactable(self):
         return bool(self.token and self.encoding_aes_key)

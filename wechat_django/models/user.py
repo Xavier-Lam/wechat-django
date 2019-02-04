@@ -120,6 +120,17 @@ class WeChatUser(m.Model):
             ))
 
     @classmethod
+    def upsert_by_oauth(cls, app, user_dict):
+        """根据oauth的结果更新"""
+        assert "openid" in user_dict, "openid not found"
+        updates = {
+            k: v for k, v in user_dict.values()
+            if k in field in cls._meta.fields
+        }
+        return cls.objects.update_or_create(defaults=update,
+            app=app, openid=updates["openid"])
+
+    @classmethod
     def _iter_followers_list(cls, app, next_openid=None):
         count = 100
         while True:

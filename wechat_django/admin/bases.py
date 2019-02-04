@@ -117,7 +117,8 @@ class WeChatAdmin(admin.ModelAdmin):
         return getattr(request, param)
     
     def logger(self, request):
-        name = "wechat.admin.{0}".format(self.get_request_app_id(request))
+        app = WeChatApp.get_by_id(self.get_request_app_id(request))
+        name = "wechat.admin.{0}".format(app.name)
         return logging.getLogger(name)
 
 class DynamicChoiceForm(forms.ModelForm):

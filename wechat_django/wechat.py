@@ -1,8 +1,12 @@
+from contextlib import contextmanager
 import logging
 import re
 
-from wechatpy import exceptions as excs, WeChatClient as _WeChatClient
+from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient, 
+    WeChatOAuth as _WeChatOAuth)
 from wechatpy.client import api
+
+from .models import WeChatSNSScope
 
 class WeChatMaterial(api.WeChatMaterial):
     def get_raw(self, media_id):
@@ -14,6 +18,7 @@ class WeChatMaterial(api.WeChatMaterial):
         )
 
 class WeChatClient(_WeChatClient):
+    appname = None
     # 增加raw_get方法
     material = WeChatMaterial()
 
@@ -37,9 +42,9 @@ class WeChatClient(_WeChatClient):
         return super()._handle_result(res, method, url, *args, **kwargs)
 
     def _logger(self, type):
-        return logging.getLogger("wechat.api.{type}.{appid}".format(
+        return logging.getLogger("wechat.api.{type}.{appname}".format(
             type=type, 
-            appid=self.appid
+            appname=self.appname
         ))
     
     def _log_msg(self, method, url, **kwargs):
@@ -53,6 +58,29 @@ class WeChatClient(_WeChatClient):
             msg += "\tdata:{0}".format(kwargs["data"])
         return msg
 
+class WeChatOAuth(_WeChatOAuth):
+    def __init__(self, app_id, secret):
+        super().__init__(app_id, secret, "")
+
+    def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
+        with self._with_args(redirect_uri, scope=scope, state=state):
+            return super().authorize_url
+    
+    def qrconnect_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
+        with self._with_args(redirect_uri, scope=scope, state=state):
+            return super().qrconnect_url
+
+    @contextmanager
+    def _with_args(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
+        try:
+            self.redirect_uri = redirect_uri
+            self.scope = scope
+            self.state = state
+            yield self
+        finally:
+            self.redirect_uri = None
+            self.scope = None
+            self.state = ""
 
 def in_wechat(request):
     """判断是否时微信环境"""

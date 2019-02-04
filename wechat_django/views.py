@@ -48,7 +48,7 @@ def handler(request, appname):
     :type request: django.http.request.HttpRequest
     """
     app = get_object_or_404(WeChatApp, name=appname)
-    logger = logging.getLogger("wechat.handler." + app.appid)
+    logger = logging.getLogger("wechat.handler.{0}".format(appname))
     log_args = dict(params=request.GET, body=request.body, 
         ip=utils.get_ip(request))
     logger.debug("received: {0}".format(log_args))
@@ -117,7 +117,7 @@ def material_proxy(request, appname, media_id):
     except WeChatClientException as e:
         if e.errcode == WeChatApiError.INVALIDMEDIAID:
             return response.Http404()
-        logging.getLogger("wechat.views." + app.appid).warning(
+        logging.getLogger("wechat.views.{0}".format(appname)).warning(
             "an exception occurred when download material",
             exc_info=True)
         return response.HttpResponseServerError()

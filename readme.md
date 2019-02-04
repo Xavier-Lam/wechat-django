@@ -13,6 +13,7 @@
 * 图文同步及查看
 * 服务号网页授权
 * 主动调用微信api封装
+* 微信网页授权
 
 目前没有使用在生产环境的案例,只在python3.4 django-1.11 下进行了徒手测试
 
@@ -37,6 +38,16 @@
 
 ## 部分功能使用说明
 ### 网页授权
+可通过`wechat_django.oauth.wechat_auth`装饰器进行网页授权,授权后,request将被附上一个名为wechat的`wechat_django.oauth.WeChatOAuthInfo` 对象,可通过 request.wechat.user 拿到`wechat_django.models.WeChatUser`实例,通过 request.wechat.app 拿到`wechat_django.models.WeChatApp`实例,以下是一个基本示例
+
+    from wechat_django.oauth import wechat_auth
+
+    @wechat_auth("your_app_name")
+    def your_view(request, *args, **kwargs):
+        user = request.wechat.user
+
+具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
+
 
 ### 主动调用微信api
     from wechat_django.models import WeChatApp
@@ -50,12 +61,13 @@
 ## 日志
 | logger | 说明 |
 | --- | --- |
-| wechat.admin.{appid} | admin异常日志 最低级别warning |
-| wechat.api.req.{appid} | api请求日志 级别debug |
-| wechat.api.resp.{appid} | api响应日志 级别debug |
-| wechat.api.excs.{appid} | api异常日志 最低级别warning |
-| wechat.handler.{appid} | 消息处理日志 最低级别debug |
-| wechat.views.{appid} | view异常日志(如素材代理) 最低级别warning |
+| wechat.admin.{appname} | admin异常日志 最低级别warning |
+| wechat.api.req.{appname} | api请求日志 级别debug |
+| wechat.api.resp.{appname} | api响应日志 级别debug |
+| wechat.api.excs.{appname} | api异常日志 最低级别warning |
+| wechat.handler.{appname} | 消息处理日志 最低级别debug |
+| wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
+| wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
 
 ## TODOS:
 * 本地化
