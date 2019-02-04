@@ -43,6 +43,8 @@ class WeChatApp(m.Model):
 
     flags = m.IntegerField(_("flags"), default=0)
 
+    last_sync_openid = m.CharField(max_length=36, null=True, default=None)
+
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
 

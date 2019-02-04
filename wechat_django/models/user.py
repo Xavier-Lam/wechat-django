@@ -81,11 +81,7 @@ class WeChatUser(m.Model):
         users = []
         first_openid = None
         if not all:
-            try:
-                user = cls.objects.filter(app=app).latest("created")
-            except cls.DoesNotExist:
-                user = None
-            first_openid = user and user.openid
+            first_openid = app.last_sync_openid
 
         for openids in cls._iter_followers_list(app, first_openid):
             if detail:
@@ -96,6 +92,9 @@ class WeChatUser(m.Model):
                         cls.objects.create(app=app, openid=openid)
                         for openid in openids
                     )
+            # 更新最后更新openid
+            app.last_sync_openid = openids[-1]
+            app.save()
         return users
 
     @classmethod

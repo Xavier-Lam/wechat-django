@@ -1,4 +1,4 @@
-"""wechatdjango URL Configuration
+"""sample URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/1.11/topics/http/urls/
@@ -18,10 +18,7 @@ from django.contrib import admin
 
 from wechat_django.views import urls
 
-from wechat_django.debug import urls as debug_urls
-
-urlpatterns = (
-    url(r"^admin/", admin.site.urls),
-    url(r"^wechat/", urls),
-    url(r"^debug/", debug_urls)
-)
+urlpatterns = [
+    url(r'^admin/', admin.site.urls),
+    url(r'^wechat/', urls) #!wechat_django 添加wechat_django
+]
