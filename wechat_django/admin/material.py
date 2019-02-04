@@ -1,10 +1,9 @@
-from urllib.parse import urlencode
-
 from django import forms
 from django.contrib import admin, messages
 from django.db import models as m
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
