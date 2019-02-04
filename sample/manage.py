@@ -3,6 +3,12 @@ import os
 import sys
 
 if __name__ == "__main__":
+    try:
+        reload(sys)  
+        sys.setdefaultencoding('utf8')
+    except:
+        pass
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sample.settings")
     try:
         from django.core.management import execute_from_command_line

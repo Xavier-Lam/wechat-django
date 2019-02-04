@@ -18,13 +18,9 @@ __all__ = ("handler", "material_proxy", "urls")
 url_patterns = []
 
 def wechat_route(route, methods=None, name=""):
+    if not methods:
+        methods = ("GET",)
     def decorator(func):
-        nonlocal methods, name
-        if not methods:
-            methods = ("GET",)
-        if not name:
-            name = func.__name__
-
         @wraps(func)
         def decorated_func(request, *args, **kwargs):
             if request.method not in methods:
@@ -35,7 +31,7 @@ def wechat_route(route, methods=None, name=""):
         pattern = url(
             r"^(?P<appname>[-_a-zA-Z\d]+)/" + route,
             decorated_func,
-            name=name
+            name=name or func.__name__
         )
         url_patterns.append(pattern)
         return decorated_func
