@@ -48,20 +48,20 @@ class MenuAdmin(WeChatAdmin):
     sync.short_description = _("sync")
 
     def get_fields(self, request, obj=None):
-        fields = list(super().get_fields(request, obj))
+        fields = list(super(MenuAdmin, self).get_fields(request, obj))
         if not obj:
             fields.remove("created")
             fields.remove("updated")
         return fields
 
     def get_readonly_fields(self, request, obj=None):
-        rv = super().get_readonly_fields(request, obj)
+        rv = super(MenuAdmin, self).get_readonly_fields(request, obj)
         if obj:
             rv = rv + ("created", "updated")
         return rv
 
     def get_queryset(self, request):
-        rv = super().get_queryset(request)
+        rv = super(MenuAdmin, self).get_queryset(request)
         if not self._get_request_params(request, "menuid"):
             rv = rv.filter(menuid__isnull=True)
         return rv
@@ -93,7 +93,7 @@ class MenuAdmin(WeChatAdmin):
     form = MenuForm
 
     def has_add_permission(self, request):
-        return (super().has_add_permission(request) 
+        return (super(MenuAdmin, self).has_add_permission(request) 
             and self.get_queryset(request).count() < 3)
 
 admin.site.register(Menu, MenuAdmin)

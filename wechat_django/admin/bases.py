@@ -33,14 +33,14 @@ class ChangeList(_ChangeList):
         with mutable_GET(request.GET) as GET:
             GET.pop("app_id", None)
 
-        super().__init__(request, *args, **kwargs)
+        super(ChangeList, self).__init__(request, *args, **kwargs)
 
         with mutable_GET(request.GET) as GET:
             GET["app_id"] = self.app_id
 
     def get_query_string(self, new_params=None, remove=None):
         # filter的链接会掉querystring
-        query = super().get_query_string(new_params, remove).replace("?", "&")
+        query = super(ChangeList, self).get_query_string(new_params, remove).replace("?", "&")
         prefix = "?app_id={0}".format(self.app_id)
         return prefix + query
 
@@ -52,11 +52,12 @@ class WeChatAdmin(admin.ModelAdmin):
             post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
             request._set_post(post)
         extra_context = self._update_context(request, extra_context)
-        return super().changelist_view(request, extra_context)
+        return super(WeChatAdmin, self).changelist_view(request, extra_context)
 
     def render_change_form(self, request, context, *args, **kwargs):
         context = self._update_context(request, context)
-        return super().render_change_form(request, context, *args, **kwargs)
+        return super(WeChatAdmin, self).render_change_form(
+            request, context, *args, **kwargs)
 
     def get_changelist(self, request, **kwargs):
         return ChangeList
@@ -72,7 +73,7 @@ class WeChatAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         self.request = request
-        rv = super().get_queryset(request)
+        rv = super(WeChatAdmin, self).get_queryset(request)
         # TODO: 检查权限
         app_id = self.get_request_app_id(request)
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
@@ -81,7 +82,7 @@ class WeChatAdmin(admin.ModelAdmin):
         with mutable_GET(request.GET) as GET:
             GET["app_id"] = self.get_request_app_id(request)
             try:
-                return super().get_preserved_filters(request)
+                return super(WeChatAdmin, self).get_preserved_filters(request)
             finally:
                 GET.pop("app_id", None)
 
@@ -91,12 +92,12 @@ class WeChatAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.app_id = self.get_request_app_id(request)
-        return super().save_model(request, obj, form, change)
+        return super(WeChatAdmin, self).save_model(request, obj, form, change)
 
     def get_model_perms(self, request):
         # 隐藏首页上的菜单
         if self.get_request_app_id(request):
-            return super().get_model_perms(request)
+            return super(WeChatAdmin, self).get_model_perms(request)
         return {}
 
     def get_request_app_id(self, request):
@@ -133,10 +134,10 @@ class DynamicChoiceForm(forms.ModelForm):
             initial = kwargs.get("initial", {})
             initial.update(getattr(inst, self.content_field))
             kwargs["initial"] = initial
-        super().__init__(*args, **kwargs)
+        super(DynamicChoiceForm, self).__init__(*args, **kwargs)
 
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super(DynamicChoiceForm, self).clean()
         if self.type_field not in cleaned_data:
             self.add_error(self.type_field, "")
             return
@@ -155,7 +156,7 @@ class DynamicChoiceForm(forms.ModelForm):
         raise NotImplementedError()
 
     def save(self, commit=True, *args, **kwargs):
-        model = super().save(False, *args, **kwargs)
+        model = super(DynamicChoiceForm, self).save(False, *args, **kwargs)
         setattr(model, self.content_field, 
             self.cleaned_data[self.content_field])
         if commit:

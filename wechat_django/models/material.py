@@ -180,7 +180,7 @@ class Material(m.Model):
         except WeChatClientException as e:
             if e.errcode != WeChatApiError.INVALIDMEDIAID:
                 raise
-        rv = super().delete(*args, **kwargs)
+        rv = super(Material, self).delete(*args, **kwargs)
         return rv
 
     def __str__(self):

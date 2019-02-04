@@ -145,23 +145,25 @@ class MessageHandlerAdmin(WeChatAdmin):
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
             post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
             request._set_post(post)
-        return super().changelist_view(request, extra_context)
+        return super(MessageHandlerAdmin, self).changelist_view(
+            request, extra_context)
 
     def get_fields(self, request, obj=None):
-        fields = list(super().get_fields(request, obj))
+        fields = list(super(MessageHandlerAdmin, self).get_fields(request, obj))
         if not obj:
             fields.remove("created")
             fields.remove("updated")
         return fields
 
     def get_readonly_fields(self, request, obj=None):
-        rv = super().get_readonly_fields(request, obj)
+        rv = super(MessageHandlerAdmin, self).get_readonly_fields(request, obj)
         if obj:
             rv = rv + ("created", "updated")
         return rv
 
     def save_model(self, request, obj, form, change):
         obj.src = MessageHandler.Source.SELF
-        return super().save_model(request, obj, form, change)
+        return super(MessageHandlerAdmin, self).save_model(
+            request, obj, form, change)
 
 admin.site.register(MessageHandler, MessageHandlerAdmin)

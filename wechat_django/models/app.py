@@ -81,11 +81,11 @@ class WeChatApp(m.Model):
             )
             self._client.appname = self.name
 
-            self._client._http.proxies = dict(
-                http="localhost:12580",
-                https="localhost:12580"
-            )
-            self._client._http.verify = False
+            # self._client._http.proxies = dict(
+            #     http="localhost:12580",
+            #     https="localhost:12580"
+            # )
+            # self._client._http.verify = False
         return self._client
     
     @property

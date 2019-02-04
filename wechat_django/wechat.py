@@ -27,7 +27,8 @@ class WeChatClient(_WeChatClient):
         msg = self._log_msg(method, url_or_endpoint, **kwargs)
         self._logger("req").debug(msg)
         try:
-            return super()._request(method, url_or_endpoint, **kwargs)
+            return super(WeChatClient, self)._request(
+                method, url_or_endpoint, **kwargs)
         except:
             self._logger("excs").warning(msg, exc_info=True)
             raise
@@ -39,7 +40,8 @@ class WeChatClient(_WeChatClient):
             msg += "\tresp:" + res.content
         except:
             msg += "\tresp:{0}".format(res)
-        return super()._handle_result(res, method, url, *args, **kwargs)
+        return super(WeChatClient, self)._handle_result(
+            res, method, url, *args, **kwargs)
 
     def _logger(self, type):
         return logging.getLogger("wechat.api.{type}.{appname}".format(
@@ -60,15 +62,15 @@ class WeChatClient(_WeChatClient):
 
 class WeChatOAuth(_WeChatOAuth):
     def __init__(self, app_id, secret):
-        super().__init__(app_id, secret, "")
+        super(WeChatOAuth, self).__init__(app_id, secret, "")
 
     def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
         with self._with_args(redirect_uri, scope=scope, state=state):
-            return super().authorize_url
+            return super(WeChatOAuth, self).authorize_url
     
     def qrconnect_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
         with self._with_args(redirect_uri, scope=scope, state=state):
-            return super().qrconnect_url
+            return super(WeChatOAuth, self).qrconnect_url
 
     @contextmanager
     def _with_args(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):

@@ -25,7 +25,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
             views.handler, kwargs=dict(appname=obj.name)))
 
     def get_fields(self, request, obj=None):
-        fields = list(super().get_fields(request, obj))
+        fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
         if not obj:
             fields.remove("callback")
             fields.remove("created")
@@ -33,18 +33,18 @@ class WeChatAppAdmin(admin.ModelAdmin):
         return fields
 
     def get_readonly_fields(self, request, obj=None):
-        rv = super().get_readonly_fields(request, obj)
+        rv = super(WeChatAppAdmin, self).get_readonly_fields(request, obj)
         if obj:
             rv = rv + ("name", "appid", "created", "updated", "callback")
         return rv
 
     def get_queryset(self, request):
         self.request = request
-        return super().get_queryset(request)
+        return super(WeChatAppAdmin, self).get_queryset(request)
 
     def get_model_perms(self, request):
         return ({} if request.resolver_match.kwargs.get("app_id") 
-            else super().get_model_perms(request))
+            else super(WeChatAppAdmin, self).get_model_perms(request))
     
     class WeChatAppForm(forms.ModelForm):
         class Meta(object):

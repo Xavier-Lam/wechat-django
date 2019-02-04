@@ -69,4 +69,4 @@ class Rule(m.Model):
     def __str__(self):
         if self.handler:
             return self.handler.name
-        return super().__str__()
+        return super(Rule, self).__str__()

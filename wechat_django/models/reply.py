@@ -178,4 +178,4 @@ class Reply(m.Model):
     def __str__(self):
         if self.handler:
             return self.handler.name
-        return super().__str__()
+        return super(Reply, self).__str__()

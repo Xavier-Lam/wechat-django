@@ -54,7 +54,7 @@ class WeChatUserAdmin(WeChatAdmin):
     update.short_description = _("update selected")
 
     def get_actions(self, request):
-        actions = super().get_actions(request)
+        actions = super(WeChatUserAdmin, self).get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
@@ -65,7 +65,8 @@ class WeChatUserAdmin(WeChatAdmin):
     def save_model(self, request, obj, form, change):
         if "remark" in form.changed_data:
             obj.app.client.user.update_remark(obj.openid, obj.remark)
-        return super().save_model(request, obj, form, change)
+        return super(WeChatUserAdmin, self).save_model(
+            request, obj, form, change)
     
     def has_delete_permission(self, request, obj=None):
         return False
