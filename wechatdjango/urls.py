@@ -18,7 +18,10 @@ from django.contrib import admin
 
 from wechat_django.views import urls
 
+from wechat_django.debug import urls as debug_urls
+
 urlpatterns = (
     url(r"^admin/", admin.site.urls),
-    url(r"^wechat/", urls)
+    url(r"^wechat/", urls),
+    url(r"^debug/", debug_urls)
 )

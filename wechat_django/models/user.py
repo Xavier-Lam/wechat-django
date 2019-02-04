@@ -51,6 +51,7 @@ class WeChatUser(m.Model):
 
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
+    # TODO: 同步时间
     
     class Meta(object):
         ordering = ("app", "-created")
@@ -124,10 +125,10 @@ class WeChatUser(m.Model):
         """根据oauth的结果更新"""
         assert "openid" in user_dict, "openid not found"
         updates = {
-            k: v for k, v in user_dict.values()
-            if k in field in cls._meta.fields
+            k: v for k, v in user_dict.items()
+            if k in map(lambda o: o.name, cls._meta.fields)
         }
-        return cls.objects.update_or_create(defaults=update,
+        return cls.objects.update_or_create(defaults=updates,
             app=app, openid=updates["openid"])
 
     @classmethod

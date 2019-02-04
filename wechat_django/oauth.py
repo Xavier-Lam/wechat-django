@@ -35,12 +35,12 @@ class WeChatOAuthInfo(object):
         )
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.values():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __str__(self):
         return "WeChatOuathInfo: " + "\t".join(
-            "{k}: {v}".format(k=attr, v=getattr(self, k, None))
+            "{k}: {v}".format(k=attr, v=getattr(self, attr, None))
             for attr in 
             ("app", "user", "redirect", "oauth_uri", "state", "scope")
         )
@@ -73,7 +73,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
     logger = _logger(appname)
 
     def decorator(func):
-        @wraps
+        @wraps(func)
         def decorated_func(request, *args, **kwargs):
             """:type request: django.http.request.HttpRequest"""
             # 优先检查session
@@ -81,13 +81,15 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
             openid = request.get_signed_cookie(session_key, None)
 
             # 未设置redirect_uri ajax取referrer 否则取当前地址
-            if not redirect_uri:
+            if redirect_uri:
+                redirect_url = redirect_uri
+            else:
                 full_url = request.build_absolute_uri()
-                redirect_uri = ((request.META.get("HTTP_REFERER") or full_url)
-                    if request.is_ajax() else full_url)
+                redirect_url = ((request.META.get("HTTP_REFERER") or full_url)
+                    if request.is_ajax() else full_url)                
 
             request.wechat = wechat = WeChatOAuthInfo(
-                redirect_uri=redirect_uri, state=state, scope=scope)
+                redirect_uri=redirect_url, state=state, scope=scope)
             try:
                 wechat.app = app = WeChatApp.get_by_name(appname)
             except WeChatApp.DoesNotExist:
@@ -103,24 +105,25 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
 
                 code = get_request_code(request)
                 # 根据code获取用户信息
-                try:
-                    user_dict = code and auth_by_code(app, code, scope)
-                    openid = user_dict.get("openid")
-                    # 更新user_dict
-                    WeChatUser.upsert_by_oauth(app, user_dict)
-                except WeChatOAuthException:
-                    logger.warning("auth code failed: {0}".format(dict(
-                        info=wechat,
-                        code=code
-                    )), exc_info=True)
-                except AssertionError:
-                    logger.error("incorrect auth response: {0}".format(dict(
-                        info=wechat,
-                        user_dict=user_dict
-                    )), exc_info=True)
-                else:
-                    # 用当前url的state替换传入的state
-                    wechat.state = request.GET.get("state", "")
+                if code:
+                    try:
+                        user_dict = auth_by_code(app, code, scope)
+                        # 更新user_dict
+                        WeChatUser.upsert_by_oauth(app, user_dict)
+                        openid = user_dict["openid"]
+                    except WeChatOAuthException:
+                        logger.warning("auth code failed: {0}".format(dict(
+                            info=wechat,
+                            code=code
+                        )), exc_info=True)
+                    except AssertionError:
+                        logger.error("incorrect auth response: {0}".format(dict(
+                            info=wechat,
+                            user_dict=user_dict
+                        )), exc_info=True)
+                    else:
+                        # 用当前url的state替换传入的state
+                        wechat.state = request.GET.get("state", "")
                 
                 if required and not openid:
                     # 最后执行重定向授权

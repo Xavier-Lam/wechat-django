@@ -25,7 +25,7 @@ def wechat_route(route, methods=None, name=""):
         if not name:
             name = func.__name__
 
-        @wraps
+        @wraps(func)
         def decorated_func(request, *args, **kwargs):
             if request.method not in methods:
                 return response.HttpResponseNotAllowed(methods)
