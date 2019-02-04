@@ -2,6 +2,8 @@
 
 本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,旨在为有在django框架下接入微信公众平台的开发者提供便利.支持的最低django版本为1.11.
 
+```注意,框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage```
+
 [TOC]
 
 ## 功能
@@ -46,7 +48,7 @@
     def your_view(request, *args, **kwargs):
         user = request.wechat.user
 
-具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
+对于默认重定向行为不满意的,可以自定义response,具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
 
 
 ### 主动调用微信api
@@ -79,3 +81,5 @@
 * 权限管理
 * 单元测试
 * 文档
+
+Xavier-Lam@NetDragon

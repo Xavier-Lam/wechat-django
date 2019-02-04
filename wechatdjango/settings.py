@@ -25,7 +25,7 @@ SECRET_KEY = 'fi-@*yxyvq2+kb6hfwh6^17tl#)qni%20$fd($*x$2p=v0tbhn'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.2.239"]
+ALLOWED_HOSTS = ["192.168.2.239", "cnn.xavier-lam.com", "localhost"]
 
 
 # Application definition
