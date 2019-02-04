@@ -26,7 +26,10 @@ def wechat_route(route, methods=None, name=""):
             if request.method not in methods:
                 return response.HttpResponseNotAllowed(methods)
                 
-            return func(request, *args, **kwargs)
+            resp = func(request, *args, **kwargs)
+            if not isinstance(resp, response.HttpResponse):
+                resp = response.HttpResponse(resp.encode())
+            return resp
 
         pattern = url(
             r"^(?P<appname>[-_a-zA-Z\d]+)/" + route,
@@ -48,10 +51,12 @@ def handler(request, appname):
     log_args = dict(params=request.GET, body=request.body, 
         ip=utils.get_ip(request))
     logger.debug("received: {0}".format(log_args))
+    if not app.interactable():
+        return response.HttpResponseNotFound()
 
     try:
         check_signature(
-            request.GET["token"],
+            app.token,
             request.GET["signature"],
             request.GET["timestamp"],
             request.GET["nonce"]
