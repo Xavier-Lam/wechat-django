@@ -98,7 +98,7 @@ class WeChatApp(m.Model):
         rv = self.appsecret and self.token
         if self.encoding_mode == self.EncodingMode.SAFE:
             rv = rv and self.encoding_aes_key
-        return rv
+        return bool(rv)
     interactable.boolean = True
     interactable.short_description = _("interactable")
 

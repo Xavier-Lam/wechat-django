@@ -65,7 +65,7 @@ class MessageHandler(m.Model):
         handlers = app.message_handlers.prefetch_related("rules").all()
         for handler in handlers:
             if handler.is_match(message):
-                return tuple(handler)
+                return (handler, )
 
     def is_match(self, message):
         if self.available():
