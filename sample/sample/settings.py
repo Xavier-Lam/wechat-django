@@ -137,6 +137,10 @@ LOGGING = {
         "wechat.api": { #!wechat_django logging
             "level": "DEBUG",
             "handlers": ["console"]
+        },
+        "wechat.handler": {
+            "level": "DEBUG",
+            "handlers": ["console"]
         }
     }
 }

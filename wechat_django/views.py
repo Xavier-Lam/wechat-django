@@ -65,7 +65,8 @@ def handler(request, appname):
         )
         if request.method == "GET":
             return request.GET["echostr"]
-    except KeyError:
+    except (KeyError, InvalidSignatureException):
+        logger.debug("received an unexcepted request", exc_info=True)
         return response.HttpResponse(status=400)
 
     raw = request.body
@@ -92,7 +93,7 @@ def handler(request, appname):
 
     msg.raw = raw
     msg.request = request
-    handlers = MessageHandler.match(app, msg)
+    handlers = MessageHandler.matches(app, msg)
     if not handlers:
         logger.debug("handler not found: {0}".format(log_args))
         return ""

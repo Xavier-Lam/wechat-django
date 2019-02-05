@@ -59,7 +59,7 @@ class MessageHandler(m.Model):
     available.boolean = True
 
     @staticmethod
-    def match(app, message):
+    def matches(app, message):
         if not message: 
             return
         handlers = app.message_handlers.prefetch_related("rules").all()
@@ -95,7 +95,7 @@ class MessageHandler(m.Model):
                 reply = random.choice(replies)
             else:
                 raise ValueError("incorrect reply strategy")
-        return reply and reply.reply()
+        return reply and reply.reply(message)
 
     @staticmethod
     def sync(app):

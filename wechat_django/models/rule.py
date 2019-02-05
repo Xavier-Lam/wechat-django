@@ -38,7 +38,7 @@ class Rule(m.Model):
         if self.type == self.Type.ALL:
             return True
         elif self.type == self.Type.MSGTYPE:
-            return message.type == self.rule["type"]
+            return message.type == self.rule["msg_type"]
         elif self.type == self.Type.EVENT:
             return (message.type == ReceiveMsgType.EVENT
                 and message.event == self.rule["event"])
@@ -49,7 +49,7 @@ class Rule(m.Model):
                 and message.key == self.rule["key"])
         elif self.type == self.Type.CONTAIN:
             return (message.type == ReceiveMsgType.TEXT 
-                and message.content.find(self.rule["pattern"]) >= -1)
+                and message.content.find(self.rule["pattern"]) >= 0)
         elif self.type == self.Type.EQUAL:
             return (message.type == ReceiveMsgType.TEXT 
                 and message.content == self.rule["pattern"])
