@@ -62,10 +62,17 @@ def handler(request, appname):
         # 防重放检查
         nonce_key = "wx:m:n:{0}".format(request.GET["signature"])
         nonce = request.GET["nonce"]
-        timestamp = request.GET["timestamp"]
         if settings.MESSAGENOREPEATNONCE and cache.get(nonce_key) == nonce:
             logger.debug("repeat request: {0}".format(log_args))
-            return response.HttpResponse(status=400)
+            return response.HttpResponseBadRequest()
+
+        timestamp = request.GET["timestamp"]
+        time_diff = int(timestamp) - time.time()/1000
+
+        # 检查timestamp
+        if abs(time_diff) > settings.MESSAGETIMEOFFSET:
+            logger.debug("time error: {0}".format(log_args))
+            return response.HttpResponseBadRequest()
 
         check_signature(
             app.token,
@@ -74,22 +81,16 @@ def handler(request, appname):
             nonce
         )
 
-        time_offset = settings.MESSAGETIMEOFFSET
-        # 检查timestamp
-        if abs(time.time()/1000 - int(timestamp)) > time_offset:
-            logger.debug("time error: {0}".format(log_args))
-            return response.HttpResponse(status=400)
-
         # 防重放
         settings.MESSAGENOREPEATNONCE and cache.set(
-            nonce_key, nonce, time_offset*2)
+            nonce_key, nonce, settings.MESSAGETIMEOFFSET + time_diff)
 
         if request.method == "GET":
             return request.GET["echostr"]
     except (KeyError, InvalidSignatureException):
         logger.debug("received an unexcepted request: {0}".format(log_args),
             exc_info=True)
-        return response.HttpResponse(status=400)
+        return response.HttpResponseBadRequest()
 
     raw = request.body
     try:
