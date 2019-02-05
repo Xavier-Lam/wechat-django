@@ -1,7 +1,9 @@
 from functools import wraps
 import logging
+import time
 
 from django.conf.urls import url
+from django.core.cache import cache
 from django.http import response
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -10,7 +12,7 @@ from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from wechatpy.utils import check_signature
 
-from . import utils
+from . import settings, utils
 from .exceptions import WeChatApiError
 from .models import MessageHandler, WeChatApp
 
@@ -57,16 +59,36 @@ def handler(request, appname):
         return response.HttpResponseNotFound()
 
     try:
+        # 防重放检查
+        nonce_key = "wx:m:n:{0}".format(request.GET["signature"])
+        nonce = request.GET["nonce"]
+        timestamp = request.GET["timestamp"]
+        if settings.MESSAGENOREPEATNONCE and cache.get(nonce_key) == nonce:
+            logger.debug("repeat request: {0}".format(log_args))
+            return response.HttpResponse(status=400)
+
         check_signature(
             app.token,
             request.GET["signature"],
-            request.GET["timestamp"],
-            request.GET["nonce"]
+            timestamp,
+            nonce
         )
+
+        time_offset = settings.MESSAGETIMEOFFSET
+        # 检查timestamp
+        if abs(time.time()/1000 - int(timestamp)) > time_offset:
+            logger.debug("time error: {0}".format(log_args))
+            return response.HttpResponse(status=400)
+
+        # 防重放
+        settings.MESSAGENOREPEATNONCE and cache.set(
+            nonce_key, nonce, time_offset*2)
+
         if request.method == "GET":
             return request.GET["echostr"]
     except (KeyError, InvalidSignatureException):
-        logger.debug("received an unexcepted request", exc_info=True)
+        logger.debug("received an unexcepted request: {0}".format(log_args),
+            exc_info=True)
         return response.HttpResponse(status=400)
 
     raw = request.body

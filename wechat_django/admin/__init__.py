@@ -93,4 +93,5 @@ for site in admin_site_paths:
     admin = import_string(site)
     patch_admin(admin)
 
-from . import wechatapp, user, menu, messagehandler, material, article
+from . import (wechatapp, user, menu, messagehandler, messagelog, 
+    material, article)

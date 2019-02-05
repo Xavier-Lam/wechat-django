@@ -15,10 +15,11 @@ class MessageLog(m.Model):
     content = JSONField()
     createtime = m.IntegerField(_("createtime"))
 
-    created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
+    created = m.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta(object):
-        index_together = (("app", "created_at"),)
+        index_together = (("app", "created"),)
+        ordering = ("app", "-created")
 
     @classmethod
     def from_msg(cls, message, app=None):

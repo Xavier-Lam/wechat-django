@@ -50,7 +50,7 @@ class WeChatApp(m.Model):
 
     @classmethod
     def get_by_id(cls, id):
-        return cls.objects.filter(id=id).first()
+        return cls.objects.get(id=id)
 
     @classmethod
     def get_by_name(cls, name):

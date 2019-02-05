@@ -10,7 +10,7 @@
 * 最基本的公众号管理
 * 同步用户及用户查看,备注
 * 最基本的菜单管理
-* 同步公众号自动回复,管理自动回复,转发自动回复和自定义自动回复业务
+* 同步公众号自动回复,管理自动回复,转发自动回复和自定义自动回复业务,公众号接收消息日志
 * 素材同步及查看
 * 图文同步及查看
 * 服务号网页授权
@@ -21,12 +21,10 @@
 
 ## 安装
 
-1. 安装
-    
-    pip install wechat_django
+1. 安装**pip install wechat_django**
 
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
-3. 运行manage.py migrate wechat_django 来更新数据库结构
+3. 运行**manage.py migrate wechat_django** 来更新数据库结构
 4. 在urls.py 中引入wechat_django.views.urls, 将其配置到urlpatterns中
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
@@ -37,6 +35,8 @@
 | WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
 | WECHAT_WECHATCLIENTFACTORY | "wechat_django.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
+| WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp超过该值的将被抛弃 |
+| WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放 默认检查 |
 
 ## 部分功能使用说明
 ### 网页授权
@@ -57,6 +57,20 @@
     data = app.client.user.get_followers()
 
 具体client的使用方式,请移步[wechatpy文档](https://wechatpy.readthedocs.io/zh_CN/master/client/index.html)
+
+### 自定义微信回复
+在后台配置自定义回复,填写自定义回复处理代码的路径,对应的方法接收一个`wechat_django.models.WeChatMessage`对象,返回字符串或一个[`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
+
+    def custom_business(message):
+        """
+        :type message: wechat_django.models.WeChatMessage
+        """
+        user = message.user
+        msg = message.message
+        text = "hello, {0}! we received a {1} message.".format(
+            user, msg.type
+        )
+        return TextReply(content=text.encode())
 
 ## 示例项目
 可参考本项目sample文件夹
@@ -84,5 +98,9 @@
 * 权限管理
 * 单元测试
 * 文档
+
+## ChangeLog
+### 0.1.0.0
+
 
 Xavier-Lam@NetDragon

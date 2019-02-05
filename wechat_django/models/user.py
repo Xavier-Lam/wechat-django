@@ -63,11 +63,10 @@ class WeChatUser(m.Model):
     
     @classmethod
     def get_by_openid(cls, app, openid):
-        user = cls.objects.filter(app=app, openid=openid).first()
-        if not user:
-            # 同步该用户
-            user = cls.fetch_user(app, openid)
-        return user
+        try:
+            return cls.objects.get(app=app, openid=openid)
+        except cls.DoesNotExist:
+            return cls.fetch_user(app, openid)
 
     @classmethod
     def sync(cls, app, all=False, detail=True):

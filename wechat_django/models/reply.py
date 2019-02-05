@@ -5,7 +5,7 @@ from jsonfield import JSONField
 import requests
 from wechatpy import replies
 
-from . import Article, Material, MessageHandler, ReplyMsgType
+from . import Article, Material, MessageHandler, ReplyMsgType, WeChatMessage
 from .. import utils
 
 class Reply(m.Model):
@@ -15,6 +15,10 @@ class Reply(m.Model):
     msg_type = m.CharField(_("type"), max_length=16,
         choices=utils.enum2choices(ReplyMsgType))
     content = JSONField()
+
+    @property
+    def app(self):
+        return self.handler.app
 
     def reply(self, message):
         """
@@ -50,7 +54,7 @@ class Reply(m.Model):
             except:
                 raise NotImplementedError("custom bussiness not found")
             else:
-                reply = func(message)
+                reply = func(WeChatMessage(self.app, message))
                 if not reply:
                     return ""
                 elif isinstance(reply, str):
