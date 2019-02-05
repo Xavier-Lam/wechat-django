@@ -54,6 +54,9 @@ class Reply(m.Model):
             except:
                 raise NotImplementedError("custom bussiness not found")
             else:
+                if not getattr(func, "message_handler", None):
+                    e = "handler must be decorated by wechat_django.decorators.message_handler"
+                    raise ValueError(e)
                 reply = func(WeChatMessage(self.app, message))
                 if not reply:
                     return ""

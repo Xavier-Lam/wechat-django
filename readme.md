@@ -59,8 +59,11 @@
 具体client的使用方式,请移步[wechatpy文档](https://wechatpy.readthedocs.io/zh_CN/master/client/index.html)
 
 ### 自定义微信回复
-在后台配置自定义回复,填写自定义回复处理代码的路径,对应的方法接收一个`wechat_django.models.WeChatMessage`对象,返回字符串或一个[`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
+在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessage` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
 
+    from wechat_django.decorators import message_handler
+
+    @message_handler
     def custom_business(message):
         """
         :type message: wechat_django.models.WeChatMessage
@@ -68,8 +71,7 @@
         user = message.user
         msg = message.message
         text = "hello, {0}! we received a {1} message.".format(
-            user, msg.type
-        )
+            user, msg.type)
         return TextReply(content=text.encode())
 
 ## 示例项目

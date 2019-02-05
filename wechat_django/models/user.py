@@ -63,6 +63,7 @@ class WeChatUser(m.Model):
     
     @classmethod
     def get_by_openid(cls, app, openid):
+        # TODO: cache
         try:
             return cls.objects.get(app=app, openid=openid)
         except cls.DoesNotExist:

@@ -67,7 +67,7 @@ def handler(request, appname):
             return response.HttpResponseBadRequest()
 
         timestamp = request.GET["timestamp"]
-        time_diff = int(timestamp) - time.time()/1000
+        time_diff = int(timestamp) - time.time()
 
         # 检查timestamp
         if abs(time_diff) > settings.MESSAGETIMEOFFSET:
