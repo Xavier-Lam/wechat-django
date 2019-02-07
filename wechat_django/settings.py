@@ -5,6 +5,6 @@ ADMINSITE = getattr(settings, "WECHAT_ADMINSITE",
 SESSIONSTORAGE = getattr(settings, "WECHAT_SESSIONSTORAGE", 
     "django.core.cache.cache")
 WECHATCLIENTFACTORY = getattr(settings, "WECHAT_WECHATCLIENTFACTORY",
-    "wechat_django.wechat.get_wechat_client")
+    "wechat_django.utils.wechat.get_wechat_client")
 MESSAGETIMEOFFSET = getattr(settings, "WECHAT_MESSAGETIMEOFFSET", 180)
 MESSAGENOREPEATNONCE = getattr(settings, "WECHAT_MESSAGENOREPEATNONCE", True)

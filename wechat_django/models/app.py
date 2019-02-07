@@ -7,9 +7,10 @@ from django.db import models as m
 from django.dispatch import receiver
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
+from jsonfield import JSONField
 
 from .. import settings
-from ..wechat import WeChatOAuth
+from ..patches import WeChatOAuth
 from . import EventType
 
 class WeChatApp(m.Model):
@@ -38,15 +39,25 @@ class WeChatApp(m.Model):
         (EncodingMode.SAFE, _("safe"))
     ), default=EncodingMode.PLAIN)
 
-    # api用key 当不想暴露secretkey 给第三方时
-    # secretkey = m.CharField(max_length=32)
-
     flags = m.IntegerField(_("flags"), default=0)
 
-    last_sync_openid = m.CharField(max_length=36, null=True, default=None)
+    _ext_info = JSONField(db_column="ext_info")
+    _configurations = JSONField(db_column="configurations")
 
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
+
+    @property
+    def ext_info(self):
+        if self._ext_info is None:
+            self._ext_info = dict()
+        return self._ext_info
+    
+    @property
+    def configurations(self):
+        if self._configurations is None:
+            self._configurations = dict()
+        return self._configurations
 
     @classmethod
     def get_by_id(cls, id):
@@ -74,12 +85,14 @@ class WeChatApp(m.Model):
                 session = settings.SESSIONSTORAGE
             
             client_factory = import_string(settings.WECHATCLIENTFACTORY)
-            self._client = client_factory(self)(
+            self._client = client = client_factory(self)(
                 self.appid,
                 self.appsecret,
                 session=session
             )
-            self._client.appname = self.name
+            client.appname = self.name
+            # API BASE URL
+            client.ACCESSTOKEN_URL = self.configurations.get("ACCESSTOKEN_URL")
 
             # self._client._http.proxies = dict(
             #     http="localhost:12580",
@@ -92,6 +105,10 @@ class WeChatApp(m.Model):
     def oauth(self):
         if not hasattr(self, "_oauth"):
             self._oauth = WeChatOAuth(self.appid, self.appsecret)
+            
+            if self.configurations.get("OAUTH_URL"):
+                self._oauth.OAUTH_URL = self.configurations["OAUTH_URL"]
+            
         return self._oauth
 
     def interactable(self):

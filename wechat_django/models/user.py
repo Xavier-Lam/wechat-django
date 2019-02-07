@@ -3,6 +3,7 @@ import re
             
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
+from django.utils import timezone as tz
 
 from .. import utils
 from . import WeChatApp
@@ -52,6 +53,8 @@ class WeChatUser(m.Model):
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
     # TODO: 同步时间
+
+    synced = m.DateTimeField(_("synced"), null=True, default=None)
     
     class Meta(object):
         ordering = ("app", "-created")
@@ -81,7 +84,7 @@ class WeChatUser(m.Model):
         users = []
         first_openid = None
         if not all:
-            first_openid = app.last_sync_openid
+            first_openid = app.ext_info.get("last_openid", None)
 
         for openids in cls._iter_followers_list(app, first_openid):
             if detail:
@@ -89,11 +92,13 @@ class WeChatUser(m.Model):
             else:
                 with transaction.atomic():
                     users.extend(
-                        cls.objects.create(app=app, openid=openid)
-                        for openid in openids
+                        cls.objects.update_or_create(o, **o)[0]
+                        for o in map(lambda openid: dict(
+                            app=app, openid=openid
+                        ), openids)
                     )
             # 更新最后更新openid
-            app.last_sync_openid = openids[-1]
+            app.ext_info["last_openid"] = openids[-1]
             app.save()
         return users
 
@@ -109,15 +114,17 @@ class WeChatUser(m.Model):
             lambda o: {k: v for k, v in o.items() if k in fields},
             app.client.user.get_batch(openids)
         )
+        rv = []
         with transaction.atomic():
-            return list(map(
-                lambda o: cls.objects.update_or_create(
+            for o in update_dicts:
+                o["synced"] = tz.datetime.now()
+                user = cls.objects.update_or_create(
                     defaults=o,
                     app=app,
                     openid=o["openid"]
-                )[0], 
-                update_dicts
-            ))
+                )[0]
+                rv.append(user)
+            return rv
 
     @classmethod
     def upsert_by_oauth(cls, app, user_dict):
@@ -127,6 +134,7 @@ class WeChatUser(m.Model):
             k: v for k, v in user_dict.items()
             if k in map(lambda o: o.name, cls._meta.fields)
         }
+        updates["synced"] = tz.datetime.now()
         return cls.objects.update_or_create(defaults=updates,
             app=app, openid=updates["openid"])
 

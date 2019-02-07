@@ -1,6 +1,10 @@
 # wechat_django
 
-本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,旨在为有在django框架下接入微信公众平台的开发者提供便利.支持的最低django版本为1.11.
+**wechat_django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的后台管理支持.
+
+本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
+
+目前没有使用在生产环境使用本项目的案例,也尚未编写单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了简单徒手测试
 
 > 注意,框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
 
@@ -10,14 +14,12 @@
 * 最基本的公众号管理
 * 同步用户及用户查看,备注
 * 最基本的菜单管理
-* 同步公众号自动回复,管理自动回复,转发自动回复和自定义自动回复业务,公众号接收消息日志
-* 素材同步及查看
+* 同步公众号自动回复,管理自动回复,转发和自定义自动回复业务,接收消息日志
+* 永久素材同步及查看
 * 图文同步及查看
 * 服务号网页授权
 * 主动调用微信api封装
 * 微信网页授权
-
-目前没有使用在生产环境的案例,只在python3.4 django-1.11 下进行了徒手测试
 
 ## 安装
 
@@ -34,7 +36,7 @@
 | --- | --- | --- |
 | WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
-| WECHAT_WECHATCLIENTFACTORY | "wechat_django.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
+| WECHAT_WECHATCLIENTFACTORY | "wechat_django.utils.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
 | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp超过该值的将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放 默认检查 |
 

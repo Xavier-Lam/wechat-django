@@ -1,6 +1,5 @@
-from contextlib import contextmanager
+from django.utils.http import urlencode
 import logging
-import re
 
 from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient, 
     WeChatOAuth as _WeChatOAuth)
@@ -18,11 +17,17 @@ class WeChatMaterial(api.WeChatMaterial):
         )
 
 class WeChatClient(_WeChatClient):
+    """继承原有WeChatClient添加日志功能 追加accesstoken url获取"""
     appname = None
     # 增加raw_get方法
     material = WeChatMaterial()
 
-    """继承原有WeChatClient添加日志功能"""
+    ACCESSTOKEN_URL = None
+
+    def _fetch_access_token(self, url, params):
+        """自定义accesstoken url"""
+        return super()._fetch_access_token(self.ACCESSTOKEN_URL or url, params)
+        
     def _request(self, method, url_or_endpoint, **kwargs):
         msg = self._log_msg(method, url_or_endpoint, **kwargs)
         self._logger("req").debug(msg)
@@ -61,34 +66,24 @@ class WeChatClient(_WeChatClient):
         return msg
 
 class WeChatOAuth(_WeChatOAuth):
+    OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
+    QRCONNECT_URL = "https://open.weixin.qq.com/connect/qrconnect"
+
     def __init__(self, app_id, secret):
         super(WeChatOAuth, self).__init__(app_id, secret, "")
 
     def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
-        with self._with_args(redirect_uri, scope=scope, state=state):
-            return super(WeChatOAuth, self).authorize_url
+        return self.OAUTH_URL + "?" + urlencode(dict(
+            appid=self.app_id,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope=scope
+        )) + "#wechat_redirect"
     
-    def qrconnect_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
-        with self._with_args(redirect_uri, scope=scope, state=state):
-            return super(WeChatOAuth, self).qrconnect_url
-
-    @contextmanager
-    def _with_args(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
-        try:
-            self.redirect_uri = redirect_uri
-            self.scope = scope
-            self.state = state
-            yield self
-        finally:
-            self.redirect_uri = None
-            self.scope = None
-            self.state = ""
-
-def in_wechat(request):
-    """判断是否时微信环境"""
-    ua = request.META["HTTP_USER_AGENT"]
-    return bool(re.search(r"micromessenger", ua, re.IGNORECASE))
-
-def get_wechat_client(wechat_app):
-    """:type wechat_app: wechat_django.models.WeChatApp"""
-    return WeChatClient
+    def qrconnect_url(self, redirect_uri, state=""):
+        return self.QRCONNECT_URL + "?" + urlencode(dict(
+            appid=self.app_id,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope="snsapi_login"
+        )) + "#wechat_redirect"
