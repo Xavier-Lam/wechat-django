@@ -8,6 +8,8 @@ from ..models import Menu, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class MenuAdmin(WeChatAdmin):
+    __category__ = "menu"
+
     actions = ("sync", )
 
     list_display = ("title", "type", "detail", "weight", "updated")
@@ -33,8 +35,8 @@ class MenuAdmin(WeChatAdmin):
     detail.allow_tags = True
 
     def sync(self, request, queryset):
-        app_id = self.get_request_app_id(request)
-        app = WeChatApp.get_by_id(app_id)
+        self.check_wechat_permission(request, "sync")
+        app = self.get_app(request)
         try:
             Menu.sync(app)
             self.message_user(request, "menus successfully synchronized")

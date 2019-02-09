@@ -26,7 +26,8 @@ class WeChatClient(_WeChatClient):
 
     def _fetch_access_token(self, url, params):
         """自定义accesstoken url"""
-        return super()._fetch_access_token(self.ACCESSTOKEN_URL or url, params)
+        return super(WeChatClient, self)._fetch_access_token(
+            self.ACCESSTOKEN_URL or url, params)
         
     def _request(self, method, url_or_endpoint, **kwargs):
         msg = self._log_msg(method, url_or_endpoint, **kwargs)

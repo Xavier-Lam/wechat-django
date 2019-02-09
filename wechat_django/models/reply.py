@@ -6,14 +6,14 @@ import requests
 from wechatpy import replies
 
 from . import Article, Material, MessageHandler, ReplyMsgType, WeChatMessage
-from .. import utils
+from ..utils.django import enum2choices
 
 class Reply(m.Model):
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="replies")
 
     msg_type = m.CharField(_("type"), max_length=16,
-        choices=utils.enum2choices(ReplyMsgType))
+        choices=enum2choices(ReplyMsgType))
     content = JSONField()
 
     @property
@@ -54,8 +54,12 @@ class Reply(m.Model):
             except:
                 raise NotImplementedError("custom bussiness not found")
             else:
-                if not getattr(func, "message_handler", None):
+                if not hasattr(func, "message_handler"):
                     e = "handler must be decorated by wechat_django.decorators.message_handler"
+                    raise ValueError(e)
+                elif (hasattr(func.message_handler, "__contains__") and
+                    self.app.name not in func.message_handler):
+                    e = "this handler cannot assigned to {0}".format(self.app.name)
                     raise ValueError(e)
                 reply = func(WeChatMessage(self.app, message))
                 if not reply:

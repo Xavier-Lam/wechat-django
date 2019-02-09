@@ -8,6 +8,8 @@ from ..utils.admin import linkify
 from .bases import WeChatAdmin
 
 class MessageLogAdmin(WeChatAdmin):
+    __category__ = "messagelog"
+    
     list_display = ("msg_id", linkify("user"), "type", "content", "created")
     list_filter = ("type", )
     search_fields = ("=user__openid", "=user__unionid", "user__nickname",

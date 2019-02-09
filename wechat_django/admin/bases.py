@@ -5,6 +5,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
+from django.core.exceptions import PermissionDenied
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy as _
 from six.moves.urllib.parse import parse_qsl
@@ -25,6 +26,21 @@ def search_form(cl):
     搜索form带app_id
     """
     return admin_list.search_form(cl)
+    
+def has_wechat_permission(request, app, category="", operate="", obj=None):
+    """
+    检查用户是否具有某一微信权限
+    :type request: django.http.request.HttpRequest
+    """
+    strings = (app.name, category, operate)
+    perms = []
+    for i in range(len(list(filter(bool, strings)))):
+        perm = "_".join(strings[: i + 1])
+        perms.append("wechat_django.{0}".format(perm))
+    
+    for perm in perms:
+        if request.user.has_perm(perm, obj):
+            return True
 
 class ChangeList(_ChangeList):
     def __init__(self, request, *args, **kwargs):
@@ -63,24 +79,23 @@ class WeChatAdmin(admin.ModelAdmin):
         return ChangeList
 
     def _update_context(self, request, context):
-        app_id = self.get_request_app_id(request)
+        app = self.get_app(request)
         context = context or dict()
         context.update(dict(
-            app_id=app_id,
-            app=WeChatApp.get_by_id(app_id)
+            app_id=app.id,
+            app=app
         ))
         return context
 
     def get_queryset(self, request):
         self.request = request
         rv = super(WeChatAdmin, self).get_queryset(request)
-        # TODO: 检查权限
-        app_id = self.get_request_app_id(request)
+        app_id = self.get_app(request).id
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
     def get_preserved_filters(self, request):
         with mutable_GET(request.GET) as GET:
-            GET["app_id"] = self.get_request_app_id(request)
+            GET["app_id"] = self.get_app(request).id
             try:
                 return super(WeChatAdmin, self).get_preserved_filters(request)
             finally:
@@ -91,17 +106,43 @@ class WeChatAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.app_id = self.get_request_app_id(request)
+            obj.app_id = self.get_app(request).id
         return super(WeChatAdmin, self).save_model(request, obj, form, change)
 
     def get_model_perms(self, request):
         # 隐藏首页上的菜单
-        if self.get_request_app_id(request):
+        if self.get_app(request, True):
             return super(WeChatAdmin, self).get_model_perms(request)
         return {}
 
-    def get_request_app_id(self, request):
-        return self._get_request_params(request, "app_id")
+    def check_wechat_permission(self, request, operate="", category="", obj=None):
+        if not self.has_wechat_permission(request, operate, category, obj):
+            raise PermissionDenied
+
+    def has_wechat_permission(self, request, operate="", category="", obj=None):
+        app = self.get_app(request)
+        category = category or self.__category__
+        return has_wechat_permission(request, app, category, operate, obj)
+    
+    def has_add_permission(self, request):
+        return self.has_wechat_permission(request, "add")
+
+    def has_change_permission(self, request, obj=None):
+        return self.has_wechat_permission(request, "change", obj=obj)
+    
+    def has_delete_permission(self, request, obj=None):
+        return self.has_wechat_permission(request, "delete", obj=obj)
+
+    def get_app(self, request, nullable=False):
+        if not hasattr(request, "app"):
+            app_id = self._get_request_params(request, "app_id")
+            try:
+                request.app = WeChatApp.get_by_id(app_id)
+            except WeChatApp.DoesNotExist:
+                if not nullable:
+                    raise
+                request.app = None
+        return request.app
     
     @staticmethod
     def _get_request_params(request, param):
@@ -118,7 +159,7 @@ class WeChatAdmin(admin.ModelAdmin):
         return getattr(request, param)
     
     def logger(self, request):
-        app = WeChatApp.get_by_id(self.get_request_app_id(request))
+        app = self.get_app(request)
         name = "wechat.admin.{0}".format(app.name)
         return logging.getLogger(name)
 
@@ -130,7 +171,6 @@ class DynamicChoiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         inst = kwargs.get("instance")
         if inst:
-            type = getattr(inst, self.type_field)
             initial = kwargs.get("initial", {})
             initial.update(getattr(inst, self.content_field))
             kwargs["initial"] = initial

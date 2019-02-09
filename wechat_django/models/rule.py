@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 from wechatpy.events import BaseEvent
 
-from .. import utils
+from ..utils.django import enum2choices
 from . import MessageHandler, ReceiveMsgType
 
 class Rule(m.Model):
@@ -22,7 +22,7 @@ class Rule(m.Model):
         related_name="rules", null=False)
 
     type = m.CharField(_("type"), max_length=16,
-        choices=utils.enum2choices(Type)) # 规则类型
+        choices=enum2choices(Type)) # 规则类型
     rule = JSONField(blank=True) # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)

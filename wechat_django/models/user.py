@@ -5,7 +5,7 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from django.utils import timezone as tz
 
-from .. import utils
+from ..utils.django import enum2choices
 from . import WeChatApp
 
 class WeChatUser(m.Model):
@@ -30,7 +30,7 @@ class WeChatUser(m.Model):
     unionid = m.CharField(_("unionid"), max_length=36, null=True)
 
     nickname = m.CharField(_("nickname"), max_length=24, null=True)
-    sex = m.SmallIntegerField(_("gender"), choices=utils.enum2choices(Gender), 
+    sex = m.SmallIntegerField(_("gender"), choices=enum2choices(Gender), 
         null=True)
     headimgurl = m.CharField(_("avatar"), max_length=256, null=True)
     city = m.CharField(_("city"), max_length=24, null=True)
@@ -41,7 +41,7 @@ class WeChatUser(m.Model):
     subscribe = m.NullBooleanField(_("is subscribed"), null=True)
     subscribe_time = m.IntegerField(_("subscribe time"), null=True)
     subscribe_scene = m.CharField(_("subscribe scene"), max_length=32,
-        null=True, choices=utils.enum2choices(SubscribeScene))
+        null=True, choices=enum2choices(SubscribeScene))
     qr_scene = m.IntegerField(_("qr scene"), null=True)
     qr_scene_str = m.CharField(_("qr_scene_str"), max_length=64, null=True)
 

@@ -11,7 +11,7 @@ from jsonfield import JSONField
 
 from .. import settings
 from ..patches import WeChatOAuth
-from . import EventType
+from . import EventType, permissions
 
 class WeChatApp(m.Model):
     class EncodingMode(object):
@@ -122,12 +122,13 @@ class WeChatApp(m.Model):
     def __str__(self):
         return "{title} ({name})".format(title=self.title, name=self.name)
 
-permissions = (
-    "{appname}_full",
-    "{appname}_manage",
-    "{appname}_menu",
-    "{appname}_handlemessage",
-)
+def _list_permission(app):
+    rv = [app.name]
+    rv.extend(
+        "{name}_{perm}".format(name=app.name, perm=perm)
+        for perm in permissions
+    )
+    return rv
 
 @receiver(m.signals.post_save, sender=WeChatApp)
 def execute_after_save(sender, instance, created, *args, **kwargs):
@@ -136,11 +137,11 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
         content_type = ContentType.objects.get_for_model(WeChatApp)
         Permission.objects.bulk_create(
             Permission(
-                codename=permission.format(appname=instance.name),
-                name=permission.format(appname=instance.name),
+                codename=perm,
+                name=perm,
                 content_type=content_type
             )
-            for permission in permissions
+            for perm in _list_permission(instance)
         )
 
 @receiver(m.signals.post_delete, sender=WeChatApp)
@@ -148,6 +149,5 @@ def execute_after_delete(sender, instance, *args, **kwargs):
     content_type = ContentType.objects.get_for_model(WeChatApp)
     Permission.objects.filter(
         content_type=content_type,
-        codename__in=[permission.format(appname=instance.name) \
-            for permission in permissions]
+        codename__in=[perm for perm in _list_permission(instance)]
     ).delete()

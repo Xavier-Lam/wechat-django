@@ -1,59 +1,30 @@
-from functools import wraps
 import logging
 import time
 
-from django.conf.urls import url
 from django.core.cache import cache
 from django.http import response
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 import requests
 from wechatpy import parse_message
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from wechatpy.utils import check_signature
 
-from . import settings, utils
+from . import settings
+from .decorators import wechat_route
 from .exceptions import WeChatApiError
 from .models import MessageHandler, WeChatApp
+from .utils.django import get_ip
 
 __all__ = ("handler", "material_proxy", "urls")
 
-url_patterns = []
-
-def wechat_route(route, methods=None, name=""):
-    if not methods:
-        methods = ("GET",)
-    def decorator(func):
-        func = csrf_exempt(func)
-        @wraps(func)
-        def decorated_func(request, *args, **kwargs):
-            if request.method not in methods:
-                return response.HttpResponseNotAllowed(methods)
-                
-            resp = func(request, *args, **kwargs)
-            if not isinstance(resp, response.HttpResponse):
-                resp = response.HttpResponse(resp.encode())
-            return resp
-
-        pattern = url(
-            r"^(?P<appname>[-_a-zA-Z\d]+)/" + route,
-            decorated_func,
-            name=name or func.__name__
-        )
-        url_patterns.append(pattern)
-        return decorated_func
-    return decorator
-
 @wechat_route("$", methods=("GET", "POST"))
-def handler(request, appname):
+def handler(request, app):
     """接收及处理微信发来的消息
-    
     :type request: django.http.request.HttpRequest
     """
-    app = get_object_or_404(WeChatApp, name=appname)
-    logger = logging.getLogger("wechat.handler.{0}".format(appname))
+    logger = logging.getLogger("wechat.handler.{0}".format(app.name))
     log_args = dict(params=request.GET, body=request.body, 
-        ip=utils.get_ip(request))
+        ip=get_ip(request))
     logger.debug("received: {0}".format(log_args))
     if not app.interactable():
         return response.HttpResponseNotFound()
@@ -132,30 +103,23 @@ def handler(request, appname):
     return response.HttpResponse(xml, content_type="text/xml")
 
 @wechat_route(r"materials/(?P<media_id>[_a-zA-Z\d]+)$")
-def material_proxy(request, appname, media_id):
+def material_proxy(request, app, media_id):
     """代理下载微信的素材"""
-    # TODO: cache
-    app = WeChatApp.get_by_name(appname)
-    if not app:
-        return response.Http404()
-
     try:
         resp = app.client.material.get(media_id)
     except WeChatClientException as e:
         if e.errcode == WeChatApiError.INVALIDMEDIAID:
-            return response.Http404()
-        logging.getLogger("wechat.views.{0}".format(appname)).warning(
+            return response.HttpResponseNotFound()
+        logging.getLogger("wechat.views.{0}".format(app.name)).warning(
             "an exception occurred when download material",
             exc_info=True)
         return response.HttpResponseServerError()
     if not isinstance(resp, requests.Response):
         # 暂时只处理image和voice
-        return response.Http404()
+        return response.HttpResponseNotFound()
     
     rv = response.FileResponse(resp.content)
     for k, v in resp.headers.items():
         if k.lower().startswith("content-"):
             rv[k] = v
     return rv
-
-urls = (url_patterns, "", "")

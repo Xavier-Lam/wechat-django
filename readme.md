@@ -1,12 +1,12 @@
-# wechat_django
+# WeChat-Django
 
-**wechat_django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的后台管理支持.
+**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的后台管理支持.
+
+项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
 本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
 
-目前没有使用在生产环境使用本项目的案例,也尚未编写单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了简单徒手测试
-
-> 注意,框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
+目前没有使用在生产环境使用本项目的案例,也尚未编写单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试
 
 [TOC]
 
@@ -21,17 +21,21 @@
 * 主动调用微信api封装
 * 微信网页授权
 
-## 安装
-
-1. 安装**pip install wechat_django**
-
+## 安装及配置
+### 初次安装
+1. 安装**pip install wechat-django**
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
-4. 在urls.py 中引入wechat_django.views.urls, 将其配置到urlpatterns中
+4. 在urls.py 中引入wechat_django.urls, 将其配置到urlpatterns中
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
 
-## 配置
+### 更新
+1. 运行**pip install -U wechat-django**
+2. 运行**manage.py migrate wechat_django** 来更新数据库结构
+
+### 配置
+一般而言,默认配置足以满足需求
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
 | WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
@@ -39,6 +43,20 @@
 | WECHAT_WECHATCLIENTFACTORY | "wechat_django.utils.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
 | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp超过该值的将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放 默认检查 |
+
+### 日志
+| logger | 说明 |
+| --- | --- |
+| wechat.admin.{appname} | admin异常日志 最低级别warning |
+| wechat.api.req.{appname} | api请求日志 级别debug |
+| wechat.api.resp.{appname} | api响应日志 级别debug |
+| wechat.api.excs.{appname} | api异常日志 最低级别warning |
+| wechat.handler.{appname} | 消息处理日志 最低级别debug |
+| wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
+| wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
+
+### 注意事项
+> 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
 
 ## 部分功能使用说明
 ### 网页授权
@@ -76,32 +94,28 @@
             user, msg.type)
         return TextReply(content=text.encode())
 
+## 后台使用简介
+### 权限
+
 ## 示例项目
 可参考本项目sample文件夹
 
-## 预览
-
-## 日志
-| logger | 说明 |
-| --- | --- |
-| wechat.admin.{appname} | admin异常日志 最低级别warning |
-| wechat.api.req.{appname} | api请求日志 级别debug |
-| wechat.api.resp.{appname} | api响应日志 级别debug |
-| wechat.api.excs.{appname} | api异常日志 最低级别warning |
-| wechat.handler.{appname} | 消息处理日志 最低级别debug |
-| wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
-| wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
-
 ## TODOS:
 * 本地化
+* 权限管理
+* 完成菜单功能
+* 后台表单验证
+* 单元测试
+* 文档
+
+### 计划的功能
 * 用户分组管理
-* 移除未使用的永久素材
+* 客服消息
+* 消息回应日志
+* 清理永久素材
 * 将部分actions改为object-tool
 * 转发多回复
 * 回复缓存
-* 权限管理
-* 单元测试
-* 文档
 
 ## ChangeLog
 ### 0.1.0.0

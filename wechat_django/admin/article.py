@@ -12,6 +12,8 @@ from ..models import Article, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class ArticleAdmin(WeChatAdmin):
+    __category__ = "article"
+
     actions = ("sync",)
     list_display = ("title", "author", "material_link", "index", "digest", 
         "link", "source_url", "synced_at")
@@ -50,7 +52,7 @@ class ArticleAdmin(WeChatAdmin):
                 link="{path}?{query}".format(
                     path=reverse("admin:wechat_django_material_change", args=(m.id,)),
                     query=urlencode(dict(
-                        app_id=self.get_request_app_id(self.request)
+                        app_id=self.get_app(self.request).id
                     ))
                 ),
                 title="{comment} ({media_id})".format(
@@ -76,8 +78,8 @@ class ArticleAdmin(WeChatAdmin):
         return actions
 
     def sync(self, request, queryset):
-        app_id = self.get_request_app_id(request)
-        app = WeChatApp.get_by_id(app_id)
+        self.check_wechat_permission(request, "sync")
+        app = self.get_app(request)
         try:
             materials = Article.sync(app)
             self.message_user(request, 

@@ -12,6 +12,8 @@ from ..models import Material, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class MaterialAdmin(WeChatAdmin):
+    __category__ = "material"
+
     actions = ("delete_selected", "sync", )
     list_display = ("media_id", "type", "comment", "updatetime")
     list_filter = ("type", )
@@ -32,19 +34,19 @@ class MaterialAdmin(WeChatAdmin):
 
     def open(self, obj):
         blank = True
+        request = self.request
         if obj.type == Material.Type.NEWS:
             url = "{0}?{1}".format(
                 reverse("admin:wechat_django_article_changelist"),
                 urlencode(dict(
-                    app_id=self.get_request_app_id(self.request),
+                    app_id=self.get_app(request).id,
                     material_id=obj.id
                 ))
             )
             blank = False
         elif obj.type == Material.Type.VOICE:
             # 代理下载
-            app_id = self.get_request_app_id(self.request)
-            app = WeChatApp.get_by_id(app_id)
+            app = self.get_app(request)
             url = reverse(views.material_proxy, kwargs=dict(
                 appname=app.name,
                 media_id=obj.media_id
@@ -58,9 +60,8 @@ class MaterialAdmin(WeChatAdmin):
     open.allow_tags = True
 
     def sync(self, request, queryset):
-        app_id = self.get_request_app_id(request)
-        app = WeChatApp.get_by_id(app_id)
-
+        self.check_wechat_permission(request, "sync")
+        app = self.get_app(request)
         try:
             materials = Material.sync(app)
             self.message_user(request, 

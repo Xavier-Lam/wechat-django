@@ -78,7 +78,7 @@ class MessageHandler(m.Model):
         :type message: wechatpy.messages.BaseMessage
         """
         if self.log:
-            # log message
+            # TODO: 移到外边去?
             MessageLog.from_msg(message, self.app)
         reply = ""
         if self.strategy == self.ReplyStrategy.NONE:

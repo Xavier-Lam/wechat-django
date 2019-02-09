@@ -8,6 +8,8 @@ from ..models import WeChatApp, WeChatUser
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class WeChatUserAdmin(WeChatAdmin):
+    __category__ = "user"
+
     actions = ("sync", "sync_all", "update")
     list_display = ("openid", "nickname", "avatar", "subscribe", "remark",# "groupid", 
         "created")
@@ -28,10 +30,10 @@ class WeChatUserAdmin(WeChatAdmin):
     subscribetime.short_description = "subscribe time"
     
     def sync(self, request, queryset, method="sync", kwargs=None):
+        self.check_wechat_permission(request, "sync")
         # 可能抛出48001 没有api权限
         kwargs = kwargs or dict()
-        app_id = self.get_request_app_id(request)
-        app = WeChatApp.get_by_id(app_id)
+        app = self.get_app(request)
         try:
             users = getattr(WeChatUser, method)(app, **kwargs)
             self.message_user(request, 

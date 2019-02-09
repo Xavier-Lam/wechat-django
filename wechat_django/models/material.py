@@ -5,8 +5,8 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatClientException
 
-from .. import utils
 from ..exceptions import WeChatApiError
+from ..utils.django import enum2choices
 from . import WeChatApp
 
 class Material(m.Model):
@@ -19,7 +19,7 @@ class Material(m.Model):
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="materials")
     type = m.CharField(_("type"), max_length=5,
-        choices=(utils.enum2choices(Type)))
+        choices=(enum2choices(Type)))
     media_id = m.CharField(_("media_id"), max_length=64)
     name = m.CharField(_("name"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)

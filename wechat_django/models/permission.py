@@ -1,0 +1,15 @@
+permissions = (
+    "manage",
+    "article",
+    "article_sync",
+    "material",
+    "material_sync",
+    "menu",
+    "menu_sync",
+    "menu_publish",
+    "messagehandler",
+    "messagehandler_sync",
+    "messagelog",
+    "user",
+    "user_sync",
+)

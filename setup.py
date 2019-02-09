@@ -10,7 +10,7 @@ setup(
     version='0.1.0.0',
     author='Xavier-Lam',
     author_email='Lam.Xavier@hotmail.com',
-    url='https://github.com/Xavier-Lam/django-wechat',
+    url='https://github.com/Xavier-Lam/wechat-django',
     packages=find_packages(),
     keywords='wechat, weixin, wx, micromessenger',
     description='WeChat Django Extension',

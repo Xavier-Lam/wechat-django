@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
 from . import MessageHandler, ReplyMsgType, WeChatApp
-from .. import utils
+from ..utils.django import enum2choices
 
 class Menu(m.Model):
     class Event(object):
@@ -30,7 +30,7 @@ class Menu(m.Model):
     menuid = m.IntegerField(_("menuid"), null=True, blank=True)
     parent = m.ForeignKey("Menu", on_delete=m.CASCADE,
         null=True, blank=True, related_name="sub_button")
-    type = m.CharField(_("type"), max_length=20, choices=utils.enum2choices(Event),
+    type = m.CharField(_("type"), max_length=20, choices=enum2choices(Event),
         null=True, blank=True)
     content = JSONField()
 
@@ -82,7 +82,7 @@ class Menu(m.Model):
         return menu
 
     @staticmethod
-    def upload(app, menuid=None):
+    def publish(app, menuid=None):
         """
         :type app: .WeChatApp
         """

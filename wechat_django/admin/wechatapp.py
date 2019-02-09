@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
@@ -6,6 +8,7 @@ from django.utils.translation import ugettext as _
 
 from .. import views
 from ..models import WeChatApp
+from .bases import has_wechat_permission
 
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
@@ -40,7 +43,33 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         self.request = request
-        return super(WeChatAppAdmin, self).get_queryset(request)
+        rv = super(WeChatAppAdmin, self).get_queryset(request)
+
+        # 非管理员 过滤拥有的微信号权限
+        if not super(WeChatAppAdmin, self).has_change_permission(request):
+            allowed_apps = self._get_allowed_apps(request)
+            rv = rv.filter(name__in=allowed_apps)
+
+        return rv
+
+    def has_change_permission(self, request, obj=None):
+        rv = super(WeChatAppAdmin, self).has_change_permission(request, obj)
+        if not rv:
+            if obj:
+                return has_wechat_permission(request, obj, "manage")
+            else:
+                return bool(self._get_allowed_apps(request))
+        return rv
+
+    def _get_allowed_apps(self, request):
+        """有权限的微信号"""
+        all_perms = request.user.get_all_permissions()
+        pattern = r"wechat_django.(\w+?)(?:_manage)?$"
+        rv = set()
+        for perm in all_perms:
+            m = re.match(pattern, perm)
+            m and rv.add(m.group(1))
+        return rv
 
     def get_model_perms(self, request):
         return ({} if request.resolver_match.kwargs.get("app_id") 

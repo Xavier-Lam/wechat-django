@@ -6,7 +6,7 @@ from wechatpy.exceptions import WeChatException
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
     Reply, ReplyMsgType, Rule, WeChatApp)
-from ..utils import check_wechat_permission, enum2choices
+from ..utils.django import enum2choices
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class RuleInline(admin.StackedInline):
@@ -94,6 +94,8 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 class MessageHandlerAdmin(WeChatAdmin):
+    __category__ = "messagehandler"
+
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")
         parameter_name = "available"
@@ -120,8 +122,8 @@ class MessageHandlerAdmin(WeChatAdmin):
         "weight", "created", "updated")
 
     def sync(self, request, queryset):
-        app_id = self.get_request_app_id(request)
-        app = WeChatApp.get_by_id(app_id)
+        self.check_wechat_permission(request, "sync")
+        app = self.get_app(request)
         try:
             handlers = MessageHandler.sync(app)
             self.message_user(request, 
