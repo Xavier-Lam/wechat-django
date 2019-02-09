@@ -1,4 +1,7 @@
+import re
+
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 
 def linkify(field_name):
     """
@@ -22,4 +25,12 @@ def linkify(field_name):
     _linkify.short_description = field_name # TODO: 改为_
     _linkify.allow_tags = True
     _linkify.admin_order_field = field_name
-    return _linkify
+    return _linkifyimport re
+
+def enum2choices(enum):
+    pattern = re.compile(r"^[A-Z][A-Z_\d]+$")
+    return tuple(
+        (getattr(enum, key), _(key))
+        for key in dir(enum)
+        if re.match(pattern, key)
+    )

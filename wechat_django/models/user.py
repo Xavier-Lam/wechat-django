@@ -5,7 +5,7 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from django.utils import timezone as tz
 
-from ..utils.django import enum2choices
+from ..utils.admin import enum2choices
 from . import WeChatApp
 
 class WeChatUser(m.Model):

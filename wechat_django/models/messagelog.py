@@ -2,7 +2,7 @@ from django.db import models as m
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
-from ..utils.django import enum2choices
+from ..utils.admin import enum2choices
 from . import ReceiveMsgType, WeChatApp, WeChatUser
 
 class MessageLog(m.Model):

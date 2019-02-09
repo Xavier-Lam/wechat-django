@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..exceptions import WeChatApiError
-from ..utils.django import enum2choices
+from ..utils.admin import enum2choices
 from . import WeChatApp
 
 class Material(m.Model):

@@ -5,8 +5,8 @@ from jsonfield import JSONField
 import requests
 from wechatpy import replies
 
+from ..utils.admin import enum2choices
 from . import Article, Material, MessageHandler, ReplyMsgType, WeChatMessage
-from ..utils.django import enum2choices
 
 class Reply(m.Model):
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,

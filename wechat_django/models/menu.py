@@ -6,8 +6,8 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
+from ..utils.admin import enum2choices
 from . import MessageHandler, ReplyMsgType, WeChatApp
-from ..utils.django import enum2choices
 
 class Menu(m.Model):
     class Event(object):

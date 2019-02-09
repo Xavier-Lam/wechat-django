@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 from wechatpy.events import BaseEvent
 
-from ..utils.django import enum2choices
+from ..utils.admin import enum2choices
 from . import MessageHandler, ReceiveMsgType
 
 class Rule(m.Model):

@@ -13,7 +13,7 @@ from . import settings
 from .decorators import wechat_route
 from .exceptions import WeChatApiError
 from .models import MessageHandler, WeChatApp
-from .utils.django import get_ip
+from .utils.web import get_ip
 
 __all__ = ("handler", "material_proxy", "urls")
 

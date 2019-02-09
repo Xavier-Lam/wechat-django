@@ -6,7 +6,7 @@ from wechatpy.exceptions import WeChatException
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
     Reply, ReplyMsgType, Rule, WeChatApp)
-from ..utils.django import enum2choices
+from ..utils.admin import enum2choices
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 class RuleInline(admin.StackedInline):
