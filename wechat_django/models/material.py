@@ -49,7 +49,7 @@ class Material(m.Model):
             return cls.create(app=app, type=type, media_id=id, **data)
         else:
             updated = []
-            for type, _ in utils.enum2choices(cls.Type):
+            for type, _ in enum2choices(cls.Type):
                 with transaction.atomic():
                     updates = cls.sync_type(type, app)
                     updated.extend(updates)
@@ -118,6 +118,13 @@ class Material(m.Model):
                 url=data.get("url"))
         else:
             return media_id
+
+    @classmethod
+    def upload_temporary(cls, file, type):
+        """上传临时素材
+        :param type: image|voice|video|thumb
+        """
+        return app.client.media.upload(type, file)
 
     @classmethod
     def create(cls, app, type=None, **kwargs):

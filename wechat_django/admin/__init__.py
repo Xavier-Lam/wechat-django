@@ -1,6 +1,3 @@
-from django.conf.urls import url, include
-from django.urls import NoReverseMatch, reverse
-from django.utils.http import urlencode
 from django.utils.module_loading import import_string
 
 from .. import settings
@@ -9,9 +6,16 @@ def patch_admin(admin):
     """
     :type admin: django.contrib.admin.sites.AdminSite
     """
+    import re
+
+    from django.conf.urls import url, include
+    from django.urls import NoReverseMatch, reverse
+    from django.utils.http import urlencode
+
     from ..apps import WeChatConfig
     from ..models import WeChatApp
     from .bases import WeChatAdmin
+
     app_label = WeChatConfig.name
     fake_app_label = app_label + "_apps"
 
@@ -40,35 +44,45 @@ def patch_admin(admin):
             else:
                 # 原始菜单
                 pass
-        # TODO: 可能需要考虑app_dict不存在的情况
-
+                
         return rv
 
     def _build_wechat_app_dict(self, request):
         apps = WeChatApp.objects.all()
+        if request.user.is_superuser:
+            allowed_apps = apps
+        else:
+            perms = request.user.get_all_permissions()
+            allowed_apps = []
+            for app in apps:
+                for perm in perms:
+                    if re.match(r"wechat_django.{0}".format(app.name), perm):
+                        allowed_apps.append(app)
+                        break
+        app_perms = [
+            dict(
+                name=str(app),
+                object_name=app.name,
+                perms=dict(
+                    change=True,
+                ),
+                admin_url=reverse(
+                    'admin:wechat_funcs_list', 
+                    current_app=self.name,
+                    kwargs=dict(
+                        app_id=app.id,
+                        app_label=app_label
+                    )
+                )
+            )
+            for app in allowed_apps
+        ]
         return {
             'name': app_label,
             'app_label': app_label,
             # 'app_url': "#", # TODO: 修订app_url
-            'has_module_perms': True, # TODO: 修订权限
-            'models': [
-                dict(
-                    name=str(app),
-                    object_name=app.name,
-                    perms=dict(
-                        change=True, # TODO: 修订权限
-                    ),
-                    admin_url=reverse(
-                        'admin:wechat_funcs_list', 
-                        current_app=self.name,
-                        kwargs=dict(
-                            app_id=app.id,
-                            app_label=app_label
-                        )
-                    )
-                )
-                for app in apps
-            ],
+            'has_module_perms': bool(app_perms),
+            'models': app_perms,
         }
 
     def get_urls(self):
@@ -87,7 +101,7 @@ def patch_admin(admin):
     admin.get_urls = types.MethodType(get_urls, admin)
 
 admin_site_paths = settings.ADMINSITE
-if not isinstance(admin_site_paths, list):
+if not isinstance(admin_site_paths, (list, tuple)):
     admin_site_paths = [admin_site_paths]
 for site in admin_site_paths:
     admin = import_string(site)

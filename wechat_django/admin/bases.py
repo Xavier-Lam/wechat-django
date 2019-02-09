@@ -13,12 +13,12 @@ from six.moves.urllib.parse import parse_qsl
 from ..models import WeChatApp
 
 @contextmanager
-def mutable_GET(GET):
-    GET._mutable = True
+def mutable_GET(request):
+    request.GET._mutable = True
     try:
-        yield GET
+        yield request.GET
     finally:
-        GET._mutable = False
+        request.GET._mutable = False
 
 @admin_list.register.inclusion_tag('admin/wechat_django/search_form.html')
 def search_form(cl):
@@ -39,19 +39,19 @@ def has_wechat_permission(request, app, category="", operate="", obj=None):
         perms.append("wechat_django.{0}".format(perm))
     
     for perm in perms:
-        if request.user.has_perm(perm, obj):
+        if request.user.has_perm(perm, None):
             return True
 
 class ChangeList(_ChangeList):
     def __init__(self, request, *args, **kwargs):
         # app_id在changelist中会抛出IncorrectLookupParameters异常
         self.app_id = request.GET.get("app_id")
-        with mutable_GET(request.GET) as GET:
+        with mutable_GET(request) as GET:
             GET.pop("app_id", None)
 
         super(ChangeList, self).__init__(request, *args, **kwargs)
 
-        with mutable_GET(request.GET) as GET:
+        with mutable_GET(request) as GET:
             GET["app_id"] = self.app_id
 
     def get_query_string(self, new_params=None, remove=None):
@@ -69,6 +69,16 @@ class WeChatAdmin(admin.ModelAdmin):
             request._set_post(post)
         extra_context = self._update_context(request, extra_context)
         return super(WeChatAdmin, self).changelist_view(request, extra_context)
+
+    def history_view(self, request, object_id, extra_context=None):
+        extra_context = self._update_context(request, extra_context)
+        return super(WeChatAdmin, self).history_view(request, object_id, 
+            extra_context)
+
+    def delete_view(self, request, object_id, extra_context=None):
+        extra_context = self._update_context(request, extra_context)
+        return super(WeChatAdmin, self).delete_view(request, object_id, 
+            extra_context)
 
     def render_change_form(self, request, context, *args, **kwargs):
         context = self._update_context(request, context)
@@ -94,7 +104,7 @@ class WeChatAdmin(admin.ModelAdmin):
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
     def get_preserved_filters(self, request):
-        with mutable_GET(request.GET) as GET:
+        with mutable_GET(request) as GET:
             GET["app_id"] = self.get_app(request).id
             try:
                 return super(WeChatAdmin, self).get_preserved_filters(request)

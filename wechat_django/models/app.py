@@ -26,8 +26,7 @@ class WeChatApp(m.Model):
         unique=True)
     desc = m.TextField(_("description"), default="", blank=True)
 
-    appid = m.CharField(_("AppId"), 
-        max_length=32, null=False, unique=True)
+    appid = m.CharField(_("AppId"), max_length=32, null=False)
     appsecret = m.CharField(_("AppSecret"), 
         max_length=64, null=False)
     token = m.CharField(max_length=32, null=True, blank=True)
@@ -41,23 +40,11 @@ class WeChatApp(m.Model):
 
     flags = m.IntegerField(_("flags"), default=0)
 
-    _ext_info = JSONField(db_column="ext_info")
-    _configurations = JSONField(db_column="configurations")
+    ext_info = JSONField(db_column="ext_info", default={})
+    configurations = JSONField(db_column="configurations", default={})
 
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
-
-    @property
-    def ext_info(self):
-        if self._ext_info is None:
-            self._ext_info = dict()
-        return self._ext_info
-    
-    @property
-    def configurations(self):
-        if self._configurations is None:
-            self._configurations = dict()
-        return self._configurations
 
     @classmethod
     def get_by_id(cls, id):
@@ -68,9 +55,9 @@ class WeChatApp(m.Model):
         """:rtype: WeChatApp"""
         return cls.objects.get(name=name)
 
-    @classmethod
-    def get_by_appid(cls, appid):
-        return cls.objects.get(appid=appid)
+    # @classmethod
+    # def get_by_appid(cls, appid):
+    #     return cls.objects.get(appid=appid)
 
     @property
     def client(self):
