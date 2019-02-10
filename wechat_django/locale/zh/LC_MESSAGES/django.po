@@ -1,0 +1,384 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-02-10 13:16+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\admin\article.py:30 .\admin\article.py:32 .\admin\menu.py:31
+msgid "link"
+msgstr "链接"
+
+#: .\admin\article.py:38 .\admin\article.py:40
+msgid "source_url"
+msgstr ""
+
+#: .\admin\article.py:45
+msgid "thumb_url"
+msgstr ""
+
+#: .\admin\article.py:63
+msgid "material"
+msgstr ""
+
+#: .\admin\article.py:68 .\admin\messagehandler.py:60 .\models\article.py:18
+msgid "content"
+msgstr ""
+
+#: .\admin\article.py:94 .\admin\material.py:76 .\admin\menu.py:50
+#: .\admin\messagehandler.py:138 .\admin\user.py:48
+msgid "sync"
+msgstr ""
+
+#: .\admin\material.py:28
+msgid "preview"
+msgstr ""
+
+#: .\admin\material.py:33 .\models\material.py:26
+msgid "update time"
+msgstr ""
+
+#: .\admin\material.py:57 .\admin\material.py:59
+msgid "open"
+msgstr ""
+
+#: .\admin\material.py:86
+msgid "delete selected"
+msgstr ""
+
+#: .\admin\menu.py:24 .\admin\messagehandler.py:63 .\models\app.py:22
+#: .\models\article.py:11
+msgid "title"
+msgstr ""
+
+#: .\admin\menu.py:34
+msgid "detail"
+msgstr ""
+
+#: .\admin\menu.py:76
+msgid "menu key"
+msgstr ""
+
+#: .\admin\menu.py:77 .\admin\messagehandler.py:59
+#: .\admin\messagehandler.py:66 .\models\article.py:19 .\models\material.py:25
+msgid "url"
+msgstr ""
+
+#: .\admin\menu.py:78
+msgid "app_id"
+msgstr ""
+
+#: .\admin\menu.py:79
+msgid "pagepath"
+msgstr ""
+
+#: .\admin\messagehandler.py:22 .\models\messagelog.py:13
+msgid "message type"
+msgstr ""
+
+#: .\admin\messagehandler.py:24
+msgid "event"
+msgstr ""
+
+#: .\admin\messagehandler.py:26
+msgid "event key"
+msgstr ""
+
+#: .\admin\messagehandler.py:27
+msgid "pattern"
+msgstr ""
+
+#: .\admin\messagehandler.py:58
+msgid "program"
+msgstr ""
+
+#: .\admin\messagehandler.py:62 .\models\material.py:23
+msgid "media_id"
+msgstr ""
+
+#: .\admin\messagehandler.py:64 .\admin\wechatapp.py:24 .\models\app.py:27
+msgid "description"
+msgstr ""
+
+#: .\admin\messagehandler.py:67
+msgid "HQ music url"
+msgstr ""
+
+#: .\admin\messagehandler.py:68
+msgid "thumb media_id"
+msgstr ""
+
+#: .\admin\messagehandler.py:100 .\models\messagehandler.py:58
+msgid "available"
+msgstr ""
+
+#: .\admin\messagehandler.py:143
+msgid "synchronized from wechat"
+msgstr ""
+
+#: .\admin\messagelog.py:24
+msgid "create time"
+msgstr ""
+
+#: .\admin\user.py:25 .\models\user.py:35
+msgid "avatar"
+msgstr ""
+
+#: .\admin\user.py:51
+msgid "sync all"
+msgstr ""
+
+#: .\admin\user.py:56
+msgid "update selected"
+msgstr ""
+
+#: .\models\app.py:23
+msgid "公众号名称"
+msgstr ""
+
+#: .\models\app.py:24 .\models\material.py:24 .\models\menu.py:29
+#: .\models\messagehandler.py:22
+msgid "name"
+msgstr ""
+
+#: .\models\app.py:24
+msgid "公众号唯一标识,可采用微信号"
+msgstr ""
+
+#: .\models\app.py:29
+msgid "AppId"
+msgstr ""
+
+#: .\models\app.py:30
+msgid "AppSecret"
+msgstr ""
+
+#: .\models\app.py:33
+msgid "EncodingAESKey"
+msgstr ""
+
+#: .\models\app.py:35
+msgid "encoding mode"
+msgstr ""
+
+#: .\models\app.py:36
+msgid "plain"
+msgstr ""
+
+#: .\models\app.py:38
+msgid "safe"
+msgstr ""
+
+#: .\models\app.py:41
+msgid "flags"
+msgstr ""
+
+#: .\models\app.py:46 .\models\material.py:31 .\models\messagehandler.py:40
+#: .\models\rule.py:29 .\models\user.py:53
+msgid "created"
+msgstr ""
+
+#: .\models\app.py:47 .\models\article.py:29 .\models\material.py:32
+#: .\models\messagehandler.py:41 .\models\user.py:54
+msgid "updated"
+msgstr ""
+
+#: .\models\app.py:107
+msgid "interactable"
+msgstr ""
+
+#: .\models\article.py:12
+msgid "thumb_media_id"
+msgstr ""
+
+#: .\models\article.py:13
+msgid "show cover"
+msgstr ""
+
+#: .\models\article.py:14
+msgid "author"
+msgstr ""
+
+#: .\models\article.py:16
+msgid "digest"
+msgstr ""
+
+#: .\models\article.py:20
+msgid "content source url"
+msgstr ""
+
+#: .\models\article.py:22 .\models\article.py:23
+msgid "need open comment"
+msgstr ""
+
+#: .\models\article.py:26
+msgid "index"
+msgstr ""
+
+#: .\models\material.py:21 .\models\menu.py:33 .\models\reply.py:15
+#: .\models\rule.py:24
+msgid "type"
+msgstr ""
+
+#: .\models\material.py:29
+msgid "comment"
+msgstr ""
+
+#: .\models\menu.py:30
+msgid "menuid"
+msgstr ""
+
+#: .\models\menu.py:37 .\models\messagehandler.py:39 .\models\rule.py:28
+msgid "weight"
+msgstr ""
+
+#: .\models\messagehandler.py:28
+msgid "strategy"
+msgstr ""
+
+#: .\models\messagehandler.py:33
+msgid "log"
+msgstr ""
+
+#: .\models\messagehandler.py:35
+msgid "starts"
+msgstr ""
+
+#: .\models\messagehandler.py:36
+msgid "ends"
+msgstr ""
+
+#: .\models\messagehandler.py:37
+msgid "enabled"
+msgstr ""
+
+#: .\models\messagelog.py:12
+msgid "msgid"
+msgstr ""
+
+#: .\models\messagelog.py:16
+msgid "createtime"
+msgstr ""
+
+#: .\models\messagelog.py:18
+msgid "created_at"
+msgstr ""
+
+#: .\models\reply.py:137 .\models\reply.py:168
+msgid "video"
+msgstr ""
+
+#: .\models\user.py:29
+msgid "openid"
+msgstr ""
+
+#: .\models\user.py:30
+msgid "unionid"
+msgstr ""
+
+#: .\models\user.py:32
+msgid "nickname"
+msgstr ""
+
+#: .\models\user.py:33
+msgid "gender"
+msgstr ""
+
+#: .\models\user.py:36
+msgid "city"
+msgstr ""
+
+#: .\models\user.py:37
+msgid "province"
+msgstr ""
+
+#: .\models\user.py:38
+msgid "country"
+msgstr ""
+
+#: .\models\user.py:39
+msgid "language"
+msgstr ""
+
+#: .\models\user.py:41
+msgid "is subscribed"
+msgstr ""
+
+#: .\models\user.py:42
+msgid "subscribe time"
+msgstr ""
+
+#: .\models\user.py:43
+msgid "subscribe scene"
+msgstr ""
+
+#: .\models\user.py:45
+msgid "qr scene"
+msgstr ""
+
+#: .\models\user.py:46
+msgid "qr_scene_str"
+msgstr ""
+
+#: .\models\user.py:48 .\models\user.py:50
+msgid "remark"
+msgstr ""
+
+#: .\models\user.py:51
+msgid "group id"
+msgstr ""
+
+#: .\models\user.py:57
+msgid "synced"
+msgstr ""
+
+#: .\templates\admin\wechat_django\change_form.html:7
+#: .\templates\admin\wechat_django\change_list.html:7
+#: .\templates\admin\wechat_django\delete_confirmation.html:7
+#: .\templates\admin\wechat_django\object_history.html:7
+msgid "Home"
+msgstr ""
+
+#: .\templates\admin\wechat_django\change_form.html:10
+#, python-format
+msgid "Add %(name)s"
+msgstr ""
+
+#: .\templates\admin\wechat_django\delete_confirmation.html:11
+msgid "Delete"
+msgstr ""
+
+#: .\templates\admin\wechat_django\object_history.html:11
+msgid "History"
+msgstr ""
+
+#: .\templates\admin\wechat_django\search_form.html:7
+msgid "Search"
+msgstr ""
+
+#: .\templates\admin\wechat_django\search_form.html:9
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] ""
+msgstr[1] ""
+
+#: .\templates\admin\wechat_django\search_form.html:9
+#, python-format
+msgid "%(full_result_count)s total"
+msgstr ""
+
+#: .\templates\admin\wechat_django\search_form.html:9
+msgid "Show all"
+msgstr ""

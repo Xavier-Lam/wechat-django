@@ -127,7 +127,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                 
                 if required and not openid:
                     # 最后执行重定向授权
-                    return redirect(wechat.oauth_uri)
+                    return redirect(wechat.oauth_uri, permanent=True)
 
             if openid:
                 wechat.user = WeChatUser.get_by_openid(app, openid)

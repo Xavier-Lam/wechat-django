@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from .. import views
-from ..models import WeChatApp
+from ..models import WeChatApp, WECHATPERM_PREFIX
 from .bases import has_wechat_permission
 
 class WeChatAppAdmin(admin.ModelAdmin):
@@ -64,11 +64,14 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def _get_allowed_apps(self, request):
         """有权限的微信号"""
         all_perms = request.user.get_all_permissions()
-        pattern = r"wechat_django.(\w+?)(?:_manage)?$"
+        pattern = r"{label}.{prefix}(?P<appname>.+)(?:|manage)?$".format(
+            label="wechat_django",
+            prefix=WECHATPERM_PREFIX
+        ).replace("|", "[|]")
         rv = set()
         for perm in all_perms:
             m = re.match(pattern, perm)
-            m and rv.add(m.group(1))
+            m and rv.add(m.group("appname"))
         return rv
 
     def get_model_perms(self, request):

@@ -11,7 +11,7 @@ from jsonfield import JSONField
 
 from .. import settings
 from ..patches import WeChatOAuth
-from . import EventType, permissions
+from . import EventType, permissions, WECHATPERM_PREFIX
 
 class WeChatApp(m.Model):
     class EncodingMode(object):
@@ -110,9 +110,16 @@ class WeChatApp(m.Model):
         return "{title} ({name})".format(title=self.title, name=self.name)
 
 def _list_permission(app):
-    rv = [app.name]
+    rv = ["{prefix}{appname}".format(
+        prefix=WECHATPERM_PREFIX,
+        appname=app.name
+    )]
     rv.extend(
-        "{name}_{perm}".format(name=app.name, perm=perm)
+        "{prefix}{appname}|{perm}".format(
+            prefix=WECHATPERM_PREFIX,
+            appname=app.name,
+            perm=perm
+        )
         for perm in permissions
     )
     return rv

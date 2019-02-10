@@ -6,11 +6,13 @@ from django.contrib import admin
 from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
 from django.utils.encoding import force_text
+from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 from six.moves.urllib.parse import parse_qsl
 
-from ..models import WeChatApp
+from ..models import WeChatApp, WECHATPERM_PREFIX
 
 @contextmanager
 def mutable_GET(request):
@@ -36,7 +38,11 @@ def has_wechat_permission(request, app, category="", operate="", obj=None):
     perms = []
     for i in range(len(list(filter(bool, strings)))):
         perm = "_".join(strings[: i + 1])
-        perms.append("wechat_django.{0}".format(perm))
+        perms.append("{label}.{prefix}{perm}".format(
+            label="wechat_django",
+            prefix=WECHATPERM_PREFIX,
+            perm=perm
+        ))
     
     for perm in perms:
         if request.user.has_perm(perm, None):
@@ -79,6 +85,18 @@ class WeChatAdmin(admin.ModelAdmin):
         extra_context = self._update_context(request, extra_context)
         return super(WeChatAdmin, self).delete_view(request, object_id, 
             extra_context)
+
+    def changeform_view(self, request, object_id=None, form_url="", 
+        extra_context=None):
+        if object_id and not self.get_app(request, True):
+            # 对于没有app_id的请求,重定向至有app_id的地址
+            obj = self.model.objects.get(id=object_id)
+            app_id = getattr(obj, "app_id", obj.app.id)
+            return redirect(request.path + "?" + urlencode(dict(
+                _changelist_filters="app_id=" + str(app_id)
+            )), permanent=True)
+        return super(WeChatAdmin, self).changeform_view(request, object_id,
+            form_url, extra_context)
 
     def render_change_form(self, request, context, *args, **kwargs):
         context = self._update_context(request, context)

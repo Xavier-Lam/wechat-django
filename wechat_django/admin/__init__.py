@@ -13,7 +13,7 @@ def patch_admin(admin):
     from django.utils.http import urlencode
 
     from ..apps import WeChatConfig
-    from ..models import WeChatApp
+    from ..models import WeChatApp, WECHATPERM_PREFIX
     from .bases import WeChatAdmin
 
     app_label = WeChatConfig.name
@@ -48,17 +48,20 @@ def patch_admin(admin):
         return rv
 
     def _build_wechat_app_dict(self, request):
-        apps = WeChatApp.objects.all()
         if request.user.is_superuser:
-            allowed_apps = apps
+            apps = WeChatApp.objects.all()
         else:
             perms = request.user.get_all_permissions()
-            allowed_apps = []
-            for app in apps:
-                for perm in perms:
-                    if re.match(r"wechat_django.{0}".format(app.name), perm):
-                        allowed_apps.append(app)
-                        break
+            pattern = r"{label}.{prefix}(?P<appname>.+)(?:|(?P<perm>.+))?$".format(
+                label="wechat_django",
+                prefix=WECHATPERM_PREFIX
+            ).replace("|", "[|]")
+            allowed_apps = set()
+            for perm in perms:
+                match = re.match(pattern, perm)
+                if match:
+                    allowed_apps.add(match.group("appname"))
+            apps = WeChatApp.objects.filter(name__in=allowed_apps)
         app_perms = [
             dict(
                 name=str(app),
@@ -75,7 +78,7 @@ def patch_admin(admin):
                     )
                 )
             )
-            for app in allowed_apps
+            for app in apps
         ]
         return {
             'name': app_label,
