@@ -93,7 +93,10 @@ class Menu(m.Model):
             query = query.filter(menuid=menuid)
         menus = query.all()
         data = dict(button=[menu.to_json() for menu in menus])
-        resp = app.client.menu.create(data)
+        rv = app.client.menu.create(data)
+        # TODO: 同步时也要保存current_menus
+        app.ext_info["current_menus"] = rv
+        return rv
 
     def to_json(self):
         rv = dict(name=self.name)

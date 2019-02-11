@@ -42,7 +42,12 @@ def patch_admin(admin):
                     if model["perms"].get("change") and model.get("admin_url"):
                         model['admin_url'] += "?" + urlencode(dict(app_id=app_id))
                     if model["perms"].get("add") and model.get("add_url"):
-                        model['add_url'] += "?" + urlencode(dict(app_id=app_id))
+                        query = urlencode(dict(
+                            _changelist_filters=urlencode(dict(
+                                app_id=app_id
+                            ))
+                        ))
+                        model['add_url'] += "?" + query
             else:
                 # 原始菜单
                 pass

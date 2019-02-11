@@ -88,6 +88,7 @@ class WeChatAdmin(admin.ModelAdmin):
             return redirect(request.path + "?" + urlencode(dict(
                 _changelist_filters="app_id=" + str(app_id)
             )), permanent=True)
+        form_url = form_url or "?{0}".format(request.GET.urlencode())
         return super(WeChatAdmin, self).changeform_view(request, object_id,
             form_url, extra_context)
 
