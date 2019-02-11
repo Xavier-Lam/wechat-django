@@ -12,7 +12,8 @@ from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 from six.moves.urllib.parse import parse_qsl
 
-from ..models import WeChatApp, WECHATPERM_PREFIX
+from ..models import WeChatApp
+from ..models.permission import get_user_permissions
 
 @contextmanager
 def mutable_GET(request):
@@ -34,19 +35,11 @@ def has_wechat_permission(request, app, category="", operate="", obj=None):
     检查用户是否具有某一微信权限
     :type request: django.http.request.HttpRequest
     """
-    strings = (app.name, category, operate)
-    perms = []
-    for i in range(len(list(filter(bool, strings)))):
-        perm = "_".join(strings[: i + 1])
-        perms.append("{label}.{prefix}{perm}".format(
-            label="wechat_django",
-            prefix=WECHATPERM_PREFIX,
-            perm=perm
-        ))
-    
-    for perm in perms:
-        if request.user.has_perm(perm, None):
-            return True
+    if request.user.is_superuser:
+        return True
+    perms = get_user_permissions(request.user, app)
+    needs = {category, "{0}_{1}".format(category, operate)}
+    return bool(needs.intersection(perms))
 
 class ChangeList(_ChangeList):
     def __init__(self, request, *args, **kwargs):

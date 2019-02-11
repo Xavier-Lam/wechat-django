@@ -8,5 +8,9 @@
 
 * pip install -r requirements.txt
 * python manage.py migrate
-* python manage.py createsuperuser
+  > 输入appid与appsecret 留空将生成一个默认appid及secret
 * python manage.py runserver
+
+超管账号*admin* 密码*123456*
+
+微信管理员账号*wechat_admin* 密码*123546*

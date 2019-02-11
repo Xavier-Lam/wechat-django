@@ -1,4 +1,5 @@
 #encoding: utf-8
+from django.conf import settings
 from django.conf.urls import url
 from django.http.response import HttpResponse
 
@@ -8,7 +9,7 @@ from wechat_django.oauth import wechat_auth
 from wechatpy.replies import TextReply
 
 #!wechat_django oauth示例
-@wechat_auth("debug")
+@wechat_auth(settings.SAMPLEAPPNAME)
 def oauth(request):
     return HttpResponse(str(request.wechat.user).encode())
 

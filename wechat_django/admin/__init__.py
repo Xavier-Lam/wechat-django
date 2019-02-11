@@ -7,13 +7,15 @@ def patch_admin(admin):
     :type admin: django.contrib.admin.sites.AdminSite
     """
     import re
+    import types
 
     from django.conf.urls import url, include
     from django.urls import NoReverseMatch, reverse
     from django.utils.http import urlencode
 
     from ..apps import WeChatConfig
-    from ..models import WeChatApp, WECHATPERM_PREFIX
+    from ..models import WeChatApp
+    from ..models.permission import get_user_permissions
     from .bases import WeChatAdmin
 
     app_label = WeChatConfig.name
@@ -51,16 +53,8 @@ def patch_admin(admin):
         if request.user.is_superuser:
             apps = WeChatApp.objects.all()
         else:
-            perms = request.user.get_all_permissions()
-            pattern = r"{label}.{prefix}(?P<appname>.+)(?:|(?P<perm>.+))?$".format(
-                label="wechat_django",
-                prefix=WECHATPERM_PREFIX
-            ).replace("|", "[|]")
-            allowed_apps = set()
-            for perm in perms:
-                match = re.match(pattern, perm)
-                if match:
-                    allowed_apps.add(match.group("appname"))
+            perms = get_user_permissions(request.user)
+            allowed_apps = perms.keys()
             apps = WeChatApp.objects.filter(name__in=allowed_apps)
         app_perms = [
             dict(
@@ -99,7 +93,6 @@ def patch_admin(admin):
 
         return rv
 
-    import types
     admin._build_app_dict = types.MethodType(_build_app_dict, admin)
     admin.get_urls = types.MethodType(get_urls, admin)
 

@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'wechat_django' #!wechat_django 添加wechat_django
+    'wechat_django', #!wechat_django 添加wechat_django
+    'sample'
 ]
 
 MIDDLEWARE = [
@@ -144,3 +145,5 @@ LOGGING = {
         }
     }
 }
+
+SAMPLEAPPNAME = "debug"

@@ -20,6 +20,7 @@
 * 服务号网页授权
 * 主动调用微信api封装
 * 微信网页授权
+* 后台权限管理
 
 ## 安装及配置
 ### 初次安装
@@ -41,8 +42,8 @@
 | WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
 | WECHAT_WECHATCLIENTFACTORY | "wechat_django.utils.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
-| WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp超过该值的将被抛弃 |
-| WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放 默认检查 |
+| WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
+| WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放检查 默认检查 |
 
 ### 日志
 | logger | 说明 |
@@ -96,13 +97,14 @@
 
 ## 后台使用简介
 ### 权限
+可给管理员分配微信管理权限,所有微信权限以 `<appname> | <perm>` 标注.
+> 在赋予用户权限时,系统会自动为用户追加所需的django默认权限,请勿删除!注意,请不要自行分配wechat_django其他model的权限给用户,这是毫无作用的
 
 ## 示例项目
 可参考本项目sample文件夹
 
 ## TODOS:
 * 本地化
-* 权限管理
 * 完成菜单功能
 * 后台表单验证
 * 单元测试
