@@ -52,7 +52,6 @@ class WeChatUser(m.Model):
 
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
-    # TODO: 同步时间
 
     synced = m.DateTimeField(_("synced"), null=True, default=None)
     

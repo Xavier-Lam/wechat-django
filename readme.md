@@ -37,6 +37,7 @@
 
 ### 配置
 一般而言,默认配置足以满足需求
+
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
 | WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |

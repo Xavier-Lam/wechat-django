@@ -209,7 +209,7 @@ class DynamicChoiceForm(forms.ModelForm):
         for k in set(cleaned_data.keys()).difference(self.origin_fields):
             if k in fields:
                 content[k] = cleaned_data[k]
-            del cleaned_data[k]
+                del cleaned_data[k]
         cleaned_data[self.content_field] = content
         return cleaned_data
 
