@@ -17,9 +17,9 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from wechat_django import urls
+import wechat_django
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^wechat/', urls) #!wechat_django 添加wechat_django
+    url(r'^wechat/', wechat_django.urls) #!wechat_django 添加wechat_django
 ]

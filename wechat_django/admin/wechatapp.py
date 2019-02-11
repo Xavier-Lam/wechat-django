@@ -26,7 +26,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
     def callback(self, obj):
         return obj and self.request.build_absolute_uri(reverse(
-            views.handler, kwargs=dict(appname=obj.name)))
+            "wechat_django:handler", kwargs=dict(appname=obj.name)))
 
     def get_fields(self, request, obj=None):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))

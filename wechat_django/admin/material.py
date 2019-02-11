@@ -47,7 +47,7 @@ class MaterialAdmin(WeChatAdmin):
         elif obj.type == Material.Type.VOICE:
             # 代理下载
             app = self.get_app(request)
-            url = reverse(views.material_proxy, kwargs=dict(
+            url = reverse("wechat_django:material_proxy", kwargs=dict(
                 appname=app.name,
                 media_id=obj.media_id
             ))
