@@ -14,8 +14,8 @@ class MenuAdmin(WeChatAdmin):
 
     actions = ("sync", "publish")
 
-    list_display = ("operates", "parent_id", "title", "type", "detail", 
-        "weight", "updated")
+    list_display = ("operates", "id", "parent_id", "title", "type", 
+        "detail", "weight", "updated")
     list_display_links = ("title",)
     list_editable = ("weight", )
     fields = ("name", "type", "key", "url", "appid", "pagepath", 
@@ -148,7 +148,10 @@ class MenuAdmin(WeChatAdmin):
         if not super(MenuAdmin, self).has_add_permission(request):
             return False
         # 判断菜单是否已满
-        max = 5 if request.GET.get("parent_id") else 3
-        return self.get_queryset(request).count() < max
+        q = self.get_queryset(request)
+        if request.GET.get("parent_id"):
+            return q.count() < 5
+        else:
+            return q.filter(parent_id__isnull=True).count() < 3
 
 admin.site.register(Menu, MenuAdmin)

@@ -39,24 +39,56 @@ class Menu(m.Model):
     updated = m.DateTimeField(auto_now=True)
 
     class Meta(object):
-        ordering = ("app", "-weight", "created")
+        ordering = ("app", "-weight", "id")
 
-    @staticmethod
-    def sync(app):
+    @classmethod
+    def sync(cls, app):
         """
+        从微信同步菜单数据
         :type app: .WeChatApp
         """
         resp = app.client.menu.get_menu_info()
+        try:
+            data = resp["selfmenu_info"]["button"]
+        except KeyError:
+            return []
         
-        # 旧menu 旧handler
         with transaction.atomic():
+            # 旧menu
             app.menus.all().delete()
             # 移除同步菜单产生的message handler
             app.message_handlers.filter(src=MessageHandler.Source.MENU).delete()
-            return [Menu.mp2menu(menu, app) for menu in resp["selfmenu_info"]["button"]]
+            rv = [Menu.json2menu(menu, app) for menu in data]
+        app.ext_info["current_menus"] = cls.menus2json(app)
+        app.save()
+        return rv
 
     @classmethod
-    def mp2menu(cls, data, app):
+    def publish(cls, app, menuid=None):
+        """
+        发布菜单
+        :type app: .WeChatApp
+        """
+        data = cls.menus2json(app, menuid)
+        rv = app.client.menu.create(data)
+        app.ext_info["current_menus"] = rv
+        return rv
+    
+    @classmethod
+    def get_menus(cls, app, menuid=None):
+        """获取数据库中公众号菜单配置"""
+        q = app.menus.prefetch_related("sub_button")
+        q = q.filter(parent_id__isnull=True)
+        q = q.filter(menuid=menuid) if menuid else q.filter(menuid__isnull=True)
+        return q.all()
+    
+    @classmethod
+    def menus2json(cls, app, menuid=None):
+        menus = cls.get_menus(app, menuid)
+        return dict(button=[menu.to_json() for menu in menus])
+
+    @classmethod
+    def json2menu(cls, data, app):
         """
         :type app: .WeChatApp
         """
@@ -65,7 +97,7 @@ class Menu(m.Model):
         if not menu.type:
             menu.save()
             menu.sub_button.add(*[
-                cls.mp2menu(sub, app) for sub in 
+                cls.json2menu(sub, app) for sub in 
                 (data.get("sub_button") or dict(list=[])).get("list")
             ])
         elif menu.type in (cls.Event.VIEW, cls.Event.CLICK, 
@@ -77,42 +109,21 @@ class Menu(m.Model):
             # 生成一个唯一key
             key = md5(json.dumps(data).encode()).hexdigest()
             menu.content = dict(key=key)
-            handler = MessageHandler.from_menu(menu, data, app)
+            MessageHandler.from_menu(menu, data, app)
         menu.save()
         return menu
-
-    @staticmethod
-    def publish(app, menuid=None):
-        """
-        :type app: .WeChatApp
-        """
-        query = app.menus.prefetch_related("sub_button")
-        if menuid is None:
-            query = query.filter(menuid__isnull=True)
-        else:
-            query = query.filter(menuid=menuid)
-        menus = query.all()
-        data = dict(button=[menu.to_json() for menu in menus])
-        rv = app.client.menu.create(data)
-        # TODO: 同步时也要保存current_menus
-        app.ext_info["current_menus"] = rv
-        return rv
 
     def to_json(self):
         rv = dict(name=self.name)
         if self.type:
-            if self.type == Menu.Event.CLICK:
-                rv["key"] = self.content
-            elif self.type == Menu.Event.VIEW:
-                rv["url"] = self.content
-            elif self.type == Menu.Event.MINIPROGRAM:
-                rv["url"] = self.content
-                rv.update(**self.ext_info)
+            rv["type"] = self.type
+            if self.type in (Menu.Event.CLICK, Menu.Event.VIEW, 
+                Menu.Event.MINIPROGRAM):
+                rv.update(self.content)
             else:
-                # TODO: 不存在类型
-                raise Exception()
+                raise ValueError("incorrect menu type")
         else:
-            rv["sub_button"] = [button.to_json() for button in self.sub_button]
+            rv["sub_button"] = [btn.to_json() for btn in self.sub_button.all()]
         return rv
 
     def __str__(self):

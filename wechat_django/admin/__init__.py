@@ -48,6 +48,7 @@ def patch_admin(admin):
                             ))
                         ))
                         model['add_url'] += "?" + query
+                        # TODO: 修改add_url
             else:
                 # 原始菜单
                 pass

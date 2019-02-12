@@ -21,10 +21,10 @@ class WeChatApp(m.Model):
         SAFE = 2
 
     title = m.CharField(_("title"), max_length=16, null=False,
-        help_text=_("公众号名称"))
-    name = m.CharField(_("name"), help_text=_("公众号唯一标识,可采用微信号"),
-        max_length=16, blank=False, null=False, 
-        unique=True)
+        help_text=_("公众号名称,用于后台辨识公众号"))
+    name = m.CharField(_("name"), max_length=16, 
+        help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"),
+        blank=False, null=False, unique=True)
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)

@@ -58,7 +58,8 @@
 | wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
 
 ### 注意事项
-> 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
+> * 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
+> * 请确保在https环境下部署,否则有secretkey泄露的风险
 
 ## 部分功能使用说明
 ### 网页授权
