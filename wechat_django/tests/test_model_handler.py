@@ -4,7 +4,7 @@ from wechatpy import messages
 
 from ..models import MessageHandler, Reply, Rule
 from .bases import WeChatTestCase
-from .interceptors import wechatapi, wechat_api_accesstoken, wechatapi_error
+from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
 class HandlerTestCase(WeChatTestCase):    
     def test_match(self):
@@ -58,6 +58,10 @@ class HandlerTestCase(WeChatTestCase):
     def test_forward(self):
         """测试转发回复"""
         pass
+    
+    def test_sync(self):
+        """测试同步"""
+        pass
         
     def test_reply(self):
         """测试一般回复"""
@@ -102,7 +106,7 @@ class HandlerTestCase(WeChatTestCase):
             FromUserName=sender,
             content="xyz"
         ))
-        with wechat_api_accesstoken(), wechatapi_error(api):
+        with wechatapi_accesstoken(), wechatapi_error(api):
             reply = handler_rand.reply(message)
             self.assertTrue(reply1 in reply or reply2 in reply)
         
@@ -113,7 +117,7 @@ class HandlerTestCase(WeChatTestCase):
             data = json.loads(request.body.decode())
             self.assertEqual(data["text"]["content"], reply2)
             self.assertEqual(data["touser"], sender)
-        with wechat_api_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
+        with wechatapi_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
             reply = handler_all.reply(message)
             self.assertTrue(reply1 in reply and reply2 not in reply)
             self.assertEqual(counter["calls"], 1)

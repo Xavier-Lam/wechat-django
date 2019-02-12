@@ -18,11 +18,11 @@ def wechatapi(api, data="", callback=None):
 
     return HTTMock(wechatapi_mock)
 
-def wechat_api_accesstoken():
+def wechatapi_accesstoken(callback=None):
     return wechatapi("/cgi-bin/token", {
         "access_token": "ACCESS_TOKEN",
         "expires_in": 7200
-    })
+    }, callback)
 
 def wechatapi_error(api):
     return wechatapi(api, {
