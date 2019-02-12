@@ -82,6 +82,7 @@ class WeChatApp(m.Model):
             # API BASE URL
             client.ACCESSTOKEN_URL = self.configurations.get("ACCESSTOKEN_URL")
 
+            # TODO: 移除
             # self._client._http.proxies = dict(
             #     http="localhost:12580",
             #     https="localhost:12580"

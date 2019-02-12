@@ -1,4 +1,4 @@
-from .msgtype import EventType, MsgType, ReceiveMsgType, ReplyMsgType
+from .msgtype import EventType, MsgType, ReceiveMsgType
 from .oauth import WeChatSNSScope
 from .permission import permissions
 

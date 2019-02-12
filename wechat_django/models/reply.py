@@ -6,14 +6,24 @@ import requests
 from wechatpy import replies
 
 from ..utils.admin import enum2choices
-from . import Article, Material, MessageHandler, ReplyMsgType, WeChatMessage
+from . import (Article, Material, MessageHandler, MsgType as BaseMsgType,
+    WeChatMessage)
 
 class Reply(m.Model):
+    class MsgType(BaseMsgType):# 响应
+        MUSIC = "music"
+        NEWS = "news"
+
+        # 自定义业务
+        # LOG = "log"
+        CUSTOM = "custom"
+        FORWARD = "forward" # 转发
+
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="replies")
 
     msg_type = m.CharField(_("type"), max_length=16,
-        choices=enum2choices(ReplyMsgType))
+        choices=enum2choices(MsgType))
     content = JSONField()
 
     @property
@@ -26,7 +36,7 @@ class Reply(m.Model):
         :type message: wechatpy.messages.BaseMessage
         :returns: serialized xml response
         """
-        if self.msg_type == ReplyMsgType.FORWARD:
+        if self.msg_type == self.MsgType.FORWARD:
             # 转发业务
             resp = requests.post(self.content["url"], message.raw, 
                 params=message.request.GET, timeout=4.5)
@@ -38,7 +48,7 @@ class Reply(m.Model):
         
     def send(self, message):
         """主动回复"""
-        if self.msg_type == ReplyMsgType.FORWARD:
+        if self.msg_type == self.MsgType.FORWARD:
             raise NotImplementedError()
         else:
             reply = self._reply(message)
@@ -46,8 +56,8 @@ class Reply(m.Model):
             return getattr(self.app.client.message, funcname)(**kwargs)
 
     def _reply(self, message):
-        assert self.msg_type != ReplyMsgType.FORWARD
-        if self.msg_type == ReplyMsgType.CUSTOM:
+        assert self.msg_type != self.MsgType.FORWARD
+        if self.msg_type == self.MsgType.CUSTOM:
             # 自定义业务
             try:
                 func = import_string(self.content["program"])
@@ -70,22 +80,22 @@ class Reply(m.Model):
                 reply.target = message.source
         else:
             # 正常回复类型
-            if self.msg_type == ReplyMsgType.NEWS:
+            if self.msg_type == self.MsgType.NEWS:
                 klass = replies.ArticlesReply
                 articles = Material.get_by_media(
                     self.content["media_id"]).articles_json
                 # 将media_id转为content
                 data = dict(articles=articles)
-            elif self.msg_type == ReplyMsgType.MUSIC:
+            elif self.msg_type == self.MsgType.MUSIC:
                 klass = replies.MusicReply
                 data = dict(**self.content)
-            elif self.msg_type == ReplyMsgType.VIDEO:
+            elif self.msg_type == self.MsgType.VIDEO:
                 klass = replies.VideoReply
                 data = dict(**self.content)
-            elif self.msg_type == ReplyMsgType.IMAGE:
+            elif self.msg_type == self.MsgType.IMAGE:
                 klass = replies.ImageReply
                 data = dict(media_id=self.content["media_id"])
-            elif self.msg_type == ReplyMsgType.VOICE:
+            elif self.msg_type == self.MsgType.VOICE:
                 klass = replies.VoiceReply
                 data = dict(media_id=self.content["media_id"])
             else:
@@ -129,21 +139,21 @@ class Reply(m.Model):
     def from_mp(cls, data, handler):
         type = data["type"]
         if type == "img":
-            type = ReplyMsgType.IMAGE
-        elif type == ReplyMsgType.VIDEO:
+            type = cls.MsgType.IMAGE
+        elif type == cls.MsgType.VIDEO:
             # video是链接
-            type = ReplyMsgType.TEXT
+            type = cls.MsgType.TEXT
             data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["content"], _("video")))
 
         reply = cls(msg_type=type, handler=handler)
-        if type == ReplyMsgType.TEXT:
+        if type == cls.MsgType.TEXT:
             content = dict(content=data["content"])
-        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
+        elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
             # 按照文档 是临时素材 需要转换为永久素材
             content = dict(media_id=Material.as_permenant(
                 data["content"], handler.app, False))
-        elif type == ReplyMsgType.NEWS:
+        elif type == cls.MsgType.NEWS:
             media_id = data["content"]
             # 同步图文
             Article.sync(handler.app, media_id)
@@ -160,20 +170,20 @@ class Reply(m.Model):
     def from_menu(cls, data, handler):
         type = data["type"]
         if type == "img":
-            type = ReplyMsgType.IMAGE
-        elif type == ReplyMsgType.VIDEO:
+            type = cls.MsgType.IMAGE
+        elif type == cls.MsgType.VIDEO:
             # video是链接
-            type = ReplyMsgType.TEXT
+            type = cls.MsgType.TEXT
             data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["value"], data.get("name", _("video"))))
 
         rv = cls(msg_type=type, handler=handler)
-        if type == ReplyMsgType.TEXT:
+        if type == cls.MsgType.TEXT:
             content = dict(content=data["content"])
-        elif type in (ReplyMsgType.IMAGE, ReplyMsgType.VOICE):
+        elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
             content = dict(media_id=Material.as_permenant(
                 data["value"], handler.app, False)) if handler else data["value"]
-        elif type == ReplyMsgType.NEWS:
+        elif type == cls.MsgType.NEWS:
             media_id = data["value"]
             # 同步图文
             Article.sync(handler.app, media_id)

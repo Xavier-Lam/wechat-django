@@ -8,8 +8,7 @@ from django.contrib.auth.management import create_permissions
 from django.contrib.auth.models import ContentType, Permission, User
 from django.db import migrations
 
-from wechat_django.models import (MessageHandler, Reply, 
-    ReplyMsgType, Rule, WeChatApp)
+from wechat_django.models import MessageHandler, Reply, Rule, WeChatApp
 from wechat_django.models.permission import WECHATPERM_PREFIX
 
 def create_data(apps, schema_editor):
@@ -53,9 +52,9 @@ def create_data(apps, schema_editor):
         app=app, name="debug custom reply", log=True)
     Rule.objects.create(
         handler=handler, type=Rule.Type.CONTAIN, rule=dict(pattern="ab"))
-    Reply.objects.create(handler=handler, msg_type=ReplyMsgType.CUSTOM,
+    Reply.objects.create(handler=handler, msg_type=Reply.MsgType.CUSTOM,
         content=dict(program="sample.wechat.views.custom_business"))
-    Reply.objects.create(handler=handler, msg_type=ReplyMsgType.TEXT,
+    Reply.objects.create(handler=handler, msg_type=Reply.MsgType.TEXT,
         content=dict(content="hello!"))
 
 def delete_data(apps, schema_editor):

@@ -10,15 +10,6 @@ class ReceiveMsgType(MsgType):
     SHORTVIDEO = "shortvideo"
     EVENT = "event"
 
-class ReplyMsgType(MsgType):# 响应
-    MUSIC = "music"
-    NEWS = "news"
-
-    # 自定义业务
-    # LOG = "log"
-    CUSTOM = "custom"
-    FORWARD = "forward" # 转发
-
 class EventType(object):
     SUBSCRIBE = "subscribe"
     UNSUBSCRIBE = "unsubscribe"

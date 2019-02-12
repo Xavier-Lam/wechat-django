@@ -1,22 +1,28 @@
 from setuptools import find_packages, setup
 
+with open("readme.md", "rb") as f:
+    long_description = f.read().decode("utf-8")
+
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 with open("requirements.dev.txt") as f:
     dev_requirements = [l for l in f.read().splitlines() if l]
 
 setup(
-    name='wechat-django',
-    version='0.1.0.0',
-    author='Xavier-Lam',
-    author_email='Lam.Xavier@hotmail.com',
-    url='https://github.com/Xavier-Lam/wechat-django',
+    name="wechat-django",
+    version="0.1.0.0",
+    author="Xavier-Lam",
+    author_email="Lam.Xavier@hotmail.com",
+    url="https://github.com/Xavier-Lam/wechat-django",
     packages=find_packages(),
-    keywords='wechat, weixin, wx, micromessenger',
-    description='WeChat Django Extension',
+    keywords="WeChat, weixin, wx, micromessenger, 微信, django",
+    description="WeChat Django Extension",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     install_requires=requirements,
     include_package_data=True,
-    # tests_require=dev_requirements,
+    tests_require=dev_requirements,
+    test_suite="runtests.main",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Environment :: Web Environment",
@@ -49,7 +55,7 @@ setup(
         "Topic :: Utilities"
     ],
     extras_require={
-        'cryptography': ["cryptography"],
-        'pycrypto': ["pycryptodome"],
+        "cryptography": ["cryptography"],
+        "pycrypto": ["pycryptodome"],
     }
 )

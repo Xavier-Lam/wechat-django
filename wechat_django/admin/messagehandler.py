@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import (EventType, MessageHandler, ReceiveMsgType, 
-    Reply, ReplyMsgType, Rule, WeChatApp)
+    Reply, Rule, WeChatApp)
 from ..utils.admin import enum2choices
 from .bases import DynamicChoiceForm, WeChatAdmin
 
@@ -73,20 +73,20 @@ class ReplyInline(admin.StackedInline):
             fields = ("msg_type", )
         
         def allowed_fields(self, type, cleaned_data):
-            if type == ReplyMsgType.FORWARD:
+            if type == Reply.MsgType.FORWARD:
                 fields = ("url", )
-            elif type == ReplyMsgType.CUSTOM:
+            elif type == Reply.MsgType.CUSTOM:
                 fields = ("program", )
-            elif type == ReplyMsgType.NEWS:
+            elif type == Reply.MsgType.NEWS:
                 fields = ("media_id", )
-            elif type in (ReplyMsgType.VOICE, ReplyMsgType.IMAGE):
+            elif type in (Reply.MsgType.VOICE, Reply.MsgType.IMAGE):
                 fields = ("media_id", )
-            elif type == ReplyMsgType.VIDEO:
+            elif type == Reply.MsgType.VIDEO:
                 fields = ("media_id", "title", "description")
-            elif type == ReplyMsgType.MUSIC:
+            elif type == Reply.MsgType.MUSIC:
                 fields = ("title", "description", "music_url", "hq_music_url",
                     "thumb_media_id")
-            elif type == ReplyMsgType.TEXT:
+            elif type == Reply.MsgType.TEXT:
                 fields = ("content", )
             return fields
         

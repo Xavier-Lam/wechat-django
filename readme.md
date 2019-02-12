@@ -24,7 +24,7 @@
 
 ## 安装及配置
 ### 初次安装
-1. 安装**pip install wechat-django**
+1. 安装**pip install wechat-django[cryptography]** 或 **pip install wechat-django[pycrypto]**
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
 4. 在urls.py 中引入wechat_django.urls, 将其配置到urlpatterns中
@@ -58,8 +58,8 @@
 | wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
 
 ### 注意事项
-> * 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
-> * 请确保在https环境下部署,否则有secretkey泄露的风险
+* 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
+* 请确保在https环境下部署,否则有secretkey泄露的风险
 
 ## 部分功能使用说明
 ### 网页授权

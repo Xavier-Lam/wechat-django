@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
-from . import MessageHandler, ReplyMsgType, WeChatApp
+from . import MessageHandler, WeChatApp
 
 class Menu(m.Model):
     class Event(object):
@@ -71,7 +71,8 @@ class Menu(m.Model):
         """
         data = cls.menus2json(app, menuid)
         rv = app.client.menu.create(data)
-        app.ext_info["current_menus"] = rv
+        app.ext_info["current_menus"] = data
+        app.save()
         return rv
     
     @classmethod
