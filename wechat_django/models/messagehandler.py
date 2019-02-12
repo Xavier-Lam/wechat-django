@@ -76,6 +76,7 @@ class MessageHandler(m.Model):
     def reply(self, message):
         """
         :type message: wechatpy.messages.BaseMessage
+        :rtype: wechatpy.replies.BaseReply
         """
         if self.log:
             # TODO: 移到外边去?

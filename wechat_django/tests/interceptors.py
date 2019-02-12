@@ -1,7 +1,7 @@
 import json
 from httmock import HTTMock, response, urlmatch
 
-from ..exceptions import WeChatApiError
+TESTFORBIDDEN = -99999
 
 def wechatapi(api, data="", callback=None):
     @urlmatch(netloc=r"(.*\.)?api\.weixin\.qq\.com$", path=api)
@@ -26,6 +26,6 @@ def wechatapi_accesstoken(callback=None):
 
 def wechatapi_error(api):
     return wechatapi(api, {
-        "errcode": WeChatApiError.TESTFORBIDDEN,
+        "errcode": TESTFORBIDDEN,
         "errmsg": "",
     })

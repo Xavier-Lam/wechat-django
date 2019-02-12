@@ -3,9 +3,9 @@ import re
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
+from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from ..exceptions import WeChatApiError
 from ..utils.admin import enum2choices
 from . import WeChatApp
 
@@ -185,7 +185,7 @@ class Material(m.Model):
         try:
             self.app.client.material.delete(self.media_id)
         except WeChatClientException as e:
-            if e.errcode != WeChatApiError.INVALIDMEDIAID:
+            if e.errcode != WeChatErrorCode.INVALID_MEDIA_ID:
                 raise
         rv = super(Material, self).delete(*args, **kwargs)
         return rv

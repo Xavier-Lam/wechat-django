@@ -29,80 +29,82 @@ class Reply(m.Model):
     @property
     def app(self):
         return self.handler.app
+        
+    def send(self, message):
+        """主动回复
+        :type message: wechatpy.messages.BaseMessage
+        """
+        reply = self.reply(message)
+        funcname, kwargs = self.reply2send(reply)
+        return funcname and getattr(self.app.client.message, funcname)(**kwargs)
 
     def reply(self, message):
-        """
-        被动回复
+        """被动回复
         :type message: wechatpy.messages.BaseMessage
-        :returns: serialized xml response
+        :rtype: wechatpy.replies.BaseReply
         """
         if self.msg_type == self.MsgType.FORWARD:
             # 转发业务
-            resp = requests.post(self.content["url"], message.raw, 
-                params=message.request.GET, timeout=4.5)
-            resp.raise_for_status()
-            return resp.content
-        else:
-            reply = self._reply(message)
-            return reply.render()
-        
-    def send(self, message):
-        """主动回复"""
-        if self.msg_type == self.MsgType.FORWARD:
-            raise NotImplementedError()
-        else:
-            reply = self._reply(message)
-            funcname, kwargs = self.reply2send(reply)
-            return getattr(self.app.client.message, funcname)(**kwargs)
-
-    def _reply(self, message):
-        assert self.msg_type != self.MsgType.FORWARD
-        if self.msg_type == self.MsgType.CUSTOM:
+            reply = self.reply_forward(message)
+        elif self.msg_type == self.MsgType.CUSTOM:
             # 自定义业务
-            try:
-                func = import_string(self.content["program"])
-            except:
-                raise NotImplementedError("custom bussiness not found")
-            else:
-                if not hasattr(func, "message_handler"):
-                    e = "handler must be decorated by wechat_django.decorators.message_handler"
-                    raise ValueError(e)
-                elif (hasattr(func.message_handler, "__contains__") and
-                    self.app.name not in func.message_handler):
-                    e = "this handler cannot assigned to {0}".format(self.app.name)
-                    raise ValueError(e)
-                reply = func(WeChatMessage(self.app, message))
-                if not reply:
-                    return ""
-                elif isinstance(reply, str):
-                    reply = replies.TextReply(content=reply)
-                reply.source = message.target
-                reply.target = message.source
+            reply = self.reply_custom(message)
         else:
             # 正常回复类型
-            if self.msg_type == self.MsgType.NEWS:
-                klass = replies.ArticlesReply
-                articles = Material.get_by_media(
-                    self.content["media_id"]).articles_json
-                # 将media_id转为content
-                data = dict(articles=articles)
-            elif self.msg_type == self.MsgType.MUSIC:
-                klass = replies.MusicReply
-                data = dict(**self.content)
-            elif self.msg_type == self.MsgType.VIDEO:
-                klass = replies.VideoReply
-                data = dict(**self.content)
-            elif self.msg_type == self.MsgType.IMAGE:
-                klass = replies.ImageReply
-                data = dict(media_id=self.content["media_id"])
-            elif self.msg_type == self.MsgType.VOICE:
-                klass = replies.VoiceReply
-                data = dict(media_id=self.content["media_id"])
-            else:
-                klass = replies.TextReply
-                data = dict(content=self.content["content"])
-            reply = klass(message=message, **data)    
+            reply = self.normal_reply(message)
         return reply
+    
+    def reply_forward(self, message):
+        resp = requests.post(self.content["url"], message.raw, 
+            params=message.request.GET, timeout=4.5)
+        resp.raise_for_status()
+        return replies.deserialize_reply(resp.content)
+
+    def reply_custom(self, message):
+        try:
+            func = import_string(self.content["program"])
+        except:
+            raise NotImplementedError("custom bussiness not found")
+        else:
+            if not hasattr(func, "message_handler"):
+                e = "handler must be decorated by wechat_django.decorators.message_handler"
+                raise ValueError(e)
+            elif (hasattr(func.message_handler, "__contains__") and
+                self.app.name not in func.message_handler):
+                e = "this handler cannot assigned to {0}".format(self.app.name)
+                raise ValueError(e)
+            reply = func(WeChatMessage(self.app, message))
+            if not reply:
+                return ""
+            elif isinstance(reply, str):
+                reply = replies.TextReply(content=reply)
+            reply.source = message.target
+            reply.target = message.source
+            return reply
+    
+    def normal_reply(self, message):
+        if self.msg_type == self.MsgType.NEWS:
+            klass = replies.ArticlesReply
+            articles = Material.get_by_media(
+                self.content["media_id"]).articles_json
+            # 将media_id转为content
+            data = dict(articles=articles)
+        elif self.msg_type == self.MsgType.MUSIC:
+            klass = replies.MusicReply
+            data = dict(**self.content)
+        elif self.msg_type == self.MsgType.VIDEO:
+            klass = replies.VideoReply
+            data = dict(**self.content)
+        elif self.msg_type == self.MsgType.IMAGE:
+            klass = replies.ImageReply
+            data = dict(media_id=self.content["media_id"])
+        elif self.msg_type == self.MsgType.VOICE:
+            klass = replies.VoiceReply
+            data = dict(media_id=self.content["media_id"])
+        else:
+            klass = replies.TextReply
+            data = dict(content=self.content["content"])
+        return klass(message=message, **data)
 
     @staticmethod
     def reply2send(reply):
@@ -112,7 +114,9 @@ class Reply(m.Model):
         """
         type = ""
         kwargs = dict(user_id=reply.target)
-        if isinstance(reply, replies.ArticlesReply):
+        if not reply or isinstance(reply, replies.EmptyReply):
+            return None, None
+        elif isinstance(reply, replies.ArticlesReply):
             kwargs["articles"] = reply.articles
             type = "articles"
         elif isinstance(reply, replies.MusicReply):

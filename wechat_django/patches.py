@@ -5,7 +5,7 @@ from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient,
     WeChatOAuth as _WeChatOAuth)
 from wechatpy.client import api
 
-from .models import WeChatSNSScope
+from .oauth import WeChatSNSScope
 
 class WeChatMaterial(api.WeChatMaterial):
     def get_raw(self, media_id):

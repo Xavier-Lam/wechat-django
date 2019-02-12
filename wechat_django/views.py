@@ -5,13 +5,13 @@ from django.core.cache import cache
 from django.http import response
 from django.shortcuts import get_object_or_404
 import requests
-from wechatpy import parse_message
+from wechatpy import parse_message, replies
+from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from wechatpy.utils import check_signature
 
 from . import settings
 from .decorators import wechat_route
-from .exceptions import WeChatApiError
 from .models import MessageHandler, WeChatApp
 from .utils.web import get_ip
 
@@ -93,7 +93,11 @@ def handler(request, app):
         return ""
     handler = handlers[0]
     try:
-        xml = handler.reply(msg)
+        reply = handler.reply(msg)
+        if not reply or isinstance(reply, replies.EmptyReply):
+            logger.debug("empty response: {0}".format(log_args))
+            return ""
+        xml = reply.render()
         log_args["response"] = xml
         logger.debug("response: {0}".format(log_args))
     except:
@@ -108,7 +112,7 @@ def material_proxy(request, app, media_id):
     try:
         resp = app.client.material.get(media_id)
     except WeChatClientException as e:
-        if e.errcode == WeChatApiError.INVALIDMEDIAID:
+        if e.errcode == WeChatErrorCode.INVALID_MEDIA_ID:
             return response.HttpResponseNotFound()
         logging.getLogger("wechat.views.{0}".format(app.name)).warning(
             "an exception occurred when download material",

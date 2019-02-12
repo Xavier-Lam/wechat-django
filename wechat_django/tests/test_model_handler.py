@@ -108,7 +108,9 @@ class HandlerTestCase(WeChatTestCase):
         ))
         with wechatapi_accesstoken(), wechatapi_error(api):
             reply = handler_rand.reply(message)
-            self.assertTrue(reply1 in reply or reply2 in reply)
+            self.assertEqual(reply.type, Reply.MsgType.TEXT)
+            self.assertEqual(reply.target, sender)
+            self.assertIn(reply.content, (reply1, reply2))
         
         # 回复一条正常消息以及一条客服消息
         counter = dict(calls=0)
@@ -119,7 +121,9 @@ class HandlerTestCase(WeChatTestCase):
             self.assertEqual(data["touser"], sender)
         with wechatapi_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
             reply = handler_all.reply(message)
-            self.assertTrue(reply1 in reply and reply2 not in reply)
+            self.assertEqual(reply.type, Reply.MsgType.TEXT)
+            self.assertEqual(reply.target, sender)
+            self.assertEqual(reply.content, reply1)
             self.assertEqual(counter["calls"], 1)
     
     def _create_handler(self, rules, name="", replies=None, **kwargs):

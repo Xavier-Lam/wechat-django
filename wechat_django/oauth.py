@@ -6,9 +6,11 @@ from django.shortcuts import redirect
 from six.moves.urllib.parse import parse_qsl, urlparse
 from wechatpy import WeChatOAuth, WeChatOAuthException
 
-from .models import WeChatApp, WeChatSNSScope, WeChatUser
+__all__ = ("wechat_auth", "WeChatSNSScope")
 
-__all__ = ("wechat_auth", )
+class WeChatSNSScope(object):
+    BASE = "snsapi_base"
+    USERINFO = "snsapi_userinfo"
 
 class WeChatOAuthInfo(object):
     """附带在request上的微信对象
@@ -66,6 +68,8 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                         django.http.response.HttpResponse
                     ]
     """
+    from .models import WeChatApp, WeChatUser
+
     assert (response is None or callable(response) 
         or isinstance(response, HttpResponse)), "incorrect response"
     assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
