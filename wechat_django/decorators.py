@@ -11,6 +11,7 @@ from .models import WeChatApp
 
 __all__ = ("message_handler", )
 
+
 def message_handler(names=None):
     """自定义回复业务需加装该装饰器
     :params names: 允许使用该message_handler的appname 不填所有均允许
@@ -19,9 +20,9 @@ def message_handler(names=None):
         # 防止副作用
         def wrapped_view(message):
             return view_func(message)
-            
+
         wrapped_view.message_handler = names or True
-        
+
         return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
     if isinstance(names, str):
@@ -29,6 +30,7 @@ def message_handler(names=None):
     elif callable(names):
         return decorator(names)
     return decorator
+
 
 def wechat_route(route, methods=None, name=""):
     """将view注册到<appname>/下

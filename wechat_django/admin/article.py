@@ -11,11 +11,12 @@ from wechatpy.exceptions import WeChatException
 from ..models import Article, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
+
 class ArticleAdmin(WeChatAdmin):
     __category__ = "article"
 
     actions = ("sync",)
-    list_display = ("title", "author", "material_link", "index", "digest", 
+    list_display = ("title", "author", "material_link", "index", "digest",
         "link", "source_url", "synced_at")
     list_editable = ("index",)
     search_fields = ("title", "author", "digest", "content_source_url", "content")
@@ -39,7 +40,7 @@ class ArticleAdmin(WeChatAdmin):
         )
     source_url.short_description = _("source_url")
     source_url.allow_tags = True
-    
+
     def thumb_image(self, obj):
         return obj.thumb_url and '<a href="{0}"><img width="200" src="{0}" /></a>'.format(obj.thumb_url)
     thumb_image.short_description = _("thumb_url")
@@ -82,7 +83,7 @@ class ArticleAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             materials = Article.sync(app)
-            self.message_user(request, 
+            self.message_user(request,
                 "%d articles successfully synchronized"%len(materials))
         except Exception as e:
             msg = "sync failed with {0}".format(e)
@@ -95,7 +96,7 @@ class ArticleAdmin(WeChatAdmin):
 
     def has_add_permission(self, request):
         return False
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
 

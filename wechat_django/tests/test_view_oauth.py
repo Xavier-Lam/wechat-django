@@ -1,5 +1,6 @@
 from .bases import WeChatTestCase
 
+
 class OAuthTestCase(WeChatTestCase):
     def test_oauth(self):
         """测试oauth接口请求"""
@@ -17,7 +18,7 @@ class OAuthTestCase(WeChatTestCase):
         pass
         # 传入Response处理函数的响应
         pass
-    
+
     def test_session(self):
         """测试授权后session状态保持"""
         pass

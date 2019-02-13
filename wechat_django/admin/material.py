@@ -11,6 +11,7 @@ from .. import views
 from ..models import Material, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
+
 class MaterialAdmin(WeChatAdmin):
     __category__ = "material"
 
@@ -64,7 +65,7 @@ class MaterialAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             materials = Material.sync(app)
-            self.message_user(request, 
+            self.message_user(request,
                 "%d materials successfully synchronized"%len(materials))
         except Exception as e:
             msg = "sync failed with {0}".format(e)
@@ -74,7 +75,7 @@ class MaterialAdmin(WeChatAdmin):
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
-    
+
     def delete_selected(self, request, obj):
         for o in obj.all():
             try:

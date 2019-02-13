@@ -1,6 +1,6 @@
 import math
 import re
-            
+
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from django.utils import timezone as tz
@@ -8,21 +8,22 @@ from django.utils import timezone as tz
 from ..utils.admin import enum2choices
 from . import WeChatApp
 
+
 class WeChatUser(m.Model):
     class Gender(object):
         UNKNOWN = 0
         MALE = 1
         FEMALE = 2
-    
+
     class SubscribeScene(object):
-        ADD_SCENE_SEARCH = "ADD_SCENE_SEARCH" # 公众号搜索
-        ADD_SCENE_ACCOUNT_MIGRATION = "ADD_SCENE_ACCOUNT_MIGRATION" # 公众号迁移
-        ADD_SCENE_PROFILE_CARD = "ADD_SCENE_PROFILE_CARD" # 名片分享
-        ADD_SCENE_QR_CODE = "ADD_SCENE_QR_CODE" # 扫描二维码
-        ADD_SCENE_PROFILE_LINK = "ADD_SCENEPROFILE LINK" # 图文页内名称点击
-        ADD_SCENE_PROFILE_ITEM = "ADD_SCENE_PROFILE_ITEM" # 图文页右上角菜单
-        ADD_SCENE_PAID = "ADD_SCENE_PAID" # 支付后关注
-        ADD_SCENE_OTHERS = "ADD_SCENE_OTHERS" # 其他
+        ADD_SCENE_SEARCH = "ADD_SCENE_SEARCH"  # 公众号搜索
+        ADD_SCENE_ACCOUNT_MIGRATION = "ADD_SCENE_ACCOUNT_MIGRATION"  # 公众号迁移
+        ADD_SCENE_PROFILE_CARD = "ADD_SCENE_PROFILE_CARD"  # 名片分享
+        ADD_SCENE_QR_CODE = "ADD_SCENE_QR_CODE"  # 扫描二维码
+        ADD_SCENE_PROFILE_LINK = "ADD_SCENEPROFILE LINK"  # 图文页内名称点击
+        ADD_SCENE_PROFILE_ITEM = "ADD_SCENE_PROFILE_ITEM"  # 图文页右上角菜单
+        ADD_SCENE_PAID = "ADD_SCENE_PAID"  # 支付后关注
+        ADD_SCENE_OTHERS = "ADD_SCENE_OTHERS"  # 其他
 
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="users", null=False, editable=False)
@@ -30,7 +31,7 @@ class WeChatUser(m.Model):
     unionid = m.CharField(_("unionid"), max_length=36, null=True)
 
     nickname = m.CharField(_("nickname"), max_length=24, null=True)
-    sex = m.SmallIntegerField(_("gender"), choices=enum2choices(Gender), 
+    sex = m.SmallIntegerField(_("gender"), choices=enum2choices(Gender),
         null=True)
     headimgurl = m.CharField(_("avatar"), max_length=256, null=True)
     city = m.CharField(_("city"), max_length=24, null=True)
@@ -45,7 +46,7 @@ class WeChatUser(m.Model):
     qr_scene = m.IntegerField(_("qr scene"), null=True)
     qr_scene_str = m.CharField(_("qr_scene_str"), max_length=64, null=True)
 
-    remark = m.CharField(_("remark"), max_length=30, 
+    remark = m.CharField(_("remark"), max_length=30,
         blank=True, null=True)
     comment = m.TextField(_("remark"), blank=True, null=True)
     groupid = m.IntegerField(_("group id"), null=True)
@@ -54,7 +55,7 @@ class WeChatUser(m.Model):
     updated = m.DateTimeField(_("updated"), auto_now=True)
 
     synced = m.DateTimeField(_("synced"), null=True, default=None)
-    
+
     class Meta(object):
         ordering = ("app", "-created")
         unique_together = (("app", "openid"), ("app", "unionid"))
@@ -62,7 +63,7 @@ class WeChatUser(m.Model):
     def avatar(self, size=132):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
-    
+
     @classmethod
     def get_by_openid(cls, app, openid):
         # TODO: cache
@@ -152,7 +153,7 @@ class WeChatUser(m.Model):
                 yield openids[page*count: page*count+count]
             if not next_openid:
                 raise StopIteration
-        
+
     def __str__(self):
         return "{nickname}({openid})".format(nickname=self.nickname or "",
             openid=self.openid)

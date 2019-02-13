@@ -8,22 +8,23 @@ from wechatpy.events import BaseEvent
 from ..utils.admin import enum2choices
 from . import MessageHandler, ReceiveMsgType
 
+
 class Rule(m.Model):
     class Type(object):
-        MSGTYPE = "msg_type" # 类型匹配
-        EVENT = "event" # 事件
-        EVENTKEY = "eventkey" # 指定事件
-        CONTAIN = "contain" # 包含
-        EQUAL = "equal" # 匹配
-        REGEX = "regex" # 正则
-        ALL = "all" # 全部
+        MSGTYPE = "msg_type"  # 类型匹配
+        EVENT = "event"  # 事件
+        EVENTKEY = "eventkey"  # 指定事件
+        CONTAIN = "contain"  # 包含
+        EQUAL = "equal"  # 匹配
+        REGEX = "regex"  # 正则
+        ALL = "all"  # 全部
 
-    handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE, 
+    handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="rules", null=False)
 
     type = m.CharField(_("type"), max_length=16,
-        choices=enum2choices(Type)) # 规则类型
-    rule = JSONField(blank=True) # 规则内容
+        choices=enum2choices(Type))  # 规则类型
+    rule = JSONField(blank=True)  # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created = m.DateTimeField(_("created"), auto_now_add=True)
@@ -48,13 +49,13 @@ class Rule(m.Model):
                 and hasattr(message, "key")
                 and message.key == self.rule["key"])
         elif self.type == self.Type.CONTAIN:
-            return (message.type == ReceiveMsgType.TEXT 
+            return (message.type == ReceiveMsgType.TEXT
                 and message.content.find(self.rule["pattern"]) >= 0)
         elif self.type == self.Type.EQUAL:
-            return (message.type == ReceiveMsgType.TEXT 
+            return (message.type == ReceiveMsgType.TEXT
                 and message.content == self.rule["pattern"])
         elif self.type == self.Type.REGEX:
-            return (message.type == ReceiveMsgType.TEXT 
+            return (message.type == ReceiveMsgType.TEXT
                 and re.search(self.rule["pattern"], message.content))
         return False
 

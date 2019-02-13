@@ -5,6 +5,7 @@ from wechatpy.replies import EmptyReply, REPLY_TYPES
 
 import xmltodict
 
+
 def deserialize_reply(xml, update_time=False):
     """反序列化被动回复
     :param xml: 待反序列化的xml
@@ -37,14 +38,17 @@ def deserialize_reply(xml, update_time=False):
 
 replies.deserialize_reply = deserialize_reply
 
+
 def from_xml(cls, value):
     return value
 BaseField.from_xml = classmethod(from_xml)
+
 
 def from_xml_media_id(cls, value):
     return value["MediaId"]
 ImageField.from_xml = classmethod(from_xml_media_id)
 VoiceField.from_xml = classmethod(from_xml_media_id)
+
 
 def from_xml_video(cls, value):
     return dict(
@@ -53,6 +57,7 @@ def from_xml_video(cls, value):
         description=value.get("Description")
     )
 VideoField.from_xml = classmethod(from_xml_video)
+
 
 def from_xml_music(cls, value):
     return dict(
@@ -63,6 +68,7 @@ def from_xml_music(cls, value):
         hq_music_url=value.get("HQMusicUrl")
     )
 MusicField.from_xml = classmethod(from_xml_music)
+
 
 def from_xml_articles(cls, value):
     return [dict(

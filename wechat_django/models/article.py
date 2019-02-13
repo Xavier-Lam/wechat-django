@@ -4,6 +4,7 @@ from wechatpy.exceptions import WeChatClientException
 
 from . import Material, WeChatApp
 
+
 class Article(m.Model):
     material = m.ForeignKey(Material, on_delete=m.CASCADE,
         related_name="articles")
@@ -13,14 +14,14 @@ class Article(m.Model):
     show_cover_pic = m.BooleanField(_("show cover"), default=True)
     author = m.CharField(_("author"), max_length=24,
         blank=True, null=True, default="")
-    digest = m.CharField(_("digest"), max_length=256, 
+    digest = m.CharField(_("digest"), max_length=256,
         blank=True, null=True, default="")
     content = m.TextField(_("content"))
     url = m.CharField(_("url"), max_length=256)
     content_source_url = m.CharField(_("content source url"), max_length=256)
 
     need_open_comment = m.NullBooleanField(_("need open comment"), default=None)
-    only_fans_can_comment = m.NullBooleanField(_("need open comment"), 
+    only_fans_can_comment = m.NullBooleanField(_("need open comment"),
         default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
@@ -50,7 +51,7 @@ class Article(m.Model):
             self._thumb_url = image and image.url
             self._thumb_url is not None and self.save()
         return self._thumb_url
-    
+
     @thumb_url.setter
     def thumb_url(self, value):
         self._thumb_url = value
@@ -62,7 +63,7 @@ class Article(m.Model):
         else:
             with transaction.atomic():
                 return Material.sync_type(Material.Type.NEWS, app)
-                
+
     def to_json(self):
         return dict(
             title=self.title,

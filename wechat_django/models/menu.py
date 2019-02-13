@@ -9,6 +9,7 @@ from jsonfield import JSONField
 from ..utils.admin import enum2choices
 from . import MessageHandler, WeChatApp
 
+
 class Menu(m.Model):
     class Event(object):
         CLICK = "click"
@@ -52,7 +53,7 @@ class Menu(m.Model):
             data = resp["selfmenu_info"]["button"]
         except KeyError:
             return []
-        
+
         with transaction.atomic():
             # 旧menu
             app.menus.all().delete()
@@ -74,7 +75,7 @@ class Menu(m.Model):
         app.ext_info["current_menus"] = data
         app.save()
         return rv
-    
+
     @classmethod
     def get_menus(cls, app, menuid=None):
         """获取数据库中公众号菜单配置"""
@@ -82,7 +83,7 @@ class Menu(m.Model):
         q = q.filter(parent_id__isnull=True)
         q = q.filter(menuid=menuid) if menuid else q.filter(menuid__isnull=True)
         return q.all()
-    
+
     @classmethod
     def menus2json(cls, app, menuid=None):
         menus = cls.get_menus(app, menuid)
@@ -98,10 +99,10 @@ class Menu(m.Model):
         if not menu.type:
             menu.save()
             menu.sub_button.add(*[
-                cls.json2menu(sub, app) for sub in 
+                cls.json2menu(sub, app) for sub in
                 (data.get("sub_button") or dict(list=[])).get("list")
             ])
-        elif menu.type in (cls.Event.VIEW, cls.Event.CLICK, 
+        elif menu.type in (cls.Event.VIEW, cls.Event.CLICK,
             cls.Event.MINIPROGRAM):
             menu.content = data
         else:
@@ -118,7 +119,7 @@ class Menu(m.Model):
         rv = dict(name=self.name)
         if self.type:
             rv["type"] = self.type
-            if self.type in (Menu.Event.CLICK, Menu.Event.VIEW, 
+            if self.type in (Menu.Event.CLICK, Menu.Event.VIEW,
                 Menu.Event.MINIPROGRAM):
                 rv.update(self.content)
             else:

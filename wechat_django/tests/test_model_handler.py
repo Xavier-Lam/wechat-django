@@ -15,18 +15,22 @@ from .bases import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
 
+
 @message_handler
 def debug_handler(message):
     return "success"
+
 
 @message_handler("test")
 def app_only_handler(message):
     return "success"
 
+
 def forbidden_handler(message):
     return ""
 
-class HandlerTestCase(WeChatTestCase):    
+
+class HandlerTestCase(WeChatTestCase):
     def test_match(self):
         """测试匹配"""
         # 测试类型匹配
@@ -56,11 +60,11 @@ class HandlerTestCase(WeChatTestCase):
         day = timedelta(days=1)
         handler_not_begin = self._create_handler(rule,
             name="not_begin", starts=now + day)
-        handler_ended = self._create_handler(rule, name="ended", 
+        handler_ended = self._create_handler(rule, name="ended",
             ends=now - day)
-        handler_disabled = self._create_handler(rule, 
+        handler_disabled = self._create_handler(rule,
             name="disabled", enabled=False)
-        handler_available = self._create_handler(rule, name="available", 
+        handler_available = self._create_handler(rule, name="available",
             starts=now - day, ends=now + day)
 
         msg = messages.TextMessage("abc")
@@ -72,7 +76,7 @@ class HandlerTestCase(WeChatTestCase):
         matches = MessageHandler.matches(self.app, msg)
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0], handler_available)
-    
+
     def test_custom(self):
         """测试自定义回复"""
         from ..models import WeChatApp
@@ -84,7 +88,7 @@ class HandlerTestCase(WeChatTestCase):
                     program="wechat_django.tests.test_model_handler." + handler
                 )
             ), app=app)
-        
+
         sender = "openid"
         message = messages.TextMessage(dict(
             FromUserName=sender,
@@ -99,7 +103,7 @@ class HandlerTestCase(WeChatTestCase):
 
         # 测试不属于本app的自定义回复
         handler_success = _get_handler("app_only_handler")
-        handler_fail = _get_handler("app_only_handler", 
+        handler_fail = _get_handler("app_only_handler",
             WeChatApp.get_by_name("test1"))
         reply = handler_success.reply(message)
         self.assertIsInstance(reply, replies.TextReply)
@@ -178,17 +182,17 @@ class HandlerTestCase(WeChatTestCase):
             self.assertIsInstance(reply, replies.TextReply)
             self.assertEqual(reply.content, reply_text)
             self.assertEqual(reply.target, sender)
-        
+
         def bad_reply(url, request):
             return response(404)
-        
+
         with common_interceptor(bad_reply):
             self.assertRaises(HTTPError, lambda: handler.reply(message))
-    
+
     def test_sync(self):
         """测试同步"""
         pass
-        
+
     def test_reply(self):
         """测试一般回复"""
         def _create_reply(msg_type, **kwargs):
@@ -229,7 +233,7 @@ class HandlerTestCase(WeChatTestCase):
         title = "title"
         description = "desc"
         msg_type = Reply.MsgType.VIDEO
-        reply = _create_reply(msg_type, media_id=media_id, title=title, 
+        reply = _create_reply(msg_type, media_id=media_id, title=title,
             description=description)
         obj = reply.reply(message)
         self.assertEqual(obj.target, sender)
@@ -250,8 +254,8 @@ class HandlerTestCase(WeChatTestCase):
         music_url = "music_url"
         hq_music_url = "hq_music_url"
         msg_type = Reply.MsgType.MUSIC
-        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title, 
-            description=description, music_url=music_url, 
+        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title,
+            description=description, music_url=music_url,
             hq_music_url=hq_music_url)
         obj = reply.reply(message)
         self.assertEqual(obj.target, sender)
@@ -274,7 +278,7 @@ class HandlerTestCase(WeChatTestCase):
 
         # 测试图文回复
         pass
-    
+
     def test_send(self):
         """测试客服回复"""
         def _create_reply(msg_type, **kwargs):
@@ -323,7 +327,7 @@ class HandlerTestCase(WeChatTestCase):
         title = "title"
         description = "desc"
         msg_type = Reply.MsgType.VIDEO
-        reply = _create_reply(msg_type, media_id=media_id, title=title, 
+        reply = _create_reply(msg_type, media_id=media_id, title=title,
             description=description).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
@@ -344,8 +348,8 @@ class HandlerTestCase(WeChatTestCase):
         music_url = "music_url"
         hq_music_url = "hq_music_url"
         msg_type = Reply.MsgType.MUSIC
-        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title, 
-            description=description, music_url=music_url, 
+        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title,
+            description=description, music_url=music_url,
             hq_music_url=hq_music_url).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
@@ -385,7 +389,7 @@ class HandlerTestCase(WeChatTestCase):
             errcode=0
         ), callback):
             handler.replies.all()[0].send(message)
-    
+
     def test_multireply(self):
         """测试多回复"""
         reply1 = "abc"
@@ -397,7 +401,7 @@ class HandlerTestCase(WeChatTestCase):
             msg_type=Reply.MsgType.TEXT,
             content=dict(content=reply2)
         )]
-        handler_all = self._create_handler(replies=replies, 
+        handler_all = self._create_handler(replies=replies,
             strategy=MessageHandler.ReplyStrategy.ALL)
         handler_rand = self._create_handler(replies=replies,
             strategy=MessageHandler.ReplyStrategy.RANDOM)
@@ -414,7 +418,7 @@ class HandlerTestCase(WeChatTestCase):
             self.assertEqual(reply.type, Reply.MsgType.TEXT)
             self.assertEqual(reply.target, sender)
             self.assertIn(reply.content, (reply1, reply2))
-        
+
         # 回复一条正常消息以及一条客服消息
         counter = dict(calls=0)
         def callback(url, request, response):
@@ -428,7 +432,7 @@ class HandlerTestCase(WeChatTestCase):
             self.assertEqual(reply.target, sender)
             self.assertEqual(reply.content, reply1)
             self.assertEqual(counter["calls"], 1)
-    
+
     def _create_handler(self, rules=None, name="", replies=None, app=None, **kwargs):
         """:rtype: MessageHandler"""
         handler = MessageHandler.objects.create(
@@ -436,7 +440,7 @@ class HandlerTestCase(WeChatTestCase):
             name=name,
             **kwargs
         )
-        
+
         if not rules:
             rules = [dict(type=Rule.Type.ALL)]
         if isinstance(rules, dict):

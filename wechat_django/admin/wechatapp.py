@@ -11,9 +11,10 @@ from ..models import WeChatApp
 from ..models.permission import get_user_permissions
 from .bases import has_wechat_permission
 
+
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
-    list_display = ("title", "name", "appid", "short_desc", "interactable", 
+    list_display = ("title", "name", "appid", "short_desc", "interactable",
         "created", "updated")
     search_fields = ("title", "name", "appid", "short_desc")
 
@@ -71,9 +72,9 @@ class WeChatAppAdmin(admin.ModelAdmin):
         )
 
     def get_model_perms(self, request):
-        return ({} if request.resolver_match.kwargs.get("app_id") 
+        return ({} if request.resolver_match.kwargs.get("app_id")
             else super(WeChatAppAdmin, self).get_model_perms(request))
-    
+
     class WeChatAppForm(forms.ModelForm):
         class Meta(object):
             model = WeChatApp

@@ -9,6 +9,7 @@ from wechatpy.exceptions import WeChatClientException
 from ..utils.admin import enum2choices
 from . import WeChatApp
 
+
 class Material(m.Model):
     class Type(object):
         IMAGE = "image"
@@ -23,11 +24,11 @@ class Material(m.Model):
     media_id = m.CharField(_("media_id"), max_length=64)
     name = m.CharField(_("name"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)
-    update_time = m.IntegerField(_("update time"), editable=False, 
+    update_time = m.IntegerField(_("update time"), editable=False,
         null=True)
 
     comment = m.TextField(_("comment"), blank=True)
-    
+
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
 
@@ -82,7 +83,7 @@ class Material(m.Model):
         """将临时素材转换为永久素材"""
         # 下载临时素材
         resp = app.client.media.download(media_id)
-        
+
         try:
             content_type = resp.headers["Content-Type"]
         except:
@@ -97,14 +98,14 @@ class Material(m.Model):
             raise ValueError("unknown Content-Type")
 
         # 找文件名
-        try:    
+        try:
             disposition = resp.headers["Content-Disposition"]
             filename = re.findall(r'filename="(.+?)"', disposition)[0]
         except:
             # 默认文件名
             ext = mimetypes.guess_extension(content_type)
             filename = (media_id + ext) if ext else media_id
-        
+
         # 上载素材
         return cls.upload_permenant((filename, resp.content), type, app, save)
 
@@ -114,7 +115,7 @@ class Material(m.Model):
         data = app.client.material.add(type, file)
         media_id = data["media_id"]
         if save:
-            return cls.objects.create(type=type, media_id=media_id, 
+            return cls.objects.create(type=type, media_id=media_id,
                 url=data.get("url"))
         else:
             return media_id
@@ -139,7 +140,7 @@ class Material(m.Model):
             if type == cls.Type.VIDEO and "url" not in kwargs:
                 data = app.client.material.get(media_id)
                 kwargs["url"] = data.get("down_url")
-            
+
             kwargs = {key: kwargs[key] for key in allowed_keys if key in kwargs}
             query = dict(app=app, type=type, media_id=media_id)
             record = dict(app=app, type=type, **kwargs)
@@ -162,10 +163,10 @@ class Material(m.Model):
         fields = list(map(lambda o: o.name, Article._meta.fields))
         Article.objects.bulk_create([
             Article(
-                index=idx, 
+                index=idx,
                 material=news,
                 _thumb_url=article.get("thumb_url"),
-                **{k: v for k, v in article.items() if k in fields} # 过滤article fields
+                **{k: v for k, v in article.items() if k in fields}  # 过滤article fields
             )
             for idx, article in enumerate(articles)
         ])

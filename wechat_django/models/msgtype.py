@@ -4,11 +4,13 @@ class MsgType(object):
     VOICE = "voice"
     VIDEO = "video"
 
+
 class ReceiveMsgType(MsgType):
     LOCATION = "location"
     LINK = "link"
     SHORTVIDEO = "shortvideo"
     EVENT = "event"
+
 
 class EventType(object):
     SUBSCRIBE = "subscribe"

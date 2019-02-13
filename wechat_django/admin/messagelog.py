@@ -7,15 +7,16 @@ from ..models import MessageLog, WeChatApp
 from ..utils.admin import linkify
 from .bases import WeChatAdmin
 
+
 class MessageLogAdmin(WeChatAdmin):
     __category__ = "messagelog"
-    
+
     list_display = ("msg_id", linkify("user"), "type", "content", "created")
     list_filter = ("type", )
     search_fields = ("=user__openid", "=user__unionid", "user__nickname",
         "user__comment", "content")
 
-    fields = ("msg_id", linkify("user"), "type", "content", 
+    fields = ("msg_id", linkify("user"), "type", "content",
         "create_time", "created")
     readonly_fields = fields
 
@@ -25,7 +26,7 @@ class MessageLogAdmin(WeChatAdmin):
 
     def has_add_permission(self, request):
         return False
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
 

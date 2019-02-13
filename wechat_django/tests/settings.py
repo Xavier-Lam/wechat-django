@@ -24,7 +24,7 @@ DATABASES = {
 }
 
 urlpatterns = [
-    url(r'^wechat/', wechat_django.urls) #!wechat_django 添加wechat_django
+    url(r'^wechat/', wechat_django.urls)  # !wechat_django 添加wechat_django
 ]
 
 ROOT_URLCONF = "wechat_django.tests.settings"

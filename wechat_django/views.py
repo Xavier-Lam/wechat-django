@@ -17,13 +17,14 @@ from .utils.web import get_ip
 
 __all__ = ("handler", "material_proxy", "urls")
 
+
 @wechat_route("$", methods=("GET", "POST"))
 def handler(request, app):
     """接收及处理微信发来的消息
     :type request: django.http.request.HttpRequest
     """
     logger = logging.getLogger("wechat.handler.{0}".format(app.name))
-    log_args = dict(params=request.GET, body=request.body, 
+    log_args = dict(params=request.GET, body=request.body,
         ip=get_ip(request))
     logger.debug("received: {0}".format(log_args))
     if not app.interactable():
@@ -67,8 +68,8 @@ def handler(request, app):
     try:
         if app.encoding_mode == WeChatApp.EncodingMode.SAFE:
             crypto = WeChatCrypto(
-                app.token, 
-                app.encoding_aes_key, 
+                app.token,
+                app.encoding_aes_key,
                 app.appid
             )
             raw = crypto.decrypt_message(
@@ -106,6 +107,7 @@ def handler(request, app):
         return ""
     return response.HttpResponse(xml, content_type="text/xml")
 
+
 @wechat_route(r"materials/(?P<media_id>[_a-zA-Z\d]+)$")
 def material_proxy(request, app, media_id):
     """代理下载微信的素材"""
@@ -121,7 +123,7 @@ def material_proxy(request, app, media_id):
     if not isinstance(resp, requests.Response):
         # 暂时只处理image和voice
         return response.HttpResponseNotFound()
-    
+
     rv = response.FileResponse(resp.content)
     for k, v in resp.headers.items():
         if k.lower().startswith("content-"):

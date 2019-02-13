@@ -8,9 +8,11 @@ from wechatpy import WeChatOAuth, WeChatOAuthException
 
 __all__ = ("wechat_auth", "WeChatSNSScope")
 
+
 class WeChatSNSScope(object):
     BASE = "snsapi_base"
     USERINFO = "snsapi_userinfo"
+
 
 class WeChatOAuthInfo(object):
     """附带在request上的微信对象
@@ -43,9 +45,10 @@ class WeChatOAuthInfo(object):
     def __str__(self):
         return "WeChatOuathInfo: " + "\t".join(
             "{k}: {v}".format(k=attr, v=getattr(self, attr, None))
-            for attr in 
+            for attr in
             ("app", "user", "redirect", "oauth_uri", "state", "scope")
         )
+
 
 def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
     required=True, response=None, state=""):
@@ -70,7 +73,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
     """
     from .models import WeChatApp, WeChatUser
 
-    assert (response is None or callable(response) 
+    assert (response is None or callable(response)
         or isinstance(response, HttpResponse)), "incorrect response"
     assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
         "incorrect scope"
@@ -90,7 +93,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
             else:
                 full_url = request.build_absolute_uri()
                 redirect_url = ((request.META.get("HTTP_REFERER") or full_url)
-                    if request.is_ajax() else full_url)                
+                    if request.is_ajax() else full_url)
 
             request.wechat = wechat = WeChatOAuthInfo(
                 redirect_uri=redirect_url, state=state, scope=scope)
@@ -98,7 +101,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                 wechat.app = app = WeChatApp.get_by_name(appname)
             except WeChatApp.DoesNotExist:
                 logger.warning("wechat app not exists: {0}".format(appname))
-                return HttpResponseNotFound()     
+                return HttpResponseNotFound()
 
             if required and not openid:
                 # 设定了response优先返回response
@@ -128,7 +131,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                     else:
                         # 用当前url的state替换传入的state
                         wechat.state = request.GET.get("state", "")
-                
+
                 if required and not openid:
                     # 最后执行重定向授权
                     return redirect(wechat.oauth_uri, permanent=True)
@@ -143,6 +146,7 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
         return decorated_func
     return decorator
 
+
 def get_request_code(request):
     if request.is_ajax():
         try:
@@ -155,10 +159,11 @@ def get_request_code(request):
         code = request.GET.get("code")
     return code
 
+
 def auth_by_code(app, code, scope):
     # 检查code有效性
     data = app.oauth.fetch_access_token(code)
-    
+
     if scope == WeChatSNSScope.USERINFO:
         # 同步数据
         try:
@@ -166,8 +171,9 @@ def auth_by_code(app, code, scope):
             data.update(user_info)
         except WeChatOAuthException:
             _logger(app.name).warning("get userinfo failed", exc_info=True)
-    
+
     return data
+
 
 def _logger(appname):
     return logging.getLogger("wechat:oauth:{0}".format(appname))

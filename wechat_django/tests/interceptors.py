@@ -3,10 +3,12 @@ from httmock import all_requests, HTTMock, response, urlmatch
 
 TESTFORBIDDEN = -99999
 
+
 def common_interceptor(callback, **kwargs):
     decorator = urlmatch(**kwargs) if kwargs else all_requests
     mock = decorator(callback)
     return HTTMock(mock)
+
 
 def wechatapi(api, data="", callback=None):
     @urlmatch(netloc=r"(.*\.)?api\.weixin\.qq\.com$", path=api)
@@ -23,11 +25,13 @@ def wechatapi(api, data="", callback=None):
 
     return HTTMock(wechatapi_mock)
 
+
 def wechatapi_accesstoken(callback=None):
     return wechatapi("/cgi-bin/token", {
         "access_token": "ACCESS_TOKEN",
         "expires_in": 7200
     }, callback)
+
 
 def wechatapi_error(api):
     return wechatapi(api, {

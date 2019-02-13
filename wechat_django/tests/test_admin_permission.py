@@ -1,5 +1,6 @@
 from .bases import WeChatTestCase
 
+
 class PermissionTestCase(WeChatTestCase):
     def test_permission_grant(self):
         """测试授权"""

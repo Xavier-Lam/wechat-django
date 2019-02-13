@@ -9,6 +9,7 @@ from .. import settings
 from ..models import MessageHandler, Reply, Rule
 from .bases import WeChatTestCase
 
+
 class HandlerTestCase(WeChatTestCase):
     def setUp(self):
         super(HandlerTestCase, self).setUp()
@@ -39,7 +40,7 @@ class HandlerTestCase(WeChatTestCase):
         self.assertEqual(resp.status_code, 200)
         reply = deserialize_reply(resp.content)
         self.assertEqual(reply.content, self.success_reply)
-        
+
         # 错误签名
         query["signature"] = "666666"
         resp = self.post(query)
@@ -87,7 +88,7 @@ class HandlerTestCase(WeChatTestCase):
         self.assertEqual(reply.target, self.sender)
         self.assertIsInstance(reply, TextReply)
         self.assertEqual(reply.content, self.success_reply)
-    
+
     def test_echostr(self):
         """测试初次请求验证"""
         echostr = b"666666"
@@ -111,7 +112,7 @@ class HandlerTestCase(WeChatTestCase):
             query["nonce"]
         )
         return signer.signature
-    
+
     def post(self, query, content=""):
         xml = """<xml>
         <ToUserName><![CDATA[toUser]]></ToUserName>
@@ -121,7 +122,7 @@ class HandlerTestCase(WeChatTestCase):
         <Content><![CDATA[{content}]]></Content>
         <MsgId>1234567890123456</MsgId>
         </xml>""".format(
-            sender=self.sender, 
+            sender=self.sender,
             content=content or self.match_str,
             timestamp=query["timestamp"]
         )
@@ -144,5 +145,5 @@ class HandlerTestCase(WeChatTestCase):
 
     @property
     def url(self):
-        return reverse("wechat_django:handler", 
+        return reverse("wechat_django:handler",
             kwargs=dict(appname=self.app.name))

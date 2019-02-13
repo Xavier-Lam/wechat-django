@@ -7,19 +7,20 @@ from wechatpy.exceptions import WeChatException
 from ..models import WeChatApp, WeChatUser
 from .bases import DynamicChoiceForm, WeChatAdmin
 
+
 class WeChatUserAdmin(WeChatAdmin):
     __category__ = "user"
 
     actions = ("sync", "sync_all", "update")
-    list_display = ("openid", "nickname", "avatar", "subscribe", "remark",# "groupid", 
+    list_display = ("openid", "nickname", "avatar", "subscribe", "remark",  # "groupid",
         "created")
     search_fields = ("=openid", "=unionid", "nickname", "remark")
-    
+
     fields = ("avatar", "nickname", "openid", "unionid", "sex",
         "city", "province", "country", "language", "subscribe",
-        "subscribetime", "subscribe_scene", "qr_scene", "qr_scene_str", 
+        "subscribetime", "subscribe_scene", "qr_scene", "qr_scene_str",
         "remark", "comment", "groupid", "created", "updated")
-    
+
     def avatar(self, obj):
         return obj.headimgurl and '<img src="{0}" />'.format(obj.avatar(46))
     avatar.short_description = _("avatar")
@@ -28,7 +29,7 @@ class WeChatUserAdmin(WeChatAdmin):
     def subscribetime(self, obj):
         return obj.subscribe_time and timezone.datetime.fromtimestamp(obj.subscribe_time)
     subscribetime.short_description = "subscribe time"
-    
+
     def sync(self, request, queryset, method="sync", kwargs=None):
         self.check_wechat_permission(request, "sync")
         # 可能抛出48001 没有api权限
@@ -36,7 +37,7 @@ class WeChatUserAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             users = getattr(WeChatUser, method)(app, **kwargs)
-            self.message_user(request, 
+            self.message_user(request,
                 "%d users successfully synchronized"%len(users))
         except Exception as e:
             msg = method + " failed with {0}".format(e)
@@ -69,7 +70,7 @@ class WeChatUserAdmin(WeChatAdmin):
             obj.app.client.user.update_remark(obj.openid, obj.remark)
         return super(WeChatUserAdmin, self).save_model(
             request, obj, form, change)
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
 

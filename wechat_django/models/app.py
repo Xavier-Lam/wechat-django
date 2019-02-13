@@ -14,6 +14,7 @@ from ..patches import WeChatOAuth
 from . import EventType
 from .permission import get_permission_desc, list_permissions, permissions
 
+
 class WeChatApp(m.Model):
     class EncodingMode(object):
         PLAIN = 0
@@ -22,16 +23,16 @@ class WeChatApp(m.Model):
 
     title = m.CharField(_("title"), max_length=16, null=False,
         help_text=_("公众号名称,用于后台辨识公众号"))
-    name = m.CharField(_("name"), max_length=16, 
+    name = m.CharField(_("name"), max_length=16,
         help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"),
         blank=False, null=False, unique=True)
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
-    appsecret = m.CharField(_("AppSecret"), 
+    appsecret = m.CharField(_("AppSecret"),
         max_length=64, null=False)
     token = m.CharField(max_length=32, null=True, blank=True)
-    encoding_aes_key = m.CharField(_("EncodingAESKey"), 
+    encoding_aes_key = m.CharField(_("EncodingAESKey"),
         max_length=43, null=True, blank=True)
     encoding_mode = m.PositiveSmallIntegerField(_("encoding mode"), choices=(
         (EncodingMode.PLAIN, _("plain")),
@@ -71,7 +72,7 @@ class WeChatApp(m.Model):
                 session = settings.SESSIONSTORAGE(self)
             else:
                 session = settings.SESSIONSTORAGE
-            
+
             client_factory = import_string(settings.WECHATCLIENTFACTORY)
             self._client = client = client_factory(self)(
                 self.appid,
@@ -89,15 +90,15 @@ class WeChatApp(m.Model):
             # )
             # self._client._http.verify = False
         return self._client
-    
+
     @property
     def oauth(self):
         if not hasattr(self, "_oauth"):
             self._oauth = WeChatOAuth(self.appid, self.appsecret)
-            
+
             if self.configurations.get("OAUTH_URL"):
                 self._oauth.OAUTH_URL = self.configurations["OAUTH_URL"]
-            
+
         return self._oauth
 
     def interactable(self):
@@ -110,6 +111,7 @@ class WeChatApp(m.Model):
 
     def __str__(self):
         return "{title} ({name})".format(title=self.title, name=self.name)
+
 
 @receiver(m.signals.post_save, sender=WeChatApp)
 def execute_after_save(sender, instance, created, *args, **kwargs):
@@ -124,6 +126,7 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
             )
             for perm in list_permissions(instance)
         )
+
 
 @receiver(m.signals.post_delete, sender=WeChatApp)
 def execute_after_delete(sender, instance, *args, **kwargs):

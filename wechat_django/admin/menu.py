@@ -9,16 +9,17 @@ from wechatpy.exceptions import WeChatException
 from ..models import Menu, WeChatApp
 from .bases import DynamicChoiceForm, WeChatAdmin
 
+
 class MenuAdmin(WeChatAdmin):
     __category__ = "menu"
 
     actions = ("sync", "publish")
 
-    list_display = ("operates", "id", "parent_id", "title", "type", 
+    list_display = ("operates", "id", "parent_id", "title", "type",
         "detail", "weight", "updated")
     list_display_links = ("title",)
     list_editable = ("weight", )
-    fields = ("name", "type", "key", "url", "appid", "pagepath", 
+    fields = ("name", "type", "key", "url", "appid", "pagepath",
         "created", "updated")
 
     def title(self, obj):
@@ -70,7 +71,7 @@ class MenuAdmin(WeChatAdmin):
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
-    
+
     def publish(self, request, queryset):
         self.check_wechat_permission(request, "sync")
         app = self.get_app(request)
@@ -122,11 +123,11 @@ class MenuAdmin(WeChatAdmin):
         url = forms.URLField(label=_("url"), required=False)
         appid = forms.CharField(label=_("app_id"), required=False)
         pagepath = forms.CharField(label=_("pagepath"), required=False)
-        
+
         class Meta(object):
             model = Menu
             fields = ("name", "menuid", "type", "weight")
-            
+
         def allowed_fields(self, type, cleaned_data):
             if type == Menu.Event.VIEW:
                 fields = ("url", )

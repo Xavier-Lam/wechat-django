@@ -2,6 +2,7 @@ from django.utils.module_loading import import_string
 
 from .. import settings
 
+
 def patch_admin(admin):
     """
     :type admin: django.contrib.admin.sites.AdminSite
@@ -52,7 +53,7 @@ def patch_admin(admin):
             else:
                 # 原始菜单
                 pass
-                
+
         return rv
 
     def _build_wechat_app_dict(self, request):
@@ -70,7 +71,7 @@ def patch_admin(admin):
                     change=True,
                 ),
                 admin_url=reverse(
-                    'admin:wechat_funcs_list', 
+                    'admin:wechat_funcs_list',
                     current_app=self.name,
                     kwargs=dict(
                         app_id=app.id,
@@ -90,9 +91,9 @@ def patch_admin(admin):
 
     def get_urls(self):
         rv = origin_get_urls(self)
-        
+
         rv += [url(
-            r"^(?P<app_label>%s)/apps/(?P<app_id>\d+)/$"%app_label, 
+            r"^(?P<app_label>%s)/apps/(?P<app_id>\d+)/$"%app_label,
             wechat_index,
             name="wechat_funcs_list"
         )]
@@ -109,5 +110,5 @@ for site in admin_site_paths:
     admin = import_string(site)
     patch_admin(admin)
 
-from . import (wechatapp, user, menu, messagehandler, messagelog, 
+from . import (wechatapp, user, menu, messagehandler, messagelog,
     material, article)

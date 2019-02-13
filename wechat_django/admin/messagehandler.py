@@ -4,10 +4,11 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import (EventType, MessageHandler, ReceiveMsgType, 
+from ..models import (EventType, MessageHandler, ReceiveMsgType,
     Reply, Rule, WeChatApp)
 from ..utils.admin import enum2choices
 from .bases import DynamicChoiceForm, WeChatAdmin
+
 
 class RuleInline(admin.StackedInline):
     model = Rule
@@ -19,9 +20,9 @@ class RuleInline(admin.StackedInline):
         origin_fields = ("type", "weight")
         type_field = "type"
 
-        msg_type = forms.ChoiceField(label=_("message type"), 
+        msg_type = forms.ChoiceField(label=_("message type"),
             choices=enum2choices(ReceiveMsgType), required=False)
-        event = forms.ChoiceField(label=_("event"), 
+        event = forms.ChoiceField(label=_("event"),
             choices=enum2choices(EventType), required=False)
         key = forms.CharField(label=_("event key"), required=False)
         pattern = forms.CharField(label=_("pattern"), required=False)
@@ -65,13 +66,13 @@ class ReplyInline(admin.StackedInline):
             widget=forms.Textarea, required=False)
         music_url = forms.URLField(label=_("url"), required=False)
         hq_music_url = forms.URLField(label=_("HQ music url"), required=False)
-        thumb_media_id = forms.CharField(label=_("thumb media_id"), 
+        thumb_media_id = forms.CharField(label=_("thumb media_id"),
             required=False)
 
         class Meta(object):
             model = Reply
             fields = ("msg_type", )
-        
+
         def allowed_fields(self, type, cleaned_data):
             if type == Reply.MsgType.FORWARD:
                 fields = ("url", )
@@ -89,9 +90,10 @@ class ReplyInline(admin.StackedInline):
             elif type == Reply.MsgType.TEXT:
                 fields = ("content", )
             return fields
-        
+
         # TODO: 表单验证
     form = ReplyForm
+
 
 class MessageHandlerAdmin(WeChatAdmin):
     __category__ = "messagehandler"
@@ -99,10 +101,10 @@ class MessageHandlerAdmin(WeChatAdmin):
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")
         parameter_name = "available"
-        
+
         def lookups(self, request, model_admin):
             return [(True, "available")]
-        
+
         def queryset(self, request, queryset):
             if self.value():
                 now = timezone.now()
@@ -111,7 +113,7 @@ class MessageHandlerAdmin(WeChatAdmin):
             return queryset
 
     actions = ("sync", )
-    list_display = ("name", "is_sync", "available", "enabled", "weight", 
+    list_display = ("name", "is_sync", "available", "enabled", "weight",
         "starts", "ends", "updated", "created")
     list_editable = ("weight",)
     list_filter = (AvailableFilter, )
@@ -126,7 +128,7 @@ class MessageHandlerAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             handlers = MessageHandler.sync(app)
-            self.message_user(request, 
+            self.message_user(request,
                 "%d handlers successfully synchronized"%len(handlers))
         except Exception as e:
             msg = "sync failed with {0}".format(e)

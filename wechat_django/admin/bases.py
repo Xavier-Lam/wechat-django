@@ -15,6 +15,7 @@ from six.moves.urllib.parse import parse_qsl
 from ..models import WeChatApp
 from ..models.permission import get_user_permissions
 
+
 @contextmanager
 def mutable_GET(request):
     request.GET._mutable = True
@@ -23,13 +24,15 @@ def mutable_GET(request):
     finally:
         request.GET._mutable = False
 
+
 @admin_list.register.inclusion_tag('admin/wechat_django/search_form.html')
 def search_form(cl):
     """
     搜索form带app_id
     """
     return admin_list.search_form(cl)
-    
+
+
 def has_wechat_permission(request, app, category="", operate="", obj=None):
     """
     检查用户是否具有某一微信权限
@@ -40,6 +43,7 @@ def has_wechat_permission(request, app, category="", operate="", obj=None):
     perms = get_user_permissions(request.user, app)
     needs = {category, "{0}_{1}".format(category, operate)}
     return bool(needs.intersection(perms))
+
 
 class ChangeList(_ChangeList):
     def __init__(self, request, *args, **kwargs):
@@ -59,6 +63,7 @@ class ChangeList(_ChangeList):
         prefix = "?app_id={0}".format(self.app_id)
         return prefix + query
 
+
 class WeChatAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         # 允许没有选中的actions
@@ -71,15 +76,15 @@ class WeChatAdmin(admin.ModelAdmin):
 
     def history_view(self, request, object_id, extra_context=None):
         extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).history_view(request, object_id, 
+        return super(WeChatAdmin, self).history_view(request, object_id,
             extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):
         extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).delete_view(request, object_id, 
+        return super(WeChatAdmin, self).delete_view(request, object_id,
             extra_context)
 
-    def changeform_view(self, request, object_id=None, form_url="", 
+    def changeform_view(self, request, object_id=None, form_url="",
         extra_context=None):
         if object_id and not self.get_app(request, True):
             # 对于没有app_id的请求,重定向至有app_id的地址
@@ -125,7 +130,7 @@ class WeChatAdmin(admin.ModelAdmin):
 
     def _filter_app_id(self, queryset, app_id):
         return queryset.filter(app_id=app_id)
-    
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.app_id = self.get_app(request).id
@@ -145,13 +150,13 @@ class WeChatAdmin(admin.ModelAdmin):
         app = self.get_app(request)
         category = category or self.__category__
         return has_wechat_permission(request, app, category, operate, obj)
-    
+
     def has_add_permission(self, request):
         return self.has_wechat_permission(request, "add")
 
     def has_change_permission(self, request, obj=None):
         return self.has_wechat_permission(request, "change", obj=obj)
-    
+
     def has_delete_permission(self, request, obj=None):
         return self.has_wechat_permission(request, "delete", obj=obj)
 
@@ -165,7 +170,7 @@ class WeChatAdmin(admin.ModelAdmin):
                     raise
                 request.app = None
         return request.app
-    
+
     @staticmethod
     def _get_request_params(request, param):
         if not hasattr(request, param):
@@ -174,16 +179,17 @@ class WeChatAdmin(admin.ModelAdmin):
                 preserved_filters = dict(parse_qsl(preserved_filters_str))
             else:
                 preserved_filters = dict()
-            value = (request.GET.get(param) 
-                or preserved_filters.get(param) 
+            value = (request.GET.get(param)
+                or preserved_filters.get(param)
                 or request.resolver_match.kwargs.get(param))
             setattr(request, param, value)
         return getattr(request, param)
-    
+
     def logger(self, request):
         app = self.get_app(request)
         name = "wechat.admin.{0}".format(app.name)
         return logging.getLogger(name)
+
 
 class DynamicChoiceForm(forms.ModelForm):
     content_field = ""
@@ -205,7 +211,7 @@ class DynamicChoiceForm(forms.ModelForm):
             return
         type = cleaned_data[self.type_field]
         fields = self.allowed_fields(type, cleaned_data)
-        
+
         content = dict()
         for k in set(cleaned_data.keys()).difference(self.origin_fields):
             if k in fields:
@@ -219,7 +225,7 @@ class DynamicChoiceForm(forms.ModelForm):
 
     def save(self, commit=True, *args, **kwargs):
         model = super(DynamicChoiceForm, self).save(False, *args, **kwargs)
-        setattr(model, self.content_field, 
+        setattr(model, self.content_field,
             self.cleaned_data[self.content_field])
         if commit:
             model.save()

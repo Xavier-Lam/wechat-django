@@ -1,11 +1,12 @@
 from django.utils.http import urlencode
 import logging
 
-from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient, 
+from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient,
     WeChatOAuth as _WeChatOAuth)
 from wechatpy.client import api
 
 from .oauth import WeChatSNSScope
+
 
 class WeChatMaterial(api.WeChatMaterial):
     def get_raw(self, media_id):
@@ -15,6 +16,7 @@ class WeChatMaterial(api.WeChatMaterial):
                 'media_id': media_id
             }
         )
+
 
 class WeChatClient(_WeChatClient):
     """继承原有WeChatClient添加日志功能 追加accesstoken url获取"""
@@ -28,7 +30,7 @@ class WeChatClient(_WeChatClient):
         """自定义accesstoken url"""
         return super(WeChatClient, self)._fetch_access_token(
             self.ACCESSTOKEN_URL or url, params)
-        
+
     def _request(self, method, url_or_endpoint, **kwargs):
         msg = self._log_msg(method, url_or_endpoint, **kwargs)
         self._logger("req").debug(msg)
@@ -51,10 +53,10 @@ class WeChatClient(_WeChatClient):
 
     def _logger(self, type):
         return logging.getLogger("wechat.api.{type}.{appname}".format(
-            type=type, 
+            type=type,
             appname=self.appname
         ))
-    
+
     def _log_msg(self, method, url, **kwargs):
         msg = "{method}\t{url}".format(
             method=method,
@@ -65,6 +67,7 @@ class WeChatClient(_WeChatClient):
         if kwargs.get("data"):
             msg += "\tdata:{0}".format(kwargs["data"])
         return msg
+
 
 class WeChatOAuth(_WeChatOAuth):
     OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
@@ -80,7 +83,7 @@ class WeChatOAuth(_WeChatOAuth):
             response_type="code",
             scope=scope
         )) + "#wechat_redirect"
-    
+
     def qrconnect_url(self, redirect_uri, state=""):
         return self.QRCONNECT_URL + "?" + urlencode(dict(
             appid=self.app_id,

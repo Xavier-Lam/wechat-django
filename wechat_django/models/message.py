@@ -1,5 +1,6 @@
 from . import WeChatUser
 
+
 class WeChatMessage(object):
     """由微信接收到的消息"""
     def __init__(self, app, message):
@@ -12,7 +13,7 @@ class WeChatMessage(object):
         :rtype: wechatpy.messages.BaseMessage
         """
         return self._message
-    
+
     @property
     def app(self):
         """

@@ -2,6 +2,7 @@ from .bases import WeChatTestCase
 
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
+
 class AppTestCase(WeChatTestCase):
     def test_getaccesstoken(self):
         """测试accesstoken获取"""

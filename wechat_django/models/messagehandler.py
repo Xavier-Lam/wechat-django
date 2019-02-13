@@ -6,11 +6,12 @@ from django.utils.translation import ugettext as _
 
 from . import EventType, MessageLog, WeChatApp
 
+
 class MessageHandler(m.Model):
     class Source(object):
-        SELF = 0 # 自己的后台
-        MENU = 1 # 菜单
-        MP = 2 # 微信后台
+        SELF = 0  # 自己的后台
+        MENU = 1  # 菜单
+        MP = 2  # 微信后台
 
     class ReplyStrategy(object):
         ALL = "reply_all"
@@ -60,7 +61,7 @@ class MessageHandler(m.Model):
 
     @staticmethod
     def matches(app, message):
-        if not message: 
+        if not message:
             return
         handlers = app.message_handlers.prefetch_related("rules").all()
         for handler in handlers:
@@ -102,7 +103,7 @@ class MessageHandler(m.Model):
     def sync(app):
         from . import Reply, Rule
         resp = app.client.message.get_autoreply_info()
-        
+
         # 处理自动回复
         handlers = []
 
@@ -123,7 +124,7 @@ class MessageHandler(m.Model):
                 )
                 handlers.append(handler)
                 rule = Rule.objects.create(type=Rule.Type.ALL, handler=handler)
-                reply = Reply.from_mp(resp["message_default_autoreply_info"], 
+                reply = Reply.from_mp(resp["message_default_autoreply_info"],
                     handler)
                 reply.save()
 
@@ -138,7 +139,7 @@ class MessageHandler(m.Model):
                 )
                 handlers.append(handler)
                 rule = Rule.objects.create(
-                    type=Rule.Type.EVENT, 
+                    type=Rule.Type.EVENT,
                     rule=dict(event=EventType.SUBSCRIBE),
                     handler=handler
                 )
@@ -149,7 +150,7 @@ class MessageHandler(m.Model):
                 and resp["keyword_autoreply_info"].get("list")):
                 for handler in resp["keyword_autoreply_info"]["list"][::-1]:
                     handlers.append(MessageHandler.from_mp(handler, app))
-            return handlers 
+            return handlers
 
     @classmethod
     def from_mp(cls, handler, app):
@@ -162,11 +163,11 @@ class MessageHandler(m.Model):
             strategy=handler["reply_mode"]
         )
         rv.rules.bulk_create([
-            Rule.from_mp(rule, rv) 
+            Rule.from_mp(rule, rv)
             for rule in handler["keyword_list_info"][::-1]
         ])
         rv.replies.bulk_create([
-            Reply.from_mp(reply, rv) 
+            Reply.from_mp(reply, rv)
             for reply in handler["reply_list_info"][::-1]
         ])
         return rv

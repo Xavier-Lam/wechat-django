@@ -46,6 +46,7 @@ permission_required = {
     )
 }
 
+
 def list_permissions(app):
     """列举该app下的所有权限"""
     rv = set()
@@ -63,6 +64,7 @@ def list_permissions(app):
     )
     return rv
 
+
 def get_user_permissions(user, app=None):
     """列举用户所有的微信权限
     :type user: django.contrib.auth.models.User
@@ -79,10 +81,12 @@ def get_user_permissions(user, app=None):
                 rv[appname] = set(permissions.keys())
     return rv[app.name] if app else dict(rv.items())
 
+
 def get_permission_desc(permission, appname):
     appname, perm = match_perm(permission)
     desc = permissions[perm] if perm else "can full control {appname}"
     return "{0} | {1}".format(appname, desc)
+
 
 @receiver(m.signals.m2m_changed, sender=Group.permissions.through)
 @receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
@@ -107,10 +111,11 @@ def before_permission_change(sender, instance, action, *args, **kwargs):
                 .filter(codename__in=codenames)
                 .all())
 
+
 def get_require_permissions(appname, perm=None):
     """获取依赖的django权限"""
     rv = set()
-    perms = (permission_required.get(perm, []) if perm else 
+    perms = (permission_required.get(perm, []) if perm else
         permission_required.keys())
     for perm in perms:
         if perm.startswith("wechat_django."):
@@ -118,6 +123,7 @@ def get_require_permissions(appname, perm=None):
         else:
             rv.update(get_require_permissions(appname, perm))
     return rv
+
 
 def match_perm(perm):
     """从permission的codename中拿到appname与权限名"""
@@ -130,4 +136,4 @@ def match_perm(perm):
         return match.group("appname"), match.group("perm")
     else:
         return None, None
-    
+

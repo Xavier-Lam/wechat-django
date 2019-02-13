@@ -9,15 +9,16 @@ from ..utils.admin import enum2choices
 from . import (Article, Material, MessageHandler, MsgType as BaseMsgType,
     WeChatMessage)
 
+
 class Reply(m.Model):
-    class MsgType(BaseMsgType):# 响应
+    class MsgType(BaseMsgType):  # 响应
         MUSIC = "music"
         NEWS = "news"
 
         # 自定义业务
         # LOG = "log"
         CUSTOM = "custom"
-        FORWARD = "forward" # 转发
+        FORWARD = "forward"  # 转发
 
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="replies")
@@ -29,7 +30,7 @@ class Reply(m.Model):
     @property
     def app(self):
         return self.handler.app
-        
+
     def send(self, message):
         """主动回复
         :type message: wechatpy.messages.BaseMessage
@@ -53,9 +54,9 @@ class Reply(m.Model):
             # 正常回复类型
             reply = self.normal_reply(message)
         return reply
-    
+
     def reply_forward(self, message):
-        resp = requests.post(self.content["url"], message.raw, 
+        resp = requests.post(self.content["url"], message.raw,
             params=message.request.GET, timeout=4.5)
         resp.raise_for_status()
         return replies.deserialize_reply(resp.content)
@@ -81,7 +82,7 @@ class Reply(m.Model):
             reply.source = message.target
             reply.target = message.source
             return reply
-    
+
     def normal_reply(self, message):
         if self.msg_type == self.MsgType.NEWS:
             klass = replies.ArticlesReply
@@ -138,7 +139,7 @@ class Reply(m.Model):
         type = type or reply.type
         funcname = "send_" + type
         return funcname, kwargs
-    
+
     @classmethod
     def from_mp(cls, data, handler):
         type = data["type"]
