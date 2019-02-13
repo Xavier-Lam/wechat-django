@@ -1,3 +1,4 @@
+#encoding: utf-8
 from setuptools import find_packages, setup
 
 import wechat_django
@@ -7,8 +8,12 @@ with open("readme.md", "rb") as f:
 
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
-with open("requirements.dev.txt") as f:
-    dev_requirements = [l for l in f.read().splitlines() if l]
+try:
+    dev_requirements = requirements.copy()
+except AttributeError:
+    import copy
+    dev_requirements = copy.copy(requirements)
+dev_requirements += ["cryptography>=2.5", "httmock==1.2.6"]
 
 setup(
     name="wechat-django",

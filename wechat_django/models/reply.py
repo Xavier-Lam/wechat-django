@@ -1,3 +1,4 @@
+#encoding: utf-8
 from django.db import models as m
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _

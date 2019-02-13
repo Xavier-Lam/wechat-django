@@ -1,3 +1,4 @@
+#encoding: utf-8
 from django.utils.module_loading import import_string
 
 from .. import settings

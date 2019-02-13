@@ -1,3 +1,4 @@
+#encoding: utf-8
 import datetime
 from hashlib import md5
 import json

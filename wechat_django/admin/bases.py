@@ -1,3 +1,4 @@
+#encoding: utf-8
 from contextlib import contextmanager
 import logging
 

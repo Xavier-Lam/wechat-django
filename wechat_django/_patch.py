@@ -1,3 +1,4 @@
+#encoding: utf-8
 import time
 from wechatpy import replies
 from wechatpy.fields import *

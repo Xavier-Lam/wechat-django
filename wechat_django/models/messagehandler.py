@@ -1,3 +1,4 @@
+#encoding: utf-8
 import random
 
 from django.db import models as m, transaction

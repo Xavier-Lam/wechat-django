@@ -1,3 +1,4 @@
+#encoding: utf-8
 from django.utils.http import urlencode
 import logging
 

@@ -7,8 +7,8 @@ from . import ReceiveMsgType, WeChatApp, WeChatUser
 
 
 class MessageLog(m.Model):
-    app = m.ForeignKey(WeChatApp)
-    user = m.ForeignKey(WeChatUser)
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE)
+    user = m.ForeignKey(WeChatUser, on_delete=m.CASCADE)
 
     msg_id = m.BigIntegerField(_("msgid"))
     type = m.CharField(_("message type"), max_length=24,
