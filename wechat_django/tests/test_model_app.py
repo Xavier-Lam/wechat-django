@@ -7,7 +7,7 @@ class AppTestCase(WeChatTestCase):
         """测试accesstoken获取"""
         api = "/cgi-bin/token"
         # 测试获取accesstoken
-        with wechatapi_accesstoken(lambda req, resp: self.assertTrue(req)):
+        with wechatapi_accesstoken(lambda url, req, resp: self.assertTrue(req)):
             token = self.app.client.access_token
             self.assertEqual(token, "ACCESS_TOKEN")
         # 测试获取后不再请求accesstoken

@@ -125,7 +125,6 @@ class HandlerTestCase(WeChatTestCase):
         timestamp = str(int(time.time()))
         nonce = "123456"
         query_data = dict(
-            token=token,
             timestamp=timestamp,
             nonce=nonce
         )
@@ -157,10 +156,10 @@ class HandlerTestCase(WeChatTestCase):
             self.assertEqual(url.path, path)
 
             query = dict(parse_qsl(url.query))
-            self.assertEqual(query["token"], token)
             self.assertEqual(query["timestamp"], timestamp)
             self.assertEqual(query["nonce"], nonce)
-            check_signature(token, query["signature"], timestamp, nonce)
+            self.assertEqual(query["signature"], signature)
+            check_signature(self.app.token, query["signature"], timestamp, nonce)
 
             msg = parse_message(request.body)
             self.assertIsInstance(msg, messages.TextMessage)
@@ -278,7 +277,114 @@ class HandlerTestCase(WeChatTestCase):
     
     def test_send(self):
         """测试客服回复"""
+        def _create_reply(msg_type, **kwargs):
+            return Reply(msg_type=msg_type, content=kwargs)
+        sender = "openid"
+        message = messages.TextMessage(dict(
+            FromUserName=sender,
+            content="xyz"
+        ))
+
+        # 空消息转换
+        empty_msg = replies.EmptyReply()
+        empty_str = ""
+        self.assertIsNone(Reply.reply2send(empty_msg)[0])
+        self.assertIsNone(Reply.reply2send(empty_str)[0])
+
+        client = self.app.client.message
+
+        # 文本消息转换
+        content = "test"
+        msg_type = Reply.MsgType.TEXT
+        reply = _create_reply(msg_type, content=content).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_text")
+        self.assertEqual(reply.content, kwargs["content"])
+
+        # 图片消息转换
+        media_id = "media_id"
+        msg_type = Reply.MsgType.IMAGE
+        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_image")
+        self.assertEqual(reply.media_id, kwargs["media_id"])
+
+        # 声音消息转换
+        msg_type = Reply.MsgType.VOICE
+        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_voice")
+        self.assertEqual(reply.media_id, kwargs["media_id"])
+
+        # 视频消息转换
+        title = "title"
+        description = "desc"
+        msg_type = Reply.MsgType.VIDEO
+        reply = _create_reply(msg_type, media_id=media_id, title=title, 
+            description=description).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_video")
+        self.assertEqual(reply.media_id, kwargs["media_id"])
+        self.assertEqual(reply.title, kwargs["title"])
+        self.assertEqual(reply.description, kwargs["description"])
+        # 选填字段
+        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_video")
+        self.assertEqual(reply.media_id, kwargs["media_id"])
+        self.assertIsNone(kwargs["title"])
+        self.assertIsNone(kwargs["description"])
+
+        # 音乐消息转换
+        music_url = "music_url"
+        hq_music_url = "hq_music_url"
+        msg_type = Reply.MsgType.MUSIC
+        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title, 
+            description=description, music_url=music_url, 
+            hq_music_url=hq_music_url).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_music")
+        self.assertEqual(reply.thumb_media_id, kwargs["thumb_media_id"])
+        self.assertEqual(reply.music_url, kwargs["url"])
+        self.assertEqual(reply.hq_music_url, kwargs["hq_url"])
+        self.assertEqual(reply.title, kwargs["title"])
+        self.assertEqual(reply.description, kwargs["description"])
+        # 选填字段
+        reply = _create_reply(msg_type, thumb_media_id=media_id).reply(message)
+        funcname, kwargs = Reply.reply2send(reply)
+        self.assertTrue(hasattr(client, funcname))
+        self.assertEqual(funcname, "send_music")
+        self.assertEqual(reply.thumb_media_id, kwargs["thumb_media_id"])
+        self.assertIsNone(kwargs["url"])
+        self.assertIsNone(kwargs["hq_url"])
+        self.assertIsNone(kwargs["title"])
+        self.assertIsNone(kwargs["description"])
+
+        # 图文消息转换
         pass
+
+        # 确认消息发送
+        handler = self._create_handler(replies=dict(
+            msg_type=Reply.MsgType.TEXT,
+            content=dict(content=content)
+        ))
+
+        def callback(url, request, response):
+            data = json.loads(request.body.decode())
+            self.assertEqual(data["touser"], sender)
+            self.assertEqual(data["msgtype"], Reply.MsgType.TEXT)
+            self.assertEqual(data["text"]["content"], content)
+
+        with wechatapi_accesstoken(), wechatapi("/cgi-bin/message/custom/send", dict(
+            errcode=0
+        ), callback):
+            handler.replies.all()[0].send(message)
     
     def test_multireply(self):
         """测试多回复"""
@@ -311,7 +417,7 @@ class HandlerTestCase(WeChatTestCase):
         
         # 回复一条正常消息以及一条客服消息
         counter = dict(calls=0)
-        def callback(request, response):
+        def callback(url, request, response):
             counter["calls"] += 1
             data = json.loads(request.body.decode())
             self.assertEqual(data["text"]["content"], reply2)

@@ -1,6 +1,6 @@
-Django>=1.11
 httmock==1.2.6
 jsonfield>=2.0.2
-pylint==2.2.2
+pylint>=1.9.4
 requests>=2.4.3
+tox>=3.7.0
 wechatpy>=1.7.6

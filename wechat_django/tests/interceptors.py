@@ -18,7 +18,7 @@ def wechatapi(api, data="", callback=None):
         }
         resp = response(200, data, headers)
         if callback:
-            callback(request, response)
+            callback(url, request, response)
         return resp
 
     return HTTMock(wechatapi_mock)

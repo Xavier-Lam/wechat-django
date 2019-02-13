@@ -112,11 +112,11 @@ class Reply(m.Model):
         将主动回复生成的reply转换为被动回复的方法及变量
         :type reply: wechatpy.replies.BaseReply
         """
-        type = ""
-        kwargs = dict(user_id=reply.target)
         if not reply or isinstance(reply, replies.EmptyReply):
             return None, None
-        elif isinstance(reply, replies.ArticlesReply):
+        type = ""
+        kwargs = dict(user_id=reply.target)
+        if isinstance(reply, replies.ArticlesReply):
             kwargs["articles"] = reply.articles
             type = "articles"
         elif isinstance(reply, replies.MusicReply):

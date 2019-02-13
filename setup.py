@@ -1,5 +1,7 @@
 from setuptools import find_packages, setup
 
+import wechat_django
+
 with open("readme.md", "rb") as f:
     long_description = f.read().decode("utf-8")
 
@@ -10,8 +12,8 @@ with open("requirements.dev.txt") as f:
 
 setup(
     name="wechat-django",
-    version="0.1.0.0",
-    author="Xavier-Lam",
+    version=wechat_django.__version__,
+    author=wechat_django.__author__,
     author_email="Lam.Xavier@hotmail.com",
     url="https://github.com/Xavier-Lam/wechat-django",
     packages=find_packages(),

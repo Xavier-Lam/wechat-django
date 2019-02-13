@@ -1,4 +1,4 @@
-__version__ = "0.0.1.0"
+__version__ = "0.1.0"
 __author__ = "Xavier-Lam"
 
 __all__ = ("urls", )
