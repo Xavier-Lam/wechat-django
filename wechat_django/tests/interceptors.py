@@ -1,7 +1,12 @@
 import json
-from httmock import HTTMock, response, urlmatch
+from httmock import all_requests, HTTMock, response, urlmatch
 
 TESTFORBIDDEN = -99999
+
+def common_interceptor(callback, **kwargs):
+    decorator = urlmatch(**kwargs) if kwargs else all_requests
+    mock = decorator(callback)
+    return HTTMock(mock)
 
 def wechatapi(api, data="", callback=None):
     @urlmatch(netloc=r"(.*\.)?api\.weixin\.qq\.com$", path=api)

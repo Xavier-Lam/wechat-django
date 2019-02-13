@@ -1,10 +1,30 @@
 import json
+import time
 
-from wechatpy import messages
+from django.test import RequestFactory
+from django.utils.http import urlencode
+from httmock import response
+from requests.exceptions import HTTPError
+from six.moves.urllib.parse import parse_qsl
+from wechatpy import messages, parse_message, replies
+from wechatpy.utils import check_signature, WeChatSigner
 
+from ..decorators import message_handler
 from ..models import MessageHandler, Reply, Rule
 from .bases import WeChatTestCase
-from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
+from .interceptors import (common_interceptor, wechatapi,
+    wechatapi_accesstoken, wechatapi_error)
+
+@message_handler
+def debug_handler(message):
+    return "success"
+
+@message_handler("test")
+def app_only_handler(message):
+    return "success"
+
+def forbidden_handler(message):
+    return ""
 
 class HandlerTestCase(WeChatTestCase):    
     def test_match(self):
@@ -22,6 +42,8 @@ class HandlerTestCase(WeChatTestCase):
         # 测试正则匹配
         pass
         # 测试全部匹配
+        pass
+        # 测试匹配顺序
         pass
 
     def test_available(self):
@@ -53,11 +75,116 @@ class HandlerTestCase(WeChatTestCase):
     
     def test_custom(self):
         """测试自定义回复"""
-        pass
+        from ..models import WeChatApp
+
+        def _get_handler(handler, app=None):
+            return self._create_handler(replies=dict(
+                msg_type=Reply.MsgType.CUSTOM,
+                content=dict(
+                    program="wechat_django.tests.test_model_handler." + handler
+                )
+            ), app=app)
+        
+        sender = "openid"
+        message = messages.TextMessage(dict(
+            FromUserName=sender,
+            content="xyz"
+        ))
+        success_reply = "success"
+        # 测试自定义回复
+        handler = _get_handler("debug_handler")
+        reply = handler.reply(message)
+        self.assertIsInstance(reply, replies.TextReply)
+        self.assertEqual(reply.content, success_reply)
+
+        # 测试不属于本app的自定义回复
+        handler_success = _get_handler("app_only_handler")
+        handler_fail = _get_handler("app_only_handler", 
+            WeChatApp.get_by_name("test1"))
+        reply = handler_success.reply(message)
+        self.assertIsInstance(reply, replies.TextReply)
+        self.assertEqual(reply.content, success_reply)
+        self.assertRaises(ValueError, lambda: handler_fail.reply(message))
+
+        # 测试未加装饰器的自定义回复
+        handler = _get_handler("forbidden_handler")
+        self.assertRaises(ValueError, lambda: handler.reply(message))
 
     def test_forward(self):
         """测试转发回复"""
-        pass
+        scheme = "http"
+        netloc = "example.com"
+        path = "/debug"
+        url = "{scheme}://{netloc}{path}".format(
+            scheme=scheme,
+            netloc=netloc,
+            path=path
+        )
+
+        token = self.app.token
+        timestamp = str(int(time.time()))
+        nonce = "123456"
+        query_data = dict(
+            token=token,
+            timestamp=timestamp,
+            nonce=nonce
+        )
+        signer = WeChatSigner()
+        signer.add_data(token, timestamp, nonce)
+        signature = signer.signature
+        query_data["signature"] = signature
+
+        request = RequestFactory().get(url + "?" + urlencode(query_data))
+
+        sender = "openid"
+        content = "xyz"
+        xml = """<xml>
+        <ToUserName><![CDATA[toUser]]></ToUserName>
+        <FromUserName><![CDATA[{sender}]]></FromUserName>
+        <CreateTime>1348831860</CreateTime>
+        <MsgType><![CDATA[text]]></MsgType>
+        <Content><![CDATA[{content}]]></Content>
+        <MsgId>1234567890123456</MsgId>
+        </xml>""".format(sender=sender, content=content)
+        message = parse_message(xml)
+        message.raw = xml
+        message.request = request
+
+        reply_text = "abc"
+        def reply_test(url, request):
+            self.assertEqual(url.scheme, scheme)
+            self.assertEqual(url.netloc, netloc)
+            self.assertEqual(url.path, path)
+
+            query = dict(parse_qsl(url.query))
+            self.assertEqual(query["token"], token)
+            self.assertEqual(query["timestamp"], timestamp)
+            self.assertEqual(query["nonce"], nonce)
+            check_signature(token, query["signature"], timestamp, nonce)
+
+            msg = parse_message(request.body)
+            self.assertIsInstance(msg, messages.TextMessage)
+            self.assertEqual(msg.source, sender)
+            self.assertEqual(msg.content, content)
+            reply = replies.create_reply(reply_text, msg)
+            return response(content=reply.render())
+
+        handler = self._create_handler(replies=dict(
+            msg_type=Reply.MsgType.FORWARD,
+            content=dict(url=url)
+        ))
+
+        with common_interceptor(reply_test):
+            reply = handler.reply(message)
+            self.assertIsInstance(reply, replies.TextReply)
+            self.assertEqual(reply.content, reply_text)
+            self.assertEqual(reply.target, sender)
+        
+        def bad_reply(url, request):
+            return response(404)
+        
+        with common_interceptor(bad_reply):
+            self.assertRaises(HTTPError, lambda: handler.reply(message))
     
     def test_sync(self):
         """测试同步"""
@@ -65,16 +192,87 @@ class HandlerTestCase(WeChatTestCase):
         
     def test_reply(self):
         """测试一般回复"""
+        def _create_reply(msg_type, **kwargs):
+            return Reply(msg_type=msg_type, content=kwargs)
+        sender = "openid"
+        message = messages.TextMessage(dict(
+            FromUserName=sender,
+            content="xyz"
+        ))
+
         # 测试文本回复
-        pass
+        content = "test"
+        msg_type = Reply.MsgType.TEXT
+        reply = _create_reply(msg_type, content=content)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.content, content)
+
         # 测试图片回复
-        pass
+        media_id = "media_id"
+        msg_type = Reply.MsgType.IMAGE
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.image, media_id)
+
         # 测试音频回复
-        pass
+        msg_type = Reply.MsgType.VOICE
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.voice, media_id)
+
         # 测试视频回复
-        pass
+        title = "title"
+        description = "desc"
+        msg_type = Reply.MsgType.VIDEO
+        reply = _create_reply(msg_type, media_id=media_id, title=title, 
+            description=description)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.media_id, media_id)
+        self.assertEqual(obj.title, title)
+        self.assertEqual(obj.description, description)
+        # 选填字段
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.media_id, media_id)
+        self.assertIsNone(obj.title)
+        self.assertIsNone(obj.description)
+
         # 测试音乐回复
-        pass
+        music_url = "music_url"
+        hq_music_url = "hq_music_url"
+        msg_type = Reply.MsgType.MUSIC
+        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title, 
+            description=description, music_url=music_url, 
+            hq_music_url=hq_music_url)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.thumb_media_id, media_id)
+        self.assertEqual(obj.title, title)
+        self.assertEqual(obj.description, description)
+        self.assertEqual(obj.music_url, music_url)
+        self.assertEqual(obj.hq_music_url, hq_music_url)
+        # 选填字段
+        reply = _create_reply(msg_type, thumb_media_id=media_id)
+        obj = reply.reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.thumb_media_id, media_id)
+        self.assertIsNone(obj.title)
+        self.assertIsNone(obj.description)
+        self.assertIsNone(obj.music_url)
+        self.assertIsNone(obj.hq_music_url)
+
         # 测试图文回复
         pass
     
@@ -93,10 +291,9 @@ class HandlerTestCase(WeChatTestCase):
             msg_type=Reply.MsgType.TEXT,
             content=dict(content=reply2)
         )]
-        rule = dict(type=Rule.Type.ALL)
-        handler_all = self._create_handler(rule, replies=replies, 
+        handler_all = self._create_handler(replies=replies, 
             strategy=MessageHandler.ReplyStrategy.ALL)
-        handler_rand = self._create_handler(rule, replies=replies,
+        handler_rand = self._create_handler(replies=replies,
             strategy=MessageHandler.ReplyStrategy.RANDOM)
 
         # 随机回复
@@ -126,16 +323,20 @@ class HandlerTestCase(WeChatTestCase):
             self.assertEqual(reply.content, reply1)
             self.assertEqual(counter["calls"], 1)
     
-    def _create_handler(self, rules, name="", replies=None, **kwargs):
+    def _create_handler(self, rules=None, name="", replies=None, app=None, **kwargs):
         """:rtype: MessageHandler"""
         handler = MessageHandler.objects.create(
-            app=self.app,
+            app=app or self.app,
             name=name,
             **kwargs
         )
         
+        if not rules:
+            rules = [dict(type=Rule.Type.ALL)]
         if isinstance(rules, dict):
             rules = [rules]
+        if isinstance(replies, dict):
+            replies = [replies]
         replies = replies or []
         Rule.objects.bulk_create([
             Rule(handler=handler, **rule)
