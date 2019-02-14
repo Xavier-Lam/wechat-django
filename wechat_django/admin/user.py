@@ -80,4 +80,5 @@ class WeChatUserAdmin(WeChatAdmin):
     def has_add_permission(self, request):
         return False
 
+
 admin.site.register(WeChatUser, WeChatUserAdmin)

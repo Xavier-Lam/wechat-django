@@ -24,7 +24,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
     fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",
         "encoding_mode", "desc", "callback", "created", "updated")
 
-    def short_desc(self ,obj):
+    def short_desc(self, obj):
         return truncatechars(obj.desc, 35)
     short_desc.short_description = _("description")
 
@@ -88,5 +88,6 @@ class WeChatAppAdmin(admin.ModelAdmin):
             )
 
     form = WeChatAppForm
+
 
 admin.site.register(WeChatApp, WeChatAppAdmin)

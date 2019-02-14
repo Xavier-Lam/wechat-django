@@ -13,5 +13,6 @@ def main():
     failures = test_runner.run_tests(["wechat_django"])
     sys.exit(bool(failures))
 
+
 if __name__ == "__main__":
     main()

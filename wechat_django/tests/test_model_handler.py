@@ -38,7 +38,7 @@ class HandlerTestCase(WeChatTestCase):
         """测试匹配"""
         def _create_rule(type, **kwargs):
             return Rule(type=type, rule=kwargs)
-        
+
         def _create_msg(type, **kwargs):
             rv = type(dict())
             for k, v in kwargs.items():

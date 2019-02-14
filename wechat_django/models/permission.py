@@ -2,10 +2,9 @@
 from __future__ import unicode_literals
 
 from collections import defaultdict
-import itertools
 import re
 
-from django.contrib.auth.models import ContentType, Group, Permission, User
+from django.contrib.auth.models import Group, Permission, User
 from django.db import models as m
 from django.dispatch import receiver
 
@@ -95,7 +94,6 @@ def get_permission_desc(permission, appname):
 @receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
 def before_permission_change(sender, instance, action, *args, **kwargs):
     if action == "pre_add":
-        from . import WeChatApp
         if isinstance(instance, User):
             permissions = instance.user_permissions
         else:
@@ -130,7 +128,8 @@ def get_require_permissions(appname, perm=None):
 
 def match_perm(perm):
     """从permission的codename中拿到appname与权限名"""
-    pattern = r"(?:{label}[.])?{prefix}(?P<appname>.+?)(?:|(?P<perm>.+))?$".format(
+    str4format = r"(?:{label}[.])?{prefix}(?P<appname>.+?)(?:|(?P<perm>.+))?$"
+    pattern = str4format.format(
         label="wechat_django",
         prefix=WECHATPERM_PREFIX
     ).replace("|", "[|]")
@@ -139,4 +138,3 @@ def match_perm(perm):
         return match.group("appname"), match.group("perm")
     else:
         return None, None
-

@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django import forms
 from django.contrib import admin, messages
-from django.db import models as m
-from django.http import response
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import Article, WeChatApp
-from .bases import DynamicChoiceForm, WeChatAdmin
+from ..models import Article
+from .bases import WeChatAdmin
 
 
 class ArticleAdmin(WeChatAdmin):
@@ -102,5 +98,6 @@ class ArticleAdmin(WeChatAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 admin.site.register(Article, ArticleAdmin)

@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django import forms
 from django.contrib import admin, messages
-from django.db import models as m
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
-from .. import views
-from ..models import Material, WeChatApp
+from ..models import Material
 from .bases import DynamicChoiceForm, WeChatAdmin
 
 
@@ -91,5 +88,6 @@ class MaterialAdmin(WeChatAdmin):
 
     def has_add_permission(self, request):
         return False
+
 
 admin.site.register(Material, MaterialAdmin)

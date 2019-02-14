@@ -10,17 +10,15 @@ def patch_admin(admin):
     """
     :type admin: django.contrib.admin.sites.AdminSite
     """
-    import re
     import types
 
-    from django.conf.urls import url, include
-    from django.urls import NoReverseMatch, reverse
+    from django.conf.urls import url
+    from django.urls import reverse
     from django.utils.http import urlencode
 
     from ..apps import WeChatConfig
     from ..models import WeChatApp
     from ..models.permission import get_user_permissions
-    from .bases import WeChatAdmin
 
     app_label = WeChatConfig.name
     fake_app_label = app_label + "_apps"
@@ -105,6 +103,7 @@ def patch_admin(admin):
 
     admin._build_app_dict = types.MethodType(_build_app_dict, admin)
     admin.get_urls = types.MethodType(get_urls, admin)
+
 
 admin_site_paths = settings.ADMINSITE
 if not isinstance(admin_site_paths, (list, tuple)):

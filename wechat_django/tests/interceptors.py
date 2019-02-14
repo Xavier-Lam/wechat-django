@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import json
 from httmock import all_requests, HTTMock, response, urlmatch
 
 TESTFORBIDDEN = -99999

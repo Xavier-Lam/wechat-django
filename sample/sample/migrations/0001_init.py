@@ -43,7 +43,7 @@ def create_data(apps, schema_editor):
         user = User.objects.get(username="wechat_admin")
     except:
         user = User.objects.create_user("wechat_admin", "", "123456", is_staff=True)
-        
+
     user.user_permissions.add(permission)
     user.save()
 

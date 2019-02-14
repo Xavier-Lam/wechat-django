@@ -173,4 +173,5 @@ class MessageHandlerAdmin(WeChatAdmin):
         return super(MessageHandlerAdmin, self).save_model(
             request, obj, form, change)
 
+
 admin.site.register(MessageHandler, MessageHandlerAdmin)

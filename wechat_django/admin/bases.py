@@ -10,7 +10,6 @@ from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
-from django.utils.encoding import force_text
 from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 from six.moves.urllib.parse import parse_qsl

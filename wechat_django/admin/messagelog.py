@@ -33,4 +33,5 @@ class MessageLogAdmin(WeChatAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 admin.site.register(MessageLog, MessageLogAdmin)

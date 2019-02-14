@@ -3,9 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
-from wechatpy.exceptions import WeChatClientException
 
-from . import Material, WeChatApp
+from . import Material
 
 
 class Article(m.Model):

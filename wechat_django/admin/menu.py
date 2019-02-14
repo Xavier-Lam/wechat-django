@@ -158,4 +158,5 @@ class MenuAdmin(WeChatAdmin):
         else:
             return q.filter(parent_id__isnull=True).count() < 3
 
+
 admin.site.register(Menu, MenuAdmin)

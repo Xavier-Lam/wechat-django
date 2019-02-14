@@ -39,16 +39,21 @@ def deserialize_reply(xml, update_time=False):
 
     return cls(**kwargs)
 
+
 replies.deserialize_reply = deserialize_reply
 
 
 def from_xml(cls, value):
     return value
+
+
 BaseField.from_xml = classmethod(from_xml)
 
 
 def from_xml_media_id(cls, value):
     return value["MediaId"]
+
+
 ImageField.from_xml = classmethod(from_xml_media_id)
 VoiceField.from_xml = classmethod(from_xml_media_id)
 
@@ -59,6 +64,8 @@ def from_xml_video(cls, value):
         title=value.get("Title"),
         description=value.get("Description")
     )
+
+
 VideoField.from_xml = classmethod(from_xml_video)
 
 
@@ -70,6 +77,8 @@ def from_xml_music(cls, value):
         music_url=value.get("MusicUrl"),
         hq_music_url=value.get("HQMusicUrl")
     )
+
+
 MusicField.from_xml = classmethod(from_xml_music)
 
 
@@ -80,4 +89,6 @@ def from_xml_articles(cls, value):
         image=item["PicUrl"],
         url=item["Url"]
     ) for item in value["item"]]
+
+
 ArticlesField.from_xml = classmethod(from_xml_articles)
