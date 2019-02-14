@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.db import models as m
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
@@ -28,6 +31,7 @@ class MessageLog(m.Model):
         :type message: wechatpy.messages.BaseMessage
         :type app: WeChatApp
         """
+        # TODO: 是否记录原始记录
         content = {
             key: getattr(message, key)
             for key in message._fields

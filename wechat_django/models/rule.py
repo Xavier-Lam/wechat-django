@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import re
 
 from django.db import models as m
@@ -37,21 +39,23 @@ class Rule(m.Model):
         """
         :type message: wechatpy.messages.BaseMessage
         """
+        s_eq = lambda a, b: a.lower() == b.lower()
+
         if self.type == self.Type.ALL:
             return True
         elif self.type == self.Type.MSGTYPE:
             return message.type == self.rule["msg_type"]
         elif self.type == self.Type.EVENT:
             return (message.type == ReceiveMsgType.EVENT
-                and message.event == self.rule["event"])
+                and s_eq(message.event, self.rule["event"]))
         elif self.type == self.Type.EVENTKEY:
             return (message.type == ReceiveMsgType.EVENT
-                and message.event == self.rule["event"]
+                and s_eq(message.event, self.rule["event"])
                 and hasattr(message, "key")
                 and message.key == self.rule["key"])
         elif self.type == self.Type.CONTAIN:
             return (message.type == ReceiveMsgType.TEXT
-                and message.content.find(self.rule["pattern"]) >= 0)
+                and self.rule["pattern"] in message.content)
         elif self.type == self.Type.EQUAL:
             return (message.type == ReceiveMsgType.TEXT
                 and message.content == self.rule["pattern"])
@@ -69,6 +73,6 @@ class Rule(m.Model):
         )
 
     def __str__(self):
-        if self.handler:
+        if hasattr(self, "handler") and self.handler is not None:
             return self.handler.name
-        return super(Rule, self).__str__()
+        return "<Rule: {0}>".format(self.type)

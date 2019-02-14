@@ -1,5 +1,12 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+__title__ = "wechat-django"
+__description__ = "Django WeChat Extension"
+__url__ = "https://github.com/Xavier-Lam/wechat-django"
 __version__ = "0.1.0"
 __author__ = "Xavier-Lam"
+__author_email__ = "Lam.Xavier@hotmail.com"
 
 __all__ = ("urls", )
 

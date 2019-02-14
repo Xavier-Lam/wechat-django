@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.utils.http import urlencode
 import logging
 

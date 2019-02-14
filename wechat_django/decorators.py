@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from functools import wraps
 
 from django.conf.urls import url
@@ -6,6 +8,7 @@ from django.http import response
 from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from six import text_type
 
 from . import url_patterns
 from .models import WeChatApp
@@ -26,7 +29,7 @@ def message_handler(names=None):
 
         return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
-    if isinstance(names, str):
+    if isinstance(names, text_type):
         names = [names]
     elif callable(names):
         return decorator(names)

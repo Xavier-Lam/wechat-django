@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from setuptools import find_packages, setup
 
 import wechat_django
@@ -8,27 +10,21 @@ with open("readme.md", "rb") as f:
 
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
-try:
-    dev_requirements = requirements.copy()
-except AttributeError:
-    import copy
-    dev_requirements = copy.copy(requirements)
-dev_requirements += ["cryptography>=2.5", "httmock==1.2.6"]
 
 setup(
-    name="wechat-django",
+    name=wechat_django.__title__,
     version=wechat_django.__version__,
     author=wechat_django.__author__,
-    author_email="Lam.Xavier@hotmail.com",
-    url="https://github.com/Xavier-Lam/wechat-django",
+    author_email=wechat_django.__author_email__,
+    url=wechat_django.__url__,
     packages=find_packages(),
     keywords="WeChat, weixin, wx, micromessenger, 微信, django",
-    description="WeChat Django Extension",
+    description=wechat_django.__description__,
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
     include_package_data=True,
-    tests_require=dev_requirements,
+    tests_require=requirements + ["cryptography>=2.5", "httmock==1.2.6"],
     test_suite="runtests.main",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

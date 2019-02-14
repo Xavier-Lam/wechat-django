@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.db import models as m, transaction
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatClientException

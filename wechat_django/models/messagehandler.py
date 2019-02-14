@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import random
 
 from django.db import models as m, transaction
@@ -43,7 +45,7 @@ class MessageHandler(m.Model):
     updated = m.DateTimeField(_("updated"), auto_now=True)
 
     class Meta:
-        ordering = ("-weight", "-created")
+        ordering = ("-weight", "-created", "-id")
         index_together = (
             ("app", "weight", "created"),
         )

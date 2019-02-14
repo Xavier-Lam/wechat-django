@@ -1,4 +1,6 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django import forms
 from django.contrib import admin, messages
 from django.db import models as m

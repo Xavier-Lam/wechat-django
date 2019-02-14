@@ -1,9 +1,12 @@
-#encoding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.db import models as m
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 import requests
+from six import text_type
 from wechatpy import replies
 
 from ..utils.admin import enum2choices
@@ -78,7 +81,7 @@ class Reply(m.Model):
             reply = func(WeChatMessage(self.app, message))
             if not reply:
                 return ""
-            elif isinstance(reply, str):
+            elif isinstance(reply, text_type):
                 reply = replies.TextReply(content=reply)
             reply.source = message.target
             reply.target = message.source

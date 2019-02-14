@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import os
 from django.conf.urls import url
 import wechat_django

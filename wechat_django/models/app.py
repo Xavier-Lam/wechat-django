@@ -1,5 +1,4 @@
-#encoding: utf-8
-
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import datetime
@@ -12,6 +11,7 @@ from django.dispatch import receiver
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
+from six import text_type
 
 from .. import settings
 from ..patches import WeChatOAuth
@@ -70,7 +70,7 @@ class WeChatApp(m.Model):
         """:rtype: wechatpy.WeChatClient"""
         if not hasattr(self, "_client"):
             # session
-            if isinstance(settings.SESSIONSTORAGE, str):
+            if isinstance(settings.SESSIONSTORAGE, text_type):
                 settings.SESSIONSTORAGE = import_string(settings.SESSIONSTORAGE)
             if callable(settings.SESSIONSTORAGE):
                 session = settings.SESSIONSTORAGE(self)
