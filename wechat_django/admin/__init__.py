@@ -114,3 +114,6 @@ for site in admin_site_paths:
 
 from . import (wechatapp, user, menu, messagehandler, messagelog,
     material, article)
+
+# TODO: 考虑一下放在哪
+from .. import handler, views

@@ -9,7 +9,6 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from .decorators import wechat_route
-from .handler import handler
 
 __all__ = ("material_proxy", )
 

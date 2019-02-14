@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import re
-
 from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from .. import views
 from ..models import WeChatApp
 from ..models.permission import get_user_permissions
 from .bases import has_wechat_permission

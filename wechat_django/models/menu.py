@@ -12,6 +12,13 @@ from ..utils.admin import enum2choices
 from . import MessageHandler, WeChatApp
 
 
+class MenuManager(m.Manager):
+    def get_queryset(self):
+        # TODO: prefetch待测试
+        return (super(MenuManager, self).get_queryset()
+            .prefetch_related("sub_button"))
+
+
 class Menu(m.Model):
     class Event(object):
         CLICK = "click"
@@ -44,11 +51,13 @@ class Menu(m.Model):
     class Meta(object):
         ordering = ("app", "-weight", "id")
 
+    objects = MenuManager()
+
     @classmethod
     def sync(cls, app):
         """
         从微信同步菜单数据
-        :type app: .WeChatApp
+        :type app: wechat_django.models.WeChatApp
         """
         resp = app.client.menu.get_menu_info()
         try:
@@ -70,7 +79,7 @@ class Menu(m.Model):
     def publish(cls, app, menuid=None):
         """
         发布菜单
-        :type app: .WeChatApp
+        :type app: wechat_django.models.WeChatApp
         """
         data = cls.menus2json(app, menuid)
         rv = app.client.menu.create(data)
@@ -94,7 +103,7 @@ class Menu(m.Model):
     @classmethod
     def json2menu(cls, data, app):
         """
-        :type app: .WeChatApp
+        :type app: wechat_django.models.WeChatApp
         """
         menu = cls(name=data["name"], app=app)
         menu.type = data.get("type")
