@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime
-import types
-
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models as m
@@ -15,8 +12,7 @@ from six import text_type
 
 from .. import settings
 from ..patches import WeChatOAuth
-from . import EventType
-from .permission import get_permission_desc, list_permissions, permissions
+from .permission import get_permission_desc, list_permissions
 
 
 class WeChatApp(m.Model):
