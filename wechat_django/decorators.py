@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods
 from six import text_type
 
 from . import url_patterns
-from .models import WeChatApp
+from .models import WeChatApp, WeChatInfo
 
 __all__ = ("message_handler", )
 
@@ -48,12 +48,14 @@ def wechat_route(route, methods=None, name=""):
         func = csrf_exempt(func)
         func = require_http_methods(methods)(func)
         @wraps(func)
-        def decorated_func(request, appname, **kwargs):
+        def decorated_func(request, appname, *args, **kwargs):
             try:
                 app = WeChatApp.get_by_name(appname)
             except WeChatApp.DoesNotExist:
                 return response.HttpResponseNotFound()
-            resp = func(request, app, **kwargs)
+            
+            WeChatInfo.patch_request(request, app=app)
+            resp = func(request, *args, **kwargs)
             if not isinstance(resp, response.HttpResponse):
                 resp = response.HttpResponse(resp.encode())
             return resp

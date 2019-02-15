@@ -17,21 +17,24 @@ import xmltodict
 from . import settings
 from .decorators import wechat_route
 from .exceptions import BadMessageRequest, HandleMessageError
-from .models import MessageHandler, MessageLog, WeChatMessage
+from .models import MessageHandler, MessageLog, WeChatMessageInfo
 from .utils.web import get_ip
 
 __all__ = ("handler", )
 
 
 class Handler(View):
-    def dispatch(self, request, app):
-        if not app.interactable():
+    def dispatch(self, request):
+        """
+        :type request: wechat_django.models.WeChatHttpRequest
+        """
+        if not request.wechat.app.interactable():
             return response.HttpResponseNotFound()
 
-        log = self._log(app, request)
+        log = self._log(request)
         try:
-            self._verify(request, app)
-            rv = super(Handler, self).dispatch(request, app)
+            self._verify(request)
+            rv = super(Handler, self).dispatch(request)
         except MultiValueDictKeyError:
             log(logging.WARNING, "bad request args", exc_info=True)
             return response.HttpResponseBadRequest()
@@ -54,18 +57,18 @@ class Handler(View):
             log(logging.DEBUG, "receive a message")
             return rv
 
-    def get(self, request, app):
+    def get(self, request):
         return request.GET["echostr"]
 
-    def post(self, request, app):
-        msg = WeChatMessage.from_request(request, app)
-        reply = self._handle(app, msg)
+    def post(self, request):
+        WeChatMessageInfo.patch_request(request)
+        reply = self._handle(request.wechat)
         if reply:
             xml = reply.render()
             return response.HttpResponse(xml, content_type="text/xml")
         return ""
 
-    def _verify(self, request, app):
+    def _verify(self, request):
         """检验请求"""
         try:
             timestamp = int(request.GET["timestamp"])
@@ -82,7 +85,7 @@ class Handler(View):
         # 防重放检查及签名检查
         with self._no_repeat_nonces(sign, nonce, time_diff):
             check_signature(
-                app.token,
+                request.wechat.app.token,
                 sign,
                 timestamp,
                 nonce
@@ -104,26 +107,27 @@ class Handler(View):
         else:
             yield
 
-    def _handle(self, app, msg):
+    def _handle(self, message_info):
         """处理消息"""
-        handlers = MessageHandler.matches(app, msg)
+        handlers = MessageHandler.matches(message_info)
         if not handlers:
             return None
 
         handler = handlers[0]
-        reply = handler.reply(msg)
-        self._log_message(handler.log, app, msg, reply)
+        reply = handler.reply(message_info)
+        self._log_message(handler.log, message_info, reply)
         if not reply or isinstance(reply, replies.EmptyReply):
             return None
         return reply
 
-    def _log_message(self, flags, app, msg, reply):
+    def _log_message(self, flags, message_info, reply):
         """记录消息日志"""
         if flags:
-            MessageLog.from_msg(msg, app)
+            MessageLog.from_message_info(message_info)
 
-    def _log(self, app, request):
-        logger = logging.getLogger("wechat.handler.{0}".format(app.name))
+    def _log(self, request):
+        logger = logging.getLogger(
+            "wechat.handler.{0}".format(request.wechat.app.name))
         args = dict(
             params=request.GET,
             body=request.body,

@@ -11,8 +11,7 @@ from wechatpy import replies
 
 from ..exceptions import HandleMessageError
 from ..utils.admin import enum2choices
-from . import (Article, Material, MessageHandler, MsgType as BaseMsgType,
-    WeChatMessage)
+from . import Article, Material, MessageHandler, MsgType as BaseMsgType
 
 
 class Reply(m.Model):
@@ -36,68 +35,70 @@ class Reply(m.Model):
     def app(self):
         return self.handler.app
 
-    def send(self, message):
+    def send(self, message_info):
         """主动回复
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
-        reply = self.reply(message)
+        reply = self.reply(message_info)
         funcname, kwargs = self.reply2send(reply)
         func = funcname and getattr(self.app.client.message, funcname)
         return func(**kwargs)
 
-    def reply(self, message):
+    def reply(self, message_info):
         """被动回复
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         :rtype: wechatpy.replies.BaseReply
         """
         if self.msg_type == self.MsgType.FORWARD:
             # 转发业务
-            reply = self.reply_forward(message)
+            reply = self.reply_forward(message_info)
         elif self.msg_type == self.MsgType.CUSTOM:
             # 自定义业务
-            reply = self.reply_custom(message)
+            reply = self.reply_custom(message_info)
         else:
             # 正常回复类型
-            reply = self.normal_reply(message.message)
+            reply = self.normal_reply(message_info.message)
         return reply
 
-    def reply_forward(self, message):
+    def reply_forward(self, message_info):
         """
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
-        resp = requests.post(self.content["url"], message.raw,
-            params=message.request.GET, timeout=4.5)
+        resp = requests.post(self.content["url"], message_info.raw,
+            params=message_info.request.GET, timeout=4.5)
         resp.raise_for_status()
         return replies.deserialize_reply(resp.content)
 
-    def reply_custom(self, message):
+    def reply_custom(self, message_info):
         """
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
         try:
             func = import_string(self.content["program"])
         except:
             raise HandleMessageError("custom bussiness not found")
         else:
+            appname = message_info.app.name
+            message = message_info.message
             if not hasattr(func, "message_handler"):
                 e = "handler must be decorated by wechat_django.decorators.message_handler"
                 raise HandleMessageError(e)
             elif (hasattr(func.message_handler, "__contains__") and
-                message.app.name not in func.message_handler):
-                e = "this handler cannot assigned to {0}".format(message.app.name)
+                appname not in func.message_handler):
+                e = "this handler cannot assigned to {0}".format(appname)
                 raise HandleMessageError(e)
-            reply = func(message)
+            reply = func(message_info)
             if not reply:
                 return ""
             elif isinstance(reply, text_type):
                 reply = replies.TextReply(content=reply)
-            reply.source = message.message.target
-            reply.target = message.message.source
+            reply.source = message.target
+            reply.target = message.source
             return reply
 
     def normal_reply(self, message):
         """
-        :type msg: wechatpy.messages.BaseMessage
+        :type message: wechatpy.messages.BaseMessage
         """
         if self.msg_type == self.MsgType.NEWS:
             klass = replies.ArticlesReply

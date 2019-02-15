@@ -41,11 +41,11 @@ class Rule(m.Model):
     class Meta:
         ordering = ("-weight", )
 
-    def match(self, message):
+    def match(self, message_info):
         """
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
-        return self._match(message.message)
+        return self._match(message_info.message)
     
     def _match(self, message):
         """

@@ -87,7 +87,7 @@
 具体client的使用方式,请移步[wechatpy文档](https://wechatpy.readthedocs.io/zh_CN/master/client/index.html)
 
 ### 自定义微信回复
-在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessage` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
+在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
 
     from wechat_django.decorators import message_handler
 
@@ -105,7 +105,7 @@
 ## 后台使用简介
 ### 权限
 可给管理员分配微信管理权限,所有微信权限以 `<appname> | <perm>` 标注.
-> 在赋予用户权限时,系统会自动为用户追加所需的django默认权限,请勿删除!注意,请不要自行分配wechat_django其他model的权限给用户,这是毫无作用的
+> 在赋予用户权限时,系统会自动为用户追加所需的django默认权限,请勿删除!注意,请不要自行分配wechat_django的默认model权限给用户,这是毫无作用的
 
 ## 示例项目
 可参考本项目sample文件夹
@@ -127,7 +127,7 @@
 * 菜单导入导出
 
 ## ChangeLog
-### 0.1.0.0
+### 0.1.0
 
 
 Xavier-Lam@NetDragon

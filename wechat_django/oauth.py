@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from six.moves.urllib.parse import parse_qsl, urlparse
 from wechatpy import WeChatOAuth, WeChatOAuthException
 
-from .models import WeChatApp, WeChatRequest, WeChatUser
+from .models import WeChatApp, WeChatInfo, WeChatUser
 
 __all__ = ("wechat_auth", "WeChatSNSScope")
 
@@ -19,7 +19,7 @@ class WeChatSNSScope(object):
     USERINFO = "snsapi_userinfo"
 
 
-class WeChatOAuthInfo(WeChatRequest):
+class WeChatOAuthInfo(WeChatInfo):
     """附带在request上的微信对象
     """
     _scope = WeChatSNSScope.BASE

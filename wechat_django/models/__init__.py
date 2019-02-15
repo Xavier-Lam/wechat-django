@@ -6,7 +6,7 @@ from .permission import permissions
 
 from .app import WeChatApp
 from .user import WeChatUser
-from .request import WeChatRequest, WeChatMessage
+from .request import WeChatHttpRequest, WeChatInfo, WeChatMessageInfo
 from .material import Material
 from .article import Article
 from .messagehandler import MessageHandler

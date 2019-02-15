@@ -72,23 +72,23 @@ class MessageHandler(m.Model):
     available.boolean = True
 
     @staticmethod
-    def matches(app, message):
+    def matches(message_info):
         """
-        :type app: wechat_django.models.WeChatApp
-        :type message: wechat_django.models.WeChatMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
-        handlers = app.message_handlers.prefetch_related("rules").all()
+        handlers = message_info.app.message_handlers\
+            .prefetch_related("rules").all()
         for handler in handlers:
-            if handler.is_match(message):
+            if handler.is_match(message_info):
                 return (handler, )
 
-    def is_match(self, message):
+    def is_match(self, message_info):
         if self.available():
             for rule in self.rules.all():
-                if rule.match(message):
+                if rule.match(message_info):
                     return self
 
-    def reply(self, message):
+    def reply(self, message_info):
         """
         :type message: wechatpy.messages.BaseMessage
         :rtype: wechatpy.replies.BaseReply
@@ -103,13 +103,13 @@ class MessageHandler(m.Model):
             elif self.strategy == self.ReplyStrategy.ALL:
                 for reply in replies[1:]:
                     # TODO: 异常处理
-                    reply.send(message)
+                    reply.send(message_info)
                 reply = replies[0]
             elif self.strategy == self.ReplyStrategy.RANDOM:
                 reply = random.choice(replies)
             else:
                 raise HandleMessageError("incorrect reply strategy")
-        return reply and reply.reply(message)
+        return reply and reply.reply(message_info)
 
     @classmethod
     def sync(cls, app):

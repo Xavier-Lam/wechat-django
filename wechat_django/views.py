@@ -13,8 +13,9 @@ from .decorators import wechat_route
 __all__ = ("material_proxy", )
 
 @wechat_route(r"materials/(?P<media_id>[_a-zA-Z\d]+)$")
-def material_proxy(request, app, media_id):
+def material_proxy(request, media_id):
     """代理下载微信的素材"""
+    app = request.wechat.app
     try:
         resp = app.client.material.get(media_id)
     except WeChatClientException as e:

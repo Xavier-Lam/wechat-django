@@ -1,12 +1,31 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.http.request import HttpRequest
 from wechatpy import parse_message
 from wechatpy.crypto import WeChatCrypto
 
 from . import WeChatApp, WeChatUser
 
-class WeChatRequest(object):
+class WeChatHttpRequest(HttpRequest):
+    @property
+    def wehcat(self):
+        """wechat_django.models.WeChatInfo"""
+        pass
+
+class WeChatInfo(object):
+    @classmethod
+    def patch_request(cls, request, app=None):
+        """
+        :type request: django.http.request.HttpRequest
+        :rtype: wechat_django.models.WeChatHttpRequest
+        """
+        request.wechat = cls(
+            _app=app or request.wechat.app, 
+            _request=request
+        )
+        return request
+
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -25,17 +44,20 @@ class WeChatRequest(object):
         """
         :rtype: wechat_django.models.WeChatUser
         """
+        if not self._user:
+            raise NotImplementedError()
         return self._user
 
+    @property
+    def request(self):
+        """
+        :rtype: django.http.request.HttpRequest
+        """
+        return self._request
 
-class WeChatMessage(WeChatRequest):
+
+class WeChatMessageInfo(WeChatInfo):
     """由微信接收到的消息"""
-    @classmethod
-    def from_request(cls, request, app):
-        rv = cls(_app=app, _request=request)
-        request.wechat = rv
-        return rv
-
     @property
     def message(self):
         """
@@ -77,10 +99,3 @@ class WeChatMessage(WeChatRequest):
         :rtype: str
         """
         return self.request.body
-
-    @property
-    def request(self):
-        """
-        :rtype: django.http.request.HttpRequest
-        """
-        return self._request

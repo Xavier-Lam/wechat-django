@@ -33,11 +33,18 @@ class MessageLog(m.Model):
         ordering = ("app", "-created")
 
     @classmethod
-    def from_msg(cls, message, app=None):
+    def from_message_info(cls, message_info):
         """
-        :type message: wechatpy.messages.BaseMessage
-        :type app: WeChatApp
+        :type message_info: wechat_django.models.WeChatMessageInfo
         """
+        return cls._from_message(
+            message_info.message,
+            message_info.app,
+            message_info.user
+        )
+    
+    @classmethod
+    def _from_message(cls, message, app, user):
         # TODO: 是否记录原始记录
         content = {
             key: getattr(message, key)
@@ -47,7 +54,7 @@ class MessageLog(m.Model):
 
         return cls.objects.create(
             app=app,
-            user=WeChatUser.get_by_openid(app, message.source),
+            user=user,
             msg_id=message.id,
             type=message.type,
             createtime=message.time,
