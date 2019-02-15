@@ -9,7 +9,7 @@ from jsonfield import JSONField
 from wechatpy.events import BaseEvent
 
 from ..utils.admin import enum2choices
-from . import MessageHandler, ReceiveMsgType
+from . import MessageHandler, MsgType
 
 
 class Rule(m.Model):
@@ -21,6 +21,12 @@ class Rule(m.Model):
         EQUAL = "equal"  # 匹配
         REGEX = "regex"  # 正则
         ALL = "all"  # 全部
+
+    class ReceiveMsgType(MsgType):
+        LOCATION = "location"
+        LINK = "link"
+        SHORTVIDEO = "shortvideo"
+        EVENT = "event"
 
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="rules", null=False)
@@ -37,6 +43,12 @@ class Rule(m.Model):
 
     def match(self, message):
         """
+        :type message: wechat_django.models.WeChatMessage
+        """
+        return self._match(message.message)
+    
+    def _match(self, message):
+        """
         :type message: wechatpy.messages.BaseMessage
         """
         s_eq = lambda a, b: a.lower() == b.lower()
@@ -46,21 +58,21 @@ class Rule(m.Model):
         elif self.type == self.Type.MSGTYPE:
             return message.type == self.rule["msg_type"]
         elif self.type == self.Type.EVENT:
-            return (message.type == ReceiveMsgType.EVENT
+            return (message.type == self.ReceiveMsgType.EVENT
                 and s_eq(message.event, self.rule["event"]))
         elif self.type == self.Type.EVENTKEY:
-            return (message.type == ReceiveMsgType.EVENT
+            return (message.type == self.ReceiveMsgType.EVENT
                 and s_eq(message.event, self.rule["event"])
                 and hasattr(message, "key")
                 and message.key == self.rule["key"])
         elif self.type == self.Type.CONTAIN:
-            return (message.type == ReceiveMsgType.TEXT
+            return (message.type == self.ReceiveMsgType.TEXT
                 and self.rule["pattern"] in message.content)
         elif self.type == self.Type.EQUAL:
-            return (message.type == ReceiveMsgType.TEXT
+            return (message.type == self.ReceiveMsgType.TEXT
                 and message.content == self.rule["pattern"])
         elif self.type == self.Type.REGEX:
-            return (message.type == ReceiveMsgType.TEXT
+            return (message.type == self.ReceiveMsgType.TEXT
                 and re.search(self.rule["pattern"], message.content))
         return False
 

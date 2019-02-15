@@ -11,7 +11,6 @@ from jsonfield import JSONField
 from six import text_type
 
 from .. import settings
-from ..patches import WeChatOAuth
 from .permission import get_permission_desc, list_permissions
 
 
@@ -94,6 +93,7 @@ class WeChatApp(m.Model):
     @property
     def oauth(self):
         if not hasattr(self, "_oauth"):
+            from ..patches import WeChatOAuth
             self._oauth = WeChatOAuth(self.appid, self.appsecret)
 
             if self.configurations.get("OAUTH_URL"):

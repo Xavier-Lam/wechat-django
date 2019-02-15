@@ -9,6 +9,7 @@ import requests
 from six import text_type
 from wechatpy import replies
 
+from ..exceptions import HandleMessageError
 from ..utils.admin import enum2choices
 from . import (Article, Material, MessageHandler, MsgType as BaseMsgType,
     WeChatMessage)
@@ -37,15 +38,16 @@ class Reply(m.Model):
 
     def send(self, message):
         """主动回复
-        :type message: wechatpy.messages.BaseMessage
+        :type message: wechat_django.models.WeChatMessage
         """
         reply = self.reply(message)
         funcname, kwargs = self.reply2send(reply)
-        return funcname and getattr(self.app.client.message, funcname)(**kwargs)
+        func = funcname and getattr(self.app.client.message, funcname)
+        return func(**kwargs)
 
     def reply(self, message):
         """被动回复
-        :type message: wechatpy.messages.BaseMessage
+        :type message: wechat_django.models.WeChatMessage
         :rtype: wechatpy.replies.BaseReply
         """
         if self.msg_type == self.MsgType.FORWARD:
@@ -56,44 +58,52 @@ class Reply(m.Model):
             reply = self.reply_custom(message)
         else:
             # 正常回复类型
-            reply = self.normal_reply(message)
+            reply = self.normal_reply(message.message)
         return reply
 
     def reply_forward(self, message):
+        """
+        :type message: wechat_django.models.WeChatMessage
+        """
         resp = requests.post(self.content["url"], message.raw,
             params=message.request.GET, timeout=4.5)
         resp.raise_for_status()
         return replies.deserialize_reply(resp.content)
 
     def reply_custom(self, message):
+        """
+        :type message: wechat_django.models.WeChatMessage
+        """
         try:
             func = import_string(self.content["program"])
         except:
-            raise NotImplementedError("custom bussiness not found")
+            raise HandleMessageError("custom bussiness not found")
         else:
             if not hasattr(func, "message_handler"):
                 e = "handler must be decorated by wechat_django.decorators.message_handler"
-                raise ValueError(e)
+                raise HandleMessageError(e)
             elif (hasattr(func.message_handler, "__contains__") and
-                self.app.name not in func.message_handler):
-                e = "this handler cannot assigned to {0}".format(self.app.name)
-                raise ValueError(e)
-            reply = func(WeChatMessage(self.app, message))
+                message.app.name not in func.message_handler):
+                e = "this handler cannot assigned to {0}".format(message.app.name)
+                raise HandleMessageError(e)
+            reply = func(message)
             if not reply:
                 return ""
             elif isinstance(reply, text_type):
                 reply = replies.TextReply(content=reply)
-            reply.source = message.target
-            reply.target = message.source
+            reply.source = message.message.target
+            reply.target = message.message.source
             return reply
 
     def normal_reply(self, message):
+        """
+        :type msg: wechatpy.messages.BaseMessage
+        """
         if self.msg_type == self.MsgType.NEWS:
             klass = replies.ArticlesReply
-            articles = Material.get_by_media(
-                self.content["media_id"]).articles_json
+            media = Material.get_by_media(self.app, self.content["media_id"])
             # 将media_id转为content
-            data = dict(articles=articles)
+            data = dict(articles=media.articles_json)
         elif self.msg_type == self.MsgType.MUSIC:
             klass = replies.MusicReply
             data = dict(**self.content)

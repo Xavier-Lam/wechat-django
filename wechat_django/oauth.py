@@ -9,6 +9,8 @@ from django.shortcuts import redirect
 from six.moves.urllib.parse import parse_qsl, urlparse
 from wechatpy import WeChatOAuth, WeChatOAuthException
 
+from .models import WeChatApp, WeChatRequest, WeChatUser
+
 __all__ = ("wechat_auth", "WeChatSNSScope")
 
 
@@ -17,21 +19,20 @@ class WeChatSNSScope(object):
     USERINFO = "snsapi_userinfo"
 
 
-class WeChatOAuthInfo(object):
+class WeChatOAuthInfo(WeChatRequest):
     """附带在request上的微信对象
-    
-    :type app: wechat_django.models.WeChatApp
-    :type user: wechat_django.models.WeChatUser
-    :attribute redirect_uri: 授权后重定向回的地址
-    :attribute oauth_uri: 授权地址
-    :attribute state: 授权携带的state
-    :attribute scope: 授权的scope
     """
-    app = None
-    user = None
-    redirect_uri = None
-    state = ""
-    scope = WeChatSNSScope.BASE
+    _scope = WeChatSNSScope.BASE
+    @property
+    def scope(self):
+        """授权的scope"""
+        return self._scope
+    
+    _state = ""
+    @property
+    def state(self):
+        """授权携带的state"""
+        return self._state
 
     @property
     def oauth_uri(self):
@@ -40,10 +41,24 @@ class WeChatOAuthInfo(object):
             self.scope,
             self.state
         )
+    
+    _redirect_uri = None
+    @property
+    def redirect_uri(self):
+        """授权后重定向回的地址"""
+        return self._redirect_uri
 
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    _oauth_uri = None
+    @property
+    def oauth_uri(self):
+        """授权地址"""
+        return self._oauth_uri
+
+    def __setattr__(self, k, v):
+        if k.startswith("_"):
+            self.__dict__[k] = v
+        else:
+            setattr(self, "_" + k, v)
 
     def __str__(self):
         return "WeChatOuathInfo: " + "\t".join(
@@ -74,8 +89,6 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                         django.http.response.HttpResponse
                     ]
     """
-    from .models import WeChatApp, WeChatUser
-
     assert (response is None or callable(response)
         or isinstance(response, HttpResponse)), "incorrect response"
     assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
@@ -98,13 +111,13 @@ def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
                 redirect_url = ((request.META.get("HTTP_REFERER") or full_url)
                     if request.is_ajax() else full_url)
 
-            request.wechat = wechat = WeChatOAuthInfo(
-                redirect_uri=redirect_url, state=state, scope=scope)
             try:
-                wechat.app = app = WeChatApp.get_by_name(appname)
+                app = WeChatApp.get_by_name(appname)
             except WeChatApp.DoesNotExist:
                 logger.warning("wechat app not exists: {0}".format(appname))
                 return HttpResponseNotFound()
+            request.wechat = wechat = WeChatOAuthInfo(
+                app=app, redirect_uri=redirect_url, state=state, scope=scope)
 
             if required and not openid:
                 # 设定了response优先返回response

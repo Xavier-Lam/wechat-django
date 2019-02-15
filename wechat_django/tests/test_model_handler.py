@@ -13,7 +13,8 @@ from wechatpy import events, messages, parse_message, replies
 from wechatpy.utils import check_signature, WeChatSigner
 
 from ..decorators import message_handler
-from ..models import EventType, MessageHandler, ReceiveMsgType, Reply, Rule
+from ..exceptions import HandleMessageError
+from ..models import MessageHandler, Reply, Rule, WeChatMessage
 from .bases import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
@@ -34,6 +35,33 @@ def forbidden_handler(message):
 
 
 class HandlerTestCase(WeChatTestCase):
+    def test_available(self):
+        """测试handler有效性"""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        rule = dict(type=Rule.Type.ALL)
+        now = timezone.now()
+        day = timedelta(days=1)
+        handler_not_begin = self._create_handler(rule,
+            name="not_begin", starts=now + day)
+        handler_ended = self._create_handler(rule, name="ended",
+            ends=now - day)
+        handler_disabled = self._create_handler(rule,
+            name="disabled", enabled=False)
+        handler_available = self._create_handler(rule, name="available",
+            starts=now - day, ends=now + day)
+
+        msg = self._wrap_message(messages.TextMessage("abc"))
+        self.assertFalse(handler_not_begin.is_match(msg))
+        self.assertFalse(handler_ended.is_match(msg))
+        self.assertFalse(handler_disabled.is_match(msg))
+        self.assertTrue(handler_available.is_match(msg))
+
+        matches = MessageHandler.matches(self.app, msg)
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0], handler_available)
+
     def test_match(self):
         """测试匹配"""
         def _create_rule(type, **kwargs):
@@ -67,18 +95,21 @@ class HandlerTestCase(WeChatTestCase):
         self.assertMatch(rule, image_message)
 
         # 测试类型匹配
-        rule = _create_rule(Rule.Type.MSGTYPE, msg_type=ReceiveMsgType.IMAGE)
+        rule = _create_rule(Rule.Type.MSGTYPE, 
+            msg_type=Rule.ReceiveMsgType.IMAGE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, image_message)
 
         # 测试事件匹配
-        rule = _create_rule(Rule.Type.EVENT, event=EventType.SUBSCRIBE)
+        rule = _create_rule(Rule.Type.EVENT,
+            event=MessageHandler.EventType.SUBSCRIBE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, sub_event)
         self.assertNotMatch(rule, click_event)
 
         # 测试指定事件匹配
-        rule = _create_rule(Rule.Type.EVENTKEY, event=EventType.CLICK, key=event_key)
+        rule = _create_rule(Rule.Type.EVENTKEY, 
+            event=MessageHandler.EventType.CLICK, key=event_key)
         self.assertNotMatch(rule, text_message)
         self.assertNotMatch(rule, sub_event)
         self.assertMatch(rule, click_event)
@@ -117,15 +148,18 @@ class HandlerTestCase(WeChatTestCase):
                 pattern=another_content
             )
         )], name="3")
-        self.assertTrue(handler3.is_match(text_message))
-        self.assertTrue(handler3.is_match(another_text_message))
-        self.assertFalse(handler3.is_match(click_event))
+        self.assertTrue(handler3.is_match(
+            self._wrap_message(text_message)))
+        self.assertTrue(handler3.is_match(
+            self._wrap_message(another_text_message)))
+        self.assertFalse(handler3.is_match(
+            self._wrap_message(click_event)))
 
         # 测试匹配顺序
         handler1 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENTKEY,
             rule=dict(
-                event=EventType.CLICK,
+                event=MessageHandler.EventType.CLICK,
                 key=event_key
             )
         )], name="1", weight=5)
@@ -138,45 +172,151 @@ class HandlerTestCase(WeChatTestCase):
         handler4 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENT,
             rule=dict(
-                event=EventType.CLICK
+                event=MessageHandler.EventType.CLICK
             )
         )], name="4", weight=-5)
-        matches = MessageHandler.matches(self.app, text_message)
+        matches = MessageHandler.matches(
+            self.app, self._wrap_message(text_message))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].id, handler2.id)
-        matches = MessageHandler.matches(self.app, click_event)
+        matches = MessageHandler.matches(
+            self.app, self._wrap_message(click_event))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].id, handler1.id)
-        matches = MessageHandler.matches(self.app, another_click_event)
+        matches = MessageHandler.matches(
+            self.app, self._wrap_message(another_click_event))
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].id, handler4.id)
 
-    def test_available(self):
-        """测试handler有效性"""
-        from datetime import timedelta
-        from django.utils import timezone
+    def test_reply(self):
+        """测试一般回复"""
+        def _create_reply(msg_type, **kwargs):
+            return Reply(msg_type=msg_type, content=kwargs)
+        sender = "openid"
+        message = messages.TextMessage(dict(
+            FromUserName=sender,
+            content="xyz"
+        ))
 
-        rule = dict(type=Rule.Type.ALL)
-        now = timezone.now()
-        day = timedelta(days=1)
-        handler_not_begin = self._create_handler(rule,
-            name="not_begin", starts=now + day)
-        handler_ended = self._create_handler(rule, name="ended",
-            ends=now - day)
-        handler_disabled = self._create_handler(rule,
-            name="disabled", enabled=False)
-        handler_available = self._create_handler(rule, name="available",
-            starts=now - day, ends=now + day)
+        # 测试文本回复
+        content = "test"
+        msg_type = Reply.MsgType.TEXT
+        reply = _create_reply(msg_type, content=content)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.content, content)
 
-        msg = messages.TextMessage("abc")
-        self.assertFalse(handler_not_begin.is_match(msg))
-        self.assertFalse(handler_ended.is_match(msg))
-        self.assertFalse(handler_disabled.is_match(msg))
-        self.assertTrue(handler_available.is_match(msg))
+        # 测试图片回复
+        media_id = "media_id"
+        msg_type = Reply.MsgType.IMAGE
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.image, media_id)
 
-        matches = MessageHandler.matches(self.app, msg)
-        self.assertEqual(len(matches), 1)
-        self.assertEqual(matches[0], handler_available)
+        # 测试音频回复
+        msg_type = Reply.MsgType.VOICE
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.voice, media_id)
+
+        # 测试视频回复
+        title = "title"
+        description = "desc"
+        msg_type = Reply.MsgType.VIDEO
+        reply = _create_reply(msg_type, media_id=media_id, title=title,
+            description=description)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.media_id, media_id)
+        self.assertEqual(obj.title, title)
+        self.assertEqual(obj.description, description)
+        # 选填字段
+        reply = _create_reply(msg_type, media_id=media_id)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.media_id, media_id)
+        self.assertIsNone(obj.title)
+        self.assertIsNone(obj.description)
+
+        # 测试音乐回复
+        music_url = "music_url"
+        hq_music_url = "hq_music_url"
+        msg_type = Reply.MsgType.MUSIC
+        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title,
+            description=description, music_url=music_url,
+            hq_music_url=hq_music_url)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.thumb_media_id, media_id)
+        self.assertEqual(obj.title, title)
+        self.assertEqual(obj.description, description)
+        self.assertEqual(obj.music_url, music_url)
+        self.assertEqual(obj.hq_music_url, hq_music_url)
+        # 选填字段
+        reply = _create_reply(msg_type, thumb_media_id=media_id)
+        obj = reply.normal_reply(message)
+        self.assertEqual(obj.target, sender)
+        self.assertEqual(obj.type, msg_type)
+        self.assertEqual(obj.thumb_media_id, media_id)
+        self.assertIsNone(obj.title)
+        self.assertIsNone(obj.description)
+        self.assertIsNone(obj.music_url)
+        self.assertIsNone(obj.hq_music_url)
+
+        # 测试图文回复
+        pass
+
+    def test_multireply(self):
+        """测试多回复"""
+        reply1 = "abc"
+        reply2 = "def"
+        replies = [dict(
+            msg_type=Reply.MsgType.TEXT,
+            content=dict(content=reply1)
+        ), dict(
+            msg_type=Reply.MsgType.TEXT,
+            content=dict(content=reply2)
+        )]
+        handler_all = self._create_handler(replies=replies,
+            strategy=MessageHandler.ReplyStrategy.ALL)
+        handler_rand = self._create_handler(replies=replies,
+            strategy=MessageHandler.ReplyStrategy.RANDOM)
+
+        # 随机回复
+        api = "/cgi-bin/message/custom/send"
+        sender = "openid"
+        message = messages.TextMessage(dict(
+            FromUserName=sender,
+            content="xyz"
+        ))
+        message = self._wrap_message(message)
+        with wechatapi_accesstoken(), wechatapi_error(api):
+            reply = handler_rand.reply(message)
+            self.assertEqual(reply.type, Reply.MsgType.TEXT)
+            self.assertEqual(reply.target, sender)
+            self.assertIn(reply.content, (reply1, reply2))
+
+        # 回复一条正常消息以及一条客服消息
+        counter = dict(calls=0)
+        def callback(url, request, response):
+            counter["calls"] += 1
+            data = json.loads(request.body.decode())
+            self.assertEqual(data["text"]["content"], reply2)
+            self.assertEqual(data["touser"], sender)
+        with wechatapi_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
+            reply = handler_all.reply(message)
+            self.assertEqual(reply.type, Reply.MsgType.TEXT)
+            self.assertEqual(reply.target, sender)
+            self.assertEqual(reply.content, reply1)
+            self.assertEqual(counter["calls"], 1)
 
     def test_custom(self):
         """测试自定义回复"""
@@ -195,12 +335,17 @@ class HandlerTestCase(WeChatTestCase):
             FromUserName=sender,
             content="xyz"
         ))
+        message = self._wrap_message(message)
         success_reply = "success"
         # 测试自定义回复
         handler = _get_handler("debug_handler")
         reply = handler.reply(message)
         self.assertIsInstance(reply, replies.TextReply)
         self.assertEqual(reply.content, success_reply)
+
+        # 测试未加装饰器的自定义回复
+        handler = _get_handler("forbidden_handler")
+        self.assertRaises(HandleMessageError, lambda: handler.reply(message))
 
         # 测试不属于本app的自定义回复
         handler_success = _get_handler("app_only_handler")
@@ -209,11 +354,8 @@ class HandlerTestCase(WeChatTestCase):
         reply = handler_success.reply(message)
         self.assertIsInstance(reply, replies.TextReply)
         self.assertEqual(reply.content, success_reply)
-        self.assertRaises(ValueError, lambda: handler_fail.reply(message))
-
-        # 测试未加装饰器的自定义回复
-        handler = _get_handler("forbidden_handler")
-        self.assertRaises(ValueError, lambda: handler.reply(message))
+        message._app = WeChatApp.get_by_name("test1")
+        self.assertRaises(HandleMessageError, lambda: handler_fail.reply(message))
 
     def test_forward(self):
         """测试转发回复"""
@@ -238,8 +380,6 @@ class HandlerTestCase(WeChatTestCase):
         signature = signer.signature
         query_data["signature"] = signature
 
-        request = RequestFactory().get(url + "?" + urlencode(query_data))
-
         sender = "openid"
         content = "xyz"
         xml = """<xml>
@@ -250,9 +390,10 @@ class HandlerTestCase(WeChatTestCase):
         <Content><![CDATA[{content}]]></Content>
         <MsgId>1234567890123456</MsgId>
         </xml>""".format(sender=sender, content=content)
-        message = parse_message(xml)
-        message.raw = xml
-        message.request = request
+        req_url = url + "?" + urlencode(query_data)
+        request = RequestFactory().post(req_url, xml, content_type="text/xml")
+
+        message = WeChatMessage.from_request(request, self.app)
 
         reply_text = "abc"
         def reply_test(url, request):
@@ -290,96 +431,6 @@ class HandlerTestCase(WeChatTestCase):
         with common_interceptor(bad_reply):
             self.assertRaises(HTTPError, lambda: handler.reply(message))
 
-    def test_sync(self):
-        """测试同步"""
-        pass
-
-    def test_reply(self):
-        """测试一般回复"""
-        def _create_reply(msg_type, **kwargs):
-            return Reply(msg_type=msg_type, content=kwargs)
-        sender = "openid"
-        message = messages.TextMessage(dict(
-            FromUserName=sender,
-            content="xyz"
-        ))
-
-        # 测试文本回复
-        content = "test"
-        msg_type = Reply.MsgType.TEXT
-        reply = _create_reply(msg_type, content=content)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.content, content)
-
-        # 测试图片回复
-        media_id = "media_id"
-        msg_type = Reply.MsgType.IMAGE
-        reply = _create_reply(msg_type, media_id=media_id)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.image, media_id)
-
-        # 测试音频回复
-        msg_type = Reply.MsgType.VOICE
-        reply = _create_reply(msg_type, media_id=media_id)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.voice, media_id)
-
-        # 测试视频回复
-        title = "title"
-        description = "desc"
-        msg_type = Reply.MsgType.VIDEO
-        reply = _create_reply(msg_type, media_id=media_id, title=title,
-            description=description)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.media_id, media_id)
-        self.assertEqual(obj.title, title)
-        self.assertEqual(obj.description, description)
-        # 选填字段
-        reply = _create_reply(msg_type, media_id=media_id)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.media_id, media_id)
-        self.assertIsNone(obj.title)
-        self.assertIsNone(obj.description)
-
-        # 测试音乐回复
-        music_url = "music_url"
-        hq_music_url = "hq_music_url"
-        msg_type = Reply.MsgType.MUSIC
-        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title,
-            description=description, music_url=music_url,
-            hq_music_url=hq_music_url)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.thumb_media_id, media_id)
-        self.assertEqual(obj.title, title)
-        self.assertEqual(obj.description, description)
-        self.assertEqual(obj.music_url, music_url)
-        self.assertEqual(obj.hq_music_url, hq_music_url)
-        # 选填字段
-        reply = _create_reply(msg_type, thumb_media_id=media_id)
-        obj = reply.reply(message)
-        self.assertEqual(obj.target, sender)
-        self.assertEqual(obj.type, msg_type)
-        self.assertEqual(obj.thumb_media_id, media_id)
-        self.assertIsNone(obj.title)
-        self.assertIsNone(obj.description)
-        self.assertIsNone(obj.music_url)
-        self.assertIsNone(obj.hq_music_url)
-
-        # 测试图文回复
-        pass
-
     def test_send(self):
         """测试客服回复"""
         def _create_reply(msg_type, **kwargs):
@@ -389,6 +440,7 @@ class HandlerTestCase(WeChatTestCase):
             FromUserName=sender,
             content="xyz"
         ))
+        message = self._wrap_message(message)
 
         # 空消息转换
         empty_msg = replies.EmptyReply()
@@ -491,54 +543,21 @@ class HandlerTestCase(WeChatTestCase):
         ), callback):
             handler.replies.all()[0].send(message)
 
-    def test_multireply(self):
-        """测试多回复"""
-        reply1 = "abc"
-        reply2 = "def"
-        replies = [dict(
-            msg_type=Reply.MsgType.TEXT,
-            content=dict(content=reply1)
-        ), dict(
-            msg_type=Reply.MsgType.TEXT,
-            content=dict(content=reply2)
-        )]
-        handler_all = self._create_handler(replies=replies,
-            strategy=MessageHandler.ReplyStrategy.ALL)
-        handler_rand = self._create_handler(replies=replies,
-            strategy=MessageHandler.ReplyStrategy.RANDOM)
-
-        # 随机回复
-        api = "/cgi-bin/message/custom/send"
-        sender = "openid"
-        message = messages.TextMessage(dict(
-            FromUserName=sender,
-            content="xyz"
-        ))
-        with wechatapi_accesstoken(), wechatapi_error(api):
-            reply = handler_rand.reply(message)
-            self.assertEqual(reply.type, Reply.MsgType.TEXT)
-            self.assertEqual(reply.target, sender)
-            self.assertIn(reply.content, (reply1, reply2))
-
-        # 回复一条正常消息以及一条客服消息
-        counter = dict(calls=0)
-        def callback(url, request, response):
-            counter["calls"] += 1
-            data = json.loads(request.body.decode())
-            self.assertEqual(data["text"]["content"], reply2)
-            self.assertEqual(data["touser"], sender)
-        with wechatapi_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
-            reply = handler_all.reply(message)
-            self.assertEqual(reply.type, Reply.MsgType.TEXT)
-            self.assertEqual(reply.target, sender)
-            self.assertEqual(reply.content, reply1)
-            self.assertEqual(counter["calls"], 1)
+    def test_sync(self):
+        """测试同步"""
+        pass
 
     def assertMatch(self, rule, message):
-        self.assertTrue(rule.match(message))
+        self.assertTrue(rule._match(message))
 
     def assertNotMatch(self, rule, message):
-        self.assertFalse(rule.match(message))
+        self.assertFalse(rule._match(message))
+    
+    def _wrap_message(self, message):
+        return WeChatMessage(
+            _app=self.app,
+            _message=message
+        )
 
     def _create_handler(self, rules=None, name="", replies=None, app=None, **kwargs):
         """:rtype: MessageHandler"""

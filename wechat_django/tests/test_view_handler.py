@@ -57,7 +57,7 @@ class HandlerTestCase(WeChatTestCase):
         reply = deserialize_reply(resp.content)
         self.assertEqual(reply.content, self.success_reply)
         resp = self.client.post(self.url + "?" + urlencode(query), dict(a=1))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content, b"")
 
         # 防重放
@@ -69,6 +69,9 @@ class HandlerTestCase(WeChatTestCase):
         resp = self.post(query)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content, b"")
+
+        # 防重放超时正常接收
+        pass
 
     def test_request(self):
         """测试正常请求"""

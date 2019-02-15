@@ -6,7 +6,7 @@
 
 本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
 
-目前没有使用在生产环境使用本项目的案例,仅编写了少量单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试
+目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试
 
 [TOC]
 
@@ -30,6 +30,11 @@
 4. 在urls.py 中引入wechat_django.urls, 将其配置到urlpatterns中
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
+
+### 直接加入项目
+如果想将拓展安装到自己的项目下,并且自己改写本拓展,可采用pip install -e 安装
+1. 在你的项目的根目录运行**pip install -e git+https://github.com/Xavier-Lam/wechat-django#egg=wechat-django[cryptography] --src ./wechat_django**
+2. 执行上述2-4
 
 ### 更新
 1. 运行**pip install -U wechat-django**
@@ -106,12 +111,10 @@
 可参考本项目sample文件夹
 
 ## TODOS:
-* 转发多回复
 * 本地化
+* 单元测试
 * 后台表单验证
 * 后台确认页
-* 单元测试
-* 文档
 
 ### 计划的功能
 * accesstoken开放给第三方
@@ -120,8 +123,7 @@
 * 客服消息
 * 清理永久素材
 * 将部分actions改为object-tool
-* 转发多回复
-* 回复缓存
+* 回复及一些查询缓存
 * 菜单导入导出
 
 ## ChangeLog

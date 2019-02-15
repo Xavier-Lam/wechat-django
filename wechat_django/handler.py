@@ -1,109 +1,137 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
 import logging
 import time
 
 from django.core.cache import cache
 from django.http import response
-from wechatpy import parse_message, replies
-from wechatpy.crypto import WeChatCrypto
+from django.utils.datastructures import MultiValueDictKeyError
+from django.views import View
+from wechatpy import replies
 from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
+import xmltodict
 
 from . import settings
 from .decorators import wechat_route
-from .models import MessageHandler, WeChatApp
+from .exceptions import BadMessageRequest, HandleMessageError
+from .models import MessageHandler, MessageLog, WeChatMessage
 from .utils.web import get_ip
 
 __all__ = ("handler", )
 
 
-@wechat_route("$", methods=("GET", "POST"))
-def handler(request, app):
-    """接收及处理微信发来的消息
-    :type request: django.http.request.HttpRequest
-    """
-    logger = logging.getLogger("wechat.handler.{0}".format(app.name))
-    log_args = dict(params=request.GET, body=request.body,
-        ip=get_ip(request))
-    logger.debug("received: {0}".format(log_args))
-    if not app.interactable():
-        return response.HttpResponseNotFound()
+class Handler(View):
+    def dispatch(self, request, app):
+        if not app.interactable():
+            return response.HttpResponseNotFound()
 
-    try:
-        # 防重放检查
-        nonce_key = "wx:m:n:{0}".format(request.GET["signature"])
-        nonce = request.GET["nonce"]
-        if settings.MESSAGENOREPEATNONCE and cache.get(nonce_key) == nonce:
-            logger.debug("repeat request: {0}".format(log_args))
+        log = self._log(app, request)
+        try:
+            self._verify(request, app)
+            rv = super(Handler, self).dispatch(request, app)
+        except MultiValueDictKeyError:
+            log(logging.WARNING, "bad request args", exc_info=True)
             return response.HttpResponseBadRequest()
+        except BadMessageRequest:
+            log(logging.WARNING, "bad request", exc_info=True)
+            return response.HttpResponseBadRequest()
+        except InvalidSignatureException:
+            log(logging.WARNING, "invalid signature", exc_info=True)
+            return response.HttpResponseBadRequest()
+        except xmltodict.expat.ExpatError:
+            log(logging.WARNING, "deserialize message failed", exc_info=True)
+            return response.HttpResponseBadRequest()
+        except HandleMessageError:
+            log(logging.WARNING, "handle message failed", exc_info=True)
+            return ""
+        except:
+            log(logging.ERROR, "an unexcept error occurred", exc_info=True)
+            return ""
+        else:
+            log(logging.DEBUG, "receive a message")
+            return rv
 
-        timestamp = request.GET["timestamp"]
+    def get(self, request, app):
+        return request.GET["echostr"]
+
+    def post(self, request, app):
+        msg = WeChatMessage.from_request(request, app)
+        reply = self._handle(app, msg)
+        if reply:
+            xml = reply.render()
+            return response.HttpResponse(xml, content_type="text/xml")
+        return ""
+
+    def _verify(self, request, app):
+        """检验请求"""
+        try:
+            timestamp = int(request.GET["timestamp"])
+        except ValueError:
+            raise BadMessageRequest("invalid timestamp")
+        sign = request.GET["signature"]
+        nonce = request.GET["nonce"]
+
         time_diff = int(timestamp) - time.time()
-
         # 检查timestamp
         if abs(time_diff) > settings.MESSAGETIMEOFFSET:
-            logger.debug("time error: {0}".format(log_args))
-            return response.HttpResponseBadRequest()
+            raise BadMessageRequest("invalid time")
 
-        check_signature(
-            app.token,
-            request.GET["signature"],
-            timestamp,
-            nonce
-        )
-
-        # 防重放
-        settings.MESSAGENOREPEATNONCE and cache.set(
-            nonce_key, nonce, settings.MESSAGETIMEOFFSET + time_diff)
-
-        if request.method == "GET":
-            return request.GET["echostr"]
-    except (KeyError, InvalidSignatureException):
-        logger.debug("received an unexcepted request: {0}".format(log_args),
-            exc_info=True)
-        return response.HttpResponseBadRequest()
-
-    raw = request.body
-    try:
-        if app.encoding_mode == WeChatApp.EncodingMode.SAFE:
-            crypto = WeChatCrypto(
+        # 防重放检查及签名检查
+        with self._no_repeat_nonces(sign, nonce, time_diff):
+            check_signature(
                 app.token,
-                app.encoding_aes_key,
-                app.appid
+                sign,
+                timestamp,
+                nonce
             )
-            raw = crypto.decrypt_message(
-                raw,
-                request.GET["signature"],
-                request.GET["timestamp"],
-                request.GET["nonce"]
-            )
-        msg = parse_message(raw)
-    except:
-        logger.error(
-            "decrypt message failed: {0}".format(log_args),
-            exc_info=True
-        )
-        return ""
 
-    msg.raw = raw
-    msg.request = request
-    handlers = MessageHandler.matches(app, msg)
-    if not handlers:
-        logger.debug("handler not found: {0}".format(log_args))
-        return ""
-    handler = handlers[0]
-    try:
+    @contextmanager
+    def _no_repeat_nonces(self, sign, nonce, time_diff):
+        """nonce防重放"""
+        nonce_key = "wx:m:n:{0}".format(sign)
+        if settings.MESSAGENOREPEATNONCE:
+            if cache.get(nonce_key) == nonce:
+                raise BadMessageRequest("repeat nonce string")
+            try:
+                yield
+                expires = settings.MESSAGETIMEOFFSET + time_diff
+                cache.set(nonce_key, nonce, expires)
+            finally:
+                pass
+        else:
+            yield
+
+    def _handle(self, app, msg):
+        """处理消息"""
+        handlers = MessageHandler.matches(app, msg)
+        if not handlers:
+            return None
+
+        handler = handlers[0]
         reply = handler.reply(msg)
+        self._log_message(handler.log, app, msg, reply)
         if not reply or isinstance(reply, replies.EmptyReply):
-            logger.debug("empty response: {0}".format(log_args))
-            return ""
-        xml = reply.render()
-        log_args["response"] = xml
-        logger.debug("response: {0}".format(log_args))
-    except:
-        logger.warning("an error occurred when response: {0}".format(
-            log_args), exc_info=True)
-        return ""
-    return response.HttpResponse(xml, content_type="text/xml")
+            return None
+        return reply
+
+    def _log_message(self, flags, app, msg, reply):
+        """记录消息日志"""
+        if flags:
+            MessageLog.from_msg(msg, app)
+
+    def _log(self, app, request):
+        logger = logging.getLogger("wechat.handler.{0}".format(app.name))
+        args = dict(
+            params=request.GET,
+            body=request.body,
+            ip=get_ip(request)
+        )
+        s = "%s - {0}".format(args)
+        return lambda lvl, msg, **kwargs: logger.log(lvl, s % msg, **kwargs)
+
+
+handler = Handler.as_view()
+wechat_route("$", methods=("GET", "POST"), name="handler")(handler)

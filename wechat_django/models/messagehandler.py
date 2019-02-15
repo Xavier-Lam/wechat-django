@@ -7,7 +7,8 @@ from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from . import EventType, MessageLog, WeChatApp
+from ..exceptions import HandleMessageError
+from . import WeChatApp
 
 
 class MessageHandler(m.Model):
@@ -20,6 +21,14 @@ class MessageHandler(m.Model):
         ALL = "reply_all"
         RANDOM = "random_one"
         NONE = "none"
+
+    class EventType(object):
+        SUBSCRIBE = "subscribe"
+        UNSUBSCRIBE = "unsubscribe"
+        SCAN = "SCAN"
+        LOCATION = "LOCATION"
+        CLICK = "CLICK"
+        VIEW = "VIEW"
 
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
         related_name="message_handlers", null=False, editable=False)
@@ -64,8 +73,10 @@ class MessageHandler(m.Model):
 
     @staticmethod
     def matches(app, message):
-        if not message:
-            return
+        """
+        :type app: wechat_django.models.WeChatApp
+        :type message: wechat_django.models.WeChatMessage
+        """
         handlers = app.message_handlers.prefetch_related("rules").all()
         for handler in handlers:
             if handler.is_match(message):
@@ -82,9 +93,6 @@ class MessageHandler(m.Model):
         :type message: wechatpy.messages.BaseMessage
         :rtype: wechatpy.replies.BaseReply
         """
-        if self.log:
-            # TODO: 移到外边去?
-            MessageLog.from_msg(message, self.app)
         reply = ""
         if self.strategy == self.ReplyStrategy.NONE:
             pass
@@ -94,16 +102,17 @@ class MessageHandler(m.Model):
                 pass
             elif self.strategy == self.ReplyStrategy.ALL:
                 for reply in replies[1:]:
+                    # TODO: 异常处理
                     reply.send(message)
                 reply = replies[0]
             elif self.strategy == self.ReplyStrategy.RANDOM:
                 reply = random.choice(replies)
             else:
-                raise ValueError("incorrect reply strategy")
+                raise HandleMessageError("incorrect reply strategy")
         return reply and reply.reply(message)
 
-    @staticmethod
-    def sync(app):
+    @classmethod
+    def sync(cls, app):
         from . import Reply, Rule
         resp = app.client.message.get_autoreply_info()
 
@@ -143,7 +152,7 @@ class MessageHandler(m.Model):
                 handlers.append(handler)
                 rule = Rule.objects.create(
                     type=Rule.Type.EVENT,
-                    rule=dict(event=EventType.SUBSCRIBE),
+                    rule=dict(event=cls.EventType.SUBSCRIBE),
                     handler=handler
                 )
                 reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
@@ -189,7 +198,7 @@ class MessageHandler(m.Model):
         Rule.objects.create(
             type=Rule.Type.EVENTKEY,
             rule=dict(
-                event=EventType.CLICK,
+                event=cls.EventType.CLICK,
                 key=menu.content["key"]
             ),
             handler=handler

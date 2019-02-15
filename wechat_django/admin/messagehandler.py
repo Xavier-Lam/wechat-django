@@ -7,8 +7,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import (EventType, MessageHandler, ReceiveMsgType,
-    Reply, Rule, WeChatApp)
+from ..models import MessageHandler, Reply, Rule, WeChatApp
 from ..utils.admin import enum2choices
 from .bases import DynamicChoiceForm, WeChatAdmin
 
@@ -24,9 +23,9 @@ class RuleInline(admin.StackedInline):
         type_field = "type"
 
         msg_type = forms.ChoiceField(label=_("message type"),
-            choices=enum2choices(ReceiveMsgType), required=False)
+            choices=enum2choices(Rule.ReceiveMsgType), required=False)
         event = forms.ChoiceField(label=_("event"),
-            choices=enum2choices(EventType), required=False)
+            choices=enum2choices(MessageHandler.EventType), required=False)
         key = forms.CharField(label=_("event key"), required=False)
         pattern = forms.CharField(label=_("pattern"), required=False)
         # media_id = forms.CharField(label=_("media_id"), required=False)

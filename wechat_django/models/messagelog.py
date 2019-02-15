@@ -6,17 +6,24 @@ from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
-from . import ReceiveMsgType, WeChatApp, WeChatUser
+from . import Rule, WeChatApp, WeChatUser
 
 
 class MessageLog(m.Model):
+    class Flag(object):
+        LOG_REQUEST = 0x01
+        LOG_REQUEST_RAW = 0x02
+        LOG_RESPONSE = 0x04
+        LOG_RESPONSE_RAW = 0x08
+
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE)
     user = m.ForeignKey(WeChatUser, on_delete=m.CASCADE)
 
     msg_id = m.BigIntegerField(_("msgid"))
     type = m.CharField(_("message type"), max_length=24,
-        choices=enum2choices(ReceiveMsgType))
+        choices=enum2choices(Rule.ReceiveMsgType))
     content = JSONField()
+    # raw = m.TextField()
     createtime = m.IntegerField(_("createtime"))
 
     created = m.DateTimeField(_("created_at"), auto_now_add=True)
