@@ -7,7 +7,7 @@ from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from ..exceptions import HandleMessageError
+from ..exceptions import MessageHandleError
 from . import WeChatApp
 
 
@@ -108,7 +108,7 @@ class MessageHandler(m.Model):
             elif self.strategy == self.ReplyStrategy.RANDOM:
                 reply = random.choice(replies)
             else:
-                raise HandleMessageError("incorrect reply strategy")
+                raise MessageHandleError("incorrect reply strategy")
         return reply and reply.reply(message_info)
 
     @classmethod

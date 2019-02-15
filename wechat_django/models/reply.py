@@ -9,7 +9,7 @@ import requests
 from six import text_type
 from wechatpy import replies
 
-from ..exceptions import HandleMessageError
+from ..exceptions import MessageHandleError
 from ..utils.admin import enum2choices
 from . import Article, Material, MessageHandler, MsgType as BaseMsgType
 
@@ -76,17 +76,17 @@ class Reply(m.Model):
         try:
             func = import_string(self.content["program"])
         except:
-            raise HandleMessageError("custom bussiness not found")
+            raise MessageHandleError("custom bussiness not found")
         else:
             appname = message_info.app.name
             message = message_info.message
             if not hasattr(func, "message_handler"):
                 e = "handler must be decorated by wechat_django.decorators.message_handler"
-                raise HandleMessageError(e)
+                raise MessageHandleError(e)
             elif (hasattr(func.message_handler, "__contains__") and
                 appname not in func.message_handler):
                 e = "this handler cannot assigned to {0}".format(appname)
-                raise HandleMessageError(e)
+                raise MessageHandleError(e)
             reply = func(message_info)
             if not reply:
                 return ""

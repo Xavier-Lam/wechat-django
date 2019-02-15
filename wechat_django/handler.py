@@ -16,7 +16,7 @@ import xmltodict
 
 from . import settings
 from .decorators import wechat_route
-from .exceptions import BadMessageRequest, HandleMessageError
+from .exceptions import BadMessageRequest, MessageHandleError
 from .models import MessageHandler, MessageLog, WeChatMessageInfo
 from .utils.web import get_ip
 
@@ -47,7 +47,7 @@ class Handler(View):
         except xmltodict.expat.ExpatError:
             log(logging.WARNING, "deserialize message failed", exc_info=True)
             return response.HttpResponseBadRequest()
-        except HandleMessageError:
+        except MessageHandleError:
             log(logging.WARNING, "handle message failed", exc_info=True)
             return ""
         except:
