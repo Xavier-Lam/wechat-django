@@ -6,6 +6,7 @@ from django.conf.urls import url
 import wechat_django
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ALLOWED_HOSTS = ["example.com"]
 
 SECRET_KEY = "fake-key"
 INSTALLED_APPS = [

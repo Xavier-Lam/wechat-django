@@ -84,7 +84,8 @@ class WeChatOAuth(_WeChatOAuth):
             appid=self.app_id,
             redirect_uri=redirect_uri,
             response_type="code",
-            scope=scope
+            scope=scope,
+            state=state
         )) + "#wechat_redirect"
 
     def qrconnect_url(self, redirect_uri, state=""):
@@ -92,5 +93,6 @@ class WeChatOAuth(_WeChatOAuth):
             appid=self.app_id,
             redirect_uri=redirect_uri,
             response_type="code",
-            scope="snsapi_login"
+            scope="snsapi_login",
+            state=state
         )) + "#wechat_redirect"

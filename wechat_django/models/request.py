@@ -125,12 +125,12 @@ class WeChatOAuthInfo(WeChatInfo):
     """附带在request上的微信对象
     """
     @classmethod
-    def patch_request(cls, request, redirect_uri, scope, state):
+    def patch_request(cls, request, appname, redirect_uri, scope, state):
         """rtype: wechat_django.models.WeChatOAuthRequest"""
         rv = super(WeChatOAuthInfo, cls).patch_request(request, appname)
-        rv._redirect_uri = redirect_uri
-        rv._scope = scope
-        rv._state = state
+        rv.wechat._redirect_uri = redirect_uri
+        rv.wechat._scope = scope
+        rv.wechat._state = state
         return rv
 
     _scope = WeChatSNSScope.BASE
@@ -153,7 +153,6 @@ class WeChatOAuthInfo(WeChatInfo):
             self.state
         )
     
-    _redirect_uri = None
     @property
     def redirect_uri(self):
         """授权后重定向回的地址"""

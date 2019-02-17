@@ -18,6 +18,10 @@ class WeChatTestCase(TestCase):
     def setUp(self):
         self.app = WeChatApp.get_by_name("test")
 
+    @property
+    def base_url(self):
+        return "http://localhost/"
+
     #region utils
     def _create_handler(self, rules=None, name="", replies=None, app=None, 
         **kwargs):
