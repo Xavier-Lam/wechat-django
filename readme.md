@@ -111,7 +111,12 @@
 可参考本项目sample文件夹
 
 ## TODOS:
+* oauth, menu, permission单元测试
+* 重构oauth
+* 整理字段名
+* 整理结构
 * 本地化
+* clear todos
 * 单元测试
 * 后台表单验证
 * 后台确认页

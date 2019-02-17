@@ -1,195 +1,165 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from functools import wraps
 import logging
 
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
+from django.views import View
 from six.moves.urllib.parse import parse_qsl, urlparse
-from wechatpy import WeChatOAuth, WeChatOAuthException
+from wechatpy import WeChatOAuthException
 
-from .models import WeChatApp, WeChatInfo, WeChatUser
+from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
 
-__all__ = ("wechat_auth", "WeChatSNSScope")
-
-
-class WeChatSNSScope(object):
-    BASE = "snsapi_base"
-    USERINFO = "snsapi_userinfo"
+__all__ = ("wechat_auth", "WeChatOAuthHandler", "WeChatSNSScope")
 
 
-class WeChatOAuthInfo(WeChatInfo):
-    """附带在request上的微信对象
-    """
-    _scope = WeChatSNSScope.BASE
-    @property
-    def scope(self):
-        """授权的scope"""
-        return self._scope
-    
-    _state = ""
-    @property
-    def state(self):
-        """授权携带的state"""
-        return self._state
+class wechat_auth(object):
+    def __init__(
+        self, appname, scope=None, redirect_uri=None, required=True,
+        response=None, state=""
+    ):
+        """微信网页授权
+        :param appname: WeChatApp的name
+        :param scope: 默认WeChatSNSScope.BASE, 可选WeChatSNSScope.USERINFO
+        :param redirect_uri: 未授权时的重定向地址 当未设置response时将自动执行授权
+                            当ajax请求时默认取referrer 否则取当前地址
+                            注意 请不要在地址上带有code及state参数 否则可能引发问题
+        :param state: 授权时需要携带的state
+        :param required: 真值必须授权 否则不授权亦可继续访问(只检查session)
+        :param response: 未授权的返回 接受一个
+        :type response: django.http.response.HttpResponse
+                        or Callable[
+                            [
+                                django.http.request.HttpRequest,
+                                *args,
+                                **kwargs
+                            ],
+                            django.http.response.HttpResponse
+                        ]
+        """
+        scope = scope or WeChatSNSScope.BASE
+        assert (
+            response is None or callable(response)
+            or isinstance(response, HttpResponse)
+        ), "incorrect response"
+        assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
+            "incorrect scope"
 
-    @property
-    def oauth_uri(self):
-        return self.app.oauth.authorize_url(
-            self.redirect_uri,
-            self.scope,
-            self.state
-        )
-    
-    _redirect_uri = None
-    @property
-    def redirect_uri(self):
-        """授权后重定向回的地址"""
-        return self._redirect_uri
+        self.appname = appname
+        self.scope = scope
+        self._redirect_uri = redirect_uri
+        self.required = required
+        self._response = response
+        self.state = state  # TODO: 改为可接受lambda
 
-    _oauth_uri = None
-    @property
-    def oauth_uri(self):
-        """授权地址"""
-        return self._oauth_uri
-
-    def __setattr__(self, k, v):
-        if k.startswith("_"):
-            self.__dict__[k] = v
-        else:
-            setattr(self, "_" + k, v)
-
-    def __str__(self):
-        return "WeChatOuathInfo: " + "\t".join(
-            "{k}: {v}".format(k=attr, v=getattr(self, attr, None))
-            for attr in
-            ("app", "user", "redirect", "oauth_uri", "state", "scope")
+    def redirect_uri(self, request):
+        return (
+            self._redirect_uri
+            or (request.is_ajax() and request.META.get("HTTP_REFERER"))
+            or request.build_absolute_uri()
         )
 
+    def __call__(self, view):
+        return WeChatOAuthHandler(self, view).as_view()
 
-def wechat_auth(appname, scope=WeChatSNSScope.BASE, redirect_uri=None,
-    required=True, response=None, state=""):
-    """微信网页授权
-    :param appname: WeChatApp的name
-    :param scope: 默认WeChatSNSScope.BASE, 可选WeChatSNSScope.USERINFO
-    :param redirect_uri: 未授权时的重定向地址 当未设置response时将自动执行授权
-                         当ajax请求时默认取referrer 否则取当前地址
-                         注意 请不要在地址上带有code及state参数 否则可能引发问题
-    :param state: 授权时需要携带的state
-    :param required: 真值必须授权 否则不授权亦可继续访问(只检查session)
-    :param response: 未授权的返回 接受一个
-    :type response: django.http.response.HttpResponse
-                    or Callable[
-                        [
-                            django.http.request.HttpRequest,
-                            *args,
-                            **kwargs
-                        ], 
-                        django.http.response.HttpResponse
-                    ]
-    """
-    assert (response is None or callable(response)
-        or isinstance(response, HttpResponse)), "incorrect response"
-    assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
-        "incorrect scope"
-    logger = _logger(appname)
 
-    def decorator(func):
-        @wraps(func)
-        def decorated_func(request, *args, **kwargs):
-            """:type request: django.http.request.HttpRequest"""
-            # 优先检查session
-            session_key = "wechat_{0}_user".format(appname)
-            openid = request.get_signed_cookie(session_key, None)
+class WeChatOAuthHandler(View):
+    def __init__(self, oauth_info, view):
+        """
+        :type oauth_info: wechat_django.oauth.wechat_auth
+        """
+        self.oauth_info = oauth_info
+        self.get = view
 
-            # 未设置redirect_uri ajax取referrer 否则取当前地址
-            if redirect_uri:
-                redirect_url = redirect_uri
+    @property
+    def code(self):
+        if not hasattr(self, "_code"):
+            request = self.request
+            if request.is_ajax():
+                try:
+                    referrer = request.META["HTTP_REFERER"]
+                    query = dict(parse_qsl(urlparse(referrer).query))
+                    self._code = query.get("code")
+                except:
+                    self._code = None
             else:
-                full_url = request.build_absolute_uri()
-                redirect_url = ((request.META.get("HTTP_REFERER") or full_url)
-                    if request.is_ajax() else full_url)
+                self._code = request.GET.get("code")
+        return self._code
 
+    def auth(self):
+        # 检查code有效性
+        app = self.request.wechat.app
+        data = app.oauth.fetch_access_token(self.code)
+
+        if self.oauth_info.scope == WeChatSNSScope.USERINFO:
+            # 同步数据
             try:
-                app = WeChatApp.get_by_name(appname)
-            except WeChatApp.DoesNotExist:
-                logger.warning("wechat app not exists: {0}".format(appname))
-                return HttpResponseNotFound()
-            request.wechat = wechat = WeChatOAuthInfo(
-                app=app, redirect_uri=redirect_url, state=state, scope=scope)
+                user_info = app.oauth.get_user_info()
+                data.update(user_info)
+            except WeChatOAuthException:
+                self.logger.warning("get userinfo failed", exc_info=True)
 
-            if required and not openid:
-                # 设定了response优先返回response
-                if response:
-                    if callable(response):
-                        return response(request, *args, **kwargs)
-                    return response
+        return data
 
-                code = get_request_code(request)
-                # 根据code获取用户信息
-                if code:
-                    try:
-                        user_dict = auth_by_code(app, code, scope)
-                        # 更新user_dict
-                        WeChatUser.upsert_by_oauth(app, user_dict)
-                        openid = user_dict["openid"]
-                    except WeChatOAuthException:
-                        logger.warning("auth code failed: {0}".format(dict(
-                            info=wechat,
-                            code=code
-                        )), exc_info=True)
-                    except AssertionError:
-                        logger.error("incorrect auth response: {0}".format(dict(
-                            info=wechat,
-                            user_dict=user_dict
-                        )), exc_info=True)
-                    else:
-                        # 用当前url的state替换传入的state
-                        wechat.state = request.GET.get("state", "")
+    def unauthorization_response(self, *args, **kwargs):
+        """未授权的响应"""
+        response = self.oauth_info.response
+        if response and callable(response):
+            response = response(self.request, *args, **kwargs)
+        elif not response:
+            # TODO: 检查是否需要permanent = True
+            oauth_uri = self.request.wechat.oauth_uri
+            response = redirect(oauth_uri, permanent=True)
+        return response
 
-                if required and not openid:
-                    # 最后执行重定向授权
-                    return redirect(wechat.oauth_uri, permanent=True)
-
-            if openid:
-                wechat.user = WeChatUser.get_by_openid(app, openid)
-
-            rv = func(request, *args, **kwargs)
-            openid and rv.set_signed_cookie(session_key, openid)
-            return rv
-
-        return decorated_func
-    return decorator
-
-
-def get_request_code(request):
-    if request.is_ajax():
+    def dispatch(self, request, *args, **kwargs):
         try:
-            referrer = request.META["HTTP_REFERER"]
-            query = dict(parse_qsl(urlparse(referrer).query))
-            code = query.get("code")
-        except:
-            code = None
-    else:
-        code = request.GET.get("code")
-    return code
+            return self._dispatch(request, *args, **kwargs)
+        except WeChatApp.DoesNotExist:
+            return HttpResponseNotFound()
 
+    def _dispatch(self, request, *args, **kwargs):
+        self.request = WeChatOAuthInfo.patch_request(
+            request=request,
+            appname=self.oauth_info.appname,
+            redirect_uri=self.oauth_info.redirect_uri(request),
+            scope=self.oauth_info.scope,
+            state=self.oauth_info.state
+        )
+        wechat = self.request.wechat
 
-def auth_by_code(app, code, scope):
-    # 检查code有效性
-    data = app.oauth.fetch_access_token(code)
+        if not wechat.openid and self.code:
+            # 有code 先授权
+            try:
+                user_dict = self.auth()
+                # 更新user_dict
+                WeChatUser.upsert_by_oauth(wechat.app, user_dict)
+                wechat._openid = user_dict["openid"]
+                # 用当前url的state替换传入的state
+                wechat._state = request.GET.get("state", "")
+            except WeChatOAuthException:
+                self.logger.warning("auth code failed: {0}".format(dict(
+                    info=wechat,
+                    code=self.code
+                )), exc_info=True)
+            except AssertionError:
+                self.logger.error("incorrect auth response: {0}".format(dict(
+                    info=wechat,
+                    user_dict=user_dict
+                )), exc_info=True)
 
-    if scope == WeChatSNSScope.USERINFO:
-        # 同步数据
-        try:
-            user_info = app.oauth.get_user_info()
-            data.update(user_info)
-        except WeChatOAuthException:
-            _logger(app.name).warning("get userinfo failed", exc_info=True)
+        # 没有openid 响应未授权
+        if self.oauth_info.required and not wechat.openid:
+            return self.unauthorization_response(request, *args, **kwargs)
 
-    return data
+        response = super(WeChatOAuthHandler, self).dispatch(
+            request, *args, **kwargs)
+        wechat.openid and response.set_signed_cookie(
+            wechat.session_key, wechat.openid)
+        return response
 
-
-def _logger(appname):
-    return logging.getLogger("wechat:oauth:{0}".format(appname))
+    @property
+    def logger(self):
+        appname = self.oauth_info.appname
+        return logging.getLogger("wechat:oauth:{0}".format(appname))

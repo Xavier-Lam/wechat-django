@@ -54,7 +54,7 @@ def wechat_route(route, methods=None, name=""):
             except WeChatApp.DoesNotExist:
                 return response.HttpResponseNotFound()
             
-            WeChatInfo.patch_request(request, app=app)
+            request = WeChatInfo.patch_request(request, appname)
             resp = func(request, *args, **kwargs)
             if not isinstance(resp, response.HttpResponse):
                 resp = response.HttpResponse(resp.encode())

@@ -61,7 +61,7 @@ class Handler(View):
         return request.GET["echostr"]
 
     def post(self, request):
-        WeChatMessageInfo.patch_request(request)
+        request = WeChatMessageInfo.patch_request(request)
         reply = self._handle(request.wechat)
         if reply:
             xml = reply.render()

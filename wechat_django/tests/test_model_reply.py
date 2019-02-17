@@ -215,7 +215,7 @@ class ReplyTestCase(WeChatTestCase):
         req_url = url + "?" + urlencode(query_data)
         request = RequestFactory().post(req_url, xml, content_type="text/xml")
 
-        WeChatMessageInfo.patch_request(request, app=self.app)
+        WeChatMessageInfo.patch_request(request, appname=self.app.name)
         message = request.wechat
 
         reply_text = "abc"
