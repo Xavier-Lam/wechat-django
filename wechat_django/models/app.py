@@ -121,7 +121,7 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
         Permission.objects.bulk_create(
             Permission(
                 codename=perm,
-                name=get_permission_desc(perm, instance.name),
+                name=get_permission_desc(perm, instance),
                 content_type=content_type
             )
             for perm in list_permissions(instance)

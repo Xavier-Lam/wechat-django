@@ -36,7 +36,7 @@ class WeChatInfo(object):
         :rtype: cls
         """
         request.wechat = cls(
-            _appname=appname or request.wechat._appname,
+            _appname=appname or request.wechat.appname,
             _request=request
         )
         return request
@@ -51,7 +51,7 @@ class WeChatInfo(object):
         :rtype: wechat_django.models.WeChatApp
         """
         if not hasattr(self, "_app"):
-            self._app = WeChatApp.get_by_name(self._appname)
+            self._app = WeChatApp.get_by_name(self.appname)
         return self._app
 
     @property
@@ -69,6 +69,10 @@ class WeChatInfo(object):
         :rtype: django.http.request.HttpRequest
         """
         return self._request
+
+    @property
+    def appname(self):
+        return self._appname
 
 
 class WeChatMessageInfo(WeChatInfo):
@@ -173,7 +177,7 @@ class WeChatOAuthInfo(WeChatInfo):
 
     @property
     def session_key(self):
-        return "wechat_{0}_user".format(self._appname)
+        return "wechat_{0}_user".format(self.appname)
 
     def __str__(self):
         return "WeChatOuathInfo: " + "\t".join(

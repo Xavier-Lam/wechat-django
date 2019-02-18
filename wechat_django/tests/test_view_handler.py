@@ -12,6 +12,8 @@ from .. import settings
 from ..models import MessageHandler, Reply, Rule
 from .bases import WeChatTestCase
 
+# TODO: 应该拆解成测试各方法会比较直观
+
 
 class HandlerTestCase(WeChatTestCase):
     def setUp(self):

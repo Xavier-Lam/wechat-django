@@ -84,10 +84,10 @@ def get_user_permissions(user, app=None):
     return rv[app.name] if app else dict(rv.items())
 
 
-def get_permission_desc(permission, appname):
+def get_permission_desc(permission, app):
     appname, perm = match_perm(permission)
     desc = permissions[perm] if perm else "can full control {appname}"
-    return "{0} | {1}".format(appname, desc)
+    return "{0} | {1}".format(appname, desc).format(appname=app.title)
 
 
 @receiver(m.signals.m2m_changed, sender=Group.permissions.through)
