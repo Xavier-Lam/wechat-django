@@ -12,6 +12,7 @@ from six import text_type
 
 from . import url_patterns
 from .models import WeChatApp, WeChatInfo
+from .utils.web import auto_response
 
 __all__ = ("message_handler", )
 
@@ -49,16 +50,9 @@ def wechat_route(route, methods=None, name=""):
         func = require_http_methods(methods)(func)
         @wraps(func)
         def decorated_func(request, appname, *args, **kwargs):
-            try:
-                app = WeChatApp.get_by_name(appname)
-            except WeChatApp.DoesNotExist:
-                return response.HttpResponseNotFound()
-            
             request = WeChatInfo.patch_request(request, appname)
-            resp = func(request, *args, **kwargs)
-            if not isinstance(resp, response.HttpResponse):
-                resp = response.HttpResponse(resp.encode())
-            return resp
+            response = func(request, *args, **kwargs)
+            return auto_response(response)
 
         pattern = url(
             r"^(?P<appname>[-_a-zA-Z\d]+)/" + route,

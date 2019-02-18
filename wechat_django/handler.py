@@ -28,13 +28,13 @@ class Handler(View):
         """
         :type request: wechat_django.models.WeChatHttpRequest
         """
-        if not request.wechat.app.interactable():
-            return response.HttpResponseNotFound()
-
         log = self._log(request)
         try:
             self._verify(request)
-            rv = super(Handler, self).dispatch(request)
+            resp = super(Handler, self).dispatch(request)
+            if not isinstance(resp, response.HttpResponseNotFound):
+                log(logging.DEBUG, "receive a message")
+            return resp
         except MultiValueDictKeyError:
             log(logging.WARNING, "bad request args", exc_info=True)
             return response.HttpResponseBadRequest()
@@ -53,11 +53,10 @@ class Handler(View):
         except:
             log(logging.ERROR, "an unexcept error occurred", exc_info=True)
             return ""
-        else:
-            log(logging.DEBUG, "receive a message")
-            return rv
 
     def get(self, request):
+        if not request.wechat.app.interactable():
+            return response.HttpResponseNotFound()
         return request.GET["echostr"]
 
     def post(self, request):

@@ -55,9 +55,7 @@
 | logger | 说明 |
 | --- | --- |
 | wechat.admin.{appname} | admin异常日志 最低级别warning |
-| wechat.api.req.{appname} | api请求日志 级别debug |
-| wechat.api.resp.{appname} | api响应日志 级别debug |
-| wechat.api.excs.{appname} | api异常日志 最低级别warning |
+| wechat.api.{appname} | api日志 最低级别debug |
 | wechat.handler.{appname} | 消息处理日志 最低级别debug |
 | wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
 | wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |

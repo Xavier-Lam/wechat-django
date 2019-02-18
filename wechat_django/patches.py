@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from django.utils.http import urlencode
 import logging
 
-from wechatpy import (exceptions as excs, WeChatClient as _WeChatClient,
-    WeChatOAuth as _WeChatOAuth)
+from wechatpy import (
+    exceptions as excs, WeChatClient as _Client, WeChatOAuth as _OAuth)
 from wechatpy.client import api
 
 from .oauth import WeChatSNSScope
@@ -21,7 +21,7 @@ class WeChatMaterial(api.WeChatMaterial):
         )
 
 
-class WeChatClient(_WeChatClient):
+class WeChatClient(_Client):
     """继承原有WeChatClient添加日志功能 追加accesstoken url获取"""
     appname = None
     # 增加raw_get方法
@@ -35,44 +35,52 @@ class WeChatClient(_WeChatClient):
             self.ACCESSTOKEN_URL or url, params)
 
     def _request(self, method, url_or_endpoint, **kwargs):
-        msg = self._log_msg(method, url_or_endpoint, **kwargs)
-        self._logger("req").debug(msg)
+        self._update_log(method=method, url=url_or_endpoint, **kwargs)
         try:
-            return super(WeChatClient, self)._request(
+            rv = super(WeChatClient, self)._request(
                 method, url_or_endpoint, **kwargs)
-        except:
-            self._logger("excs").warning(msg, exc_info=True)
+            self._log(logging.DEBUG)
+            return rv
+        except Exception as e:
+            if isinstance(e, excs.WeChatClientException):
+                self._log(logging.WARNING)
+            else:
+                self._log(logging.ERROR)
             raise
 
-    def _handle_result(self, res, method=None, url=None,
-        *args, **kwargs):
-        msg = self._log_msg(method, url, **kwargs)
-        try:
-            msg += "\tresp:" + res.content
-        except:
-            msg += "\tresp:{0}".format(res)
+    def _handle_result(self, res, method=None, url=None, *args, **kwargs):
+        resp = res.content if hasattr(res, "content") else res
+        self._update_log(resp=resp)
         return super(WeChatClient, self)._handle_result(
             res, method, url, *args, **kwargs)
 
-    def _logger(self, type):
-        return logging.getLogger("wechat.api.{type}.{appname}".format(
+    @property
+    def _logger(self):
+        return logging.getLogger("wechat.api.{appname}".format(
             type=type,
             appname=self.appname
         ))
 
-    def _log_msg(self, method, url, **kwargs):
+    def _update_log(self, **kwargs):
+        if not hasattr(self, "_log_kwargs"):
+            self._log_kwargs = dict()
+        self._log_kwargs.update(kwargs)
+
+    def _log(self, level):
         msg = "{method}\t{url}".format(
-            method=method,
-            url=url
+            method=self._log_kwargs["method"],
+            url=self._log_kwargs["url"]
         )
-        if kwargs.get("params"):
-            msg += "\tparams:{0}".format(kwargs["params"])
-        if kwargs.get("data"):
-            msg += "\tdata:{0}".format(kwargs["data"])
-        return msg
+        for k, v in self._log_kwargs.items():
+            msg += "\t{k}: {v}".format(k=k, v=v)
+        kwargs = dict()
+        if level >= logging.WARNING:
+            kwargs["exc_info"] = True
+        self._logger.log(level, msg)
+        self._log_kwargs.clear()
 
 
-class WeChatOAuth(_WeChatOAuth):
+class WeChatOAuth(_OAuth):
     OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
     QRCONNECT_URL = "https://open.weixin.qq.com/connect/qrconnect"
 

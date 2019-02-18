@@ -5,11 +5,10 @@ import logging
 
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
-from django.views import View
 from wechatpy import WeChatOAuthException
 
 from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
-from .utils.web import get_params
+from .utils.web import auto_response, get_params
 
 __all__ = ("wechat_auth", "WeChatOAuthHandler", "WeChatSNSScope")
 
@@ -51,7 +50,7 @@ class wechat_auth(object):
         self._redirect_uri = redirect_uri
         self.required = required
         self.response = response
-        self.state = state  # TODO: 改为可接受lambda
+        self.state = state  # TODO: 改为可接受callable
 
     def redirect_uri(self, request):
         return request.build_absolute_uri(
@@ -61,7 +60,7 @@ class wechat_auth(object):
         )
 
     def __call__(self, view):
-        return WeChatOAuthHandler(self, view).as_view()
+        return WeChatOAuthHandler(self, view)
     
     def __str__(self):
         return "<wechat_auth appname: {appname} scope: {scope}>".format(
@@ -70,7 +69,9 @@ class wechat_auth(object):
         )
 
 
-class WeChatOAuthHandler(View):
+class WeChatOAuthHandler(object):
+    oauth_info = None
+
     def __init__(self, oauth_info, view):
         """
         :type oauth_info: wechat_django.oauth.wechat_auth
@@ -113,8 +114,8 @@ class WeChatOAuthHandler(View):
         if self.oauth_info.required and not wechat.openid:
             return self.unauthorization_response(request, *args, **kwargs)
 
-        response = super(WeChatOAuthHandler, self).dispatch(
-            request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        response = auto_response(response)
         wechat.openid and response.set_signed_cookie(
             wechat.session_key, wechat.openid)
         return response
@@ -141,9 +142,8 @@ class WeChatOAuthHandler(View):
         if response and callable(response):
             response = response(request, *args, **kwargs)
         elif not response:
-            # TODO: 检查是否需要permanent = True
             oauth_uri = request.wechat.oauth_uri
-            response = redirect(oauth_uri, permanent=True)
+            response = redirect(oauth_uri, permanent=False)
         return response
 
     @property
@@ -159,3 +159,5 @@ class WeChatOAuthHandler(View):
             scope=self.oauth_info.scope,
             state=self.oauth_info.state
         )
+    
+    __call__ = dispatch

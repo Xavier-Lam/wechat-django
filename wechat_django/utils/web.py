@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.http import response
 from six.moves.urllib.parse import parse_qsl, urlparse
+from six import text_type
 
 
 def get_ip(request):
@@ -25,3 +27,12 @@ def get_params(request, key, default=None):
             return default
     else:
         return request.GET.get(key, default)
+
+
+def auto_response(resp):
+    if isinstance(resp, text_type):
+        return response.HttpResponse(resp)
+    elif isinstance(resp, dict):
+        return response.JsonResponse(resp)
+    else:
+        return resp

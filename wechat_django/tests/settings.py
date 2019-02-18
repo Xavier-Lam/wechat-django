@@ -8,6 +8,8 @@ import wechat_django
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOWED_HOSTS = ["example.com"]
 
+DEBUG = True
+
 SECRET_KEY = "fake-key"
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -27,7 +29,7 @@ DATABASES = {
 }
 
 urlpatterns = [
-    url(r'^wechat/', wechat_django.urls)
+    url(r"^wechat/", wechat_django.urls)
 ]
 
 ROOT_URLCONF = "wechat_django.tests.settings"

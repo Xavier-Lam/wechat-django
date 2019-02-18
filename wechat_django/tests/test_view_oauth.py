@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
+
+from django.conf.urls import url
 from django.http import response
 from django.test import RequestFactory
 from django.test.utils import override_settings
 from django.utils.http import urlencode
+from six.moves.urllib.parse import parse_qsl, urlparse
 
+from ..models import WeChatUser
 from ..oauth import wechat_auth, WeChatOAuthHandler, WeChatSNSScope
 from ..patches import WeChatOAuth
 from .bases import WeChatTestCase
@@ -35,8 +40,35 @@ def oauth_api(openid, callback=None):
 
     return common_interceptor(mock, **kwargs)
 
-urlpatterns = [
+def snsinfo_api(openid, callback=None, **data):
+    kwargs = dict(
+        netloc=r"(.*\.)?api\.weixin\.qq\.com$",
+        path="/sns/userinfo"
+    )
 
+    def mock(url, request):
+        headers = {
+            "Content-Type": "application/json"
+        }
+        from httmock import response
+        resp = response(200, data, headers)
+        if callback:
+            callback(url, request, resp)
+        return resp
+
+    return common_interceptor(mock, **kwargs)
+
+@wechat_auth("test", state="state")
+def test_oauth_view(request, *args):
+    user = request.wechat.user
+    return dict(
+        openid=user.openid,
+        id=user.id,
+        args=args
+    )
+
+urlpatterns = [
+    url(r"^test/(.+)$", test_oauth_view)
 ]
 
 @override_settings(ROOT_URLCONF=__name__)
@@ -95,7 +127,7 @@ class OAuthTestCase(WeChatTestCase):
             request, redirect_uri=redirect_uri,
             scope=WeChatSNSScope.USERINFO, state=state)
         resp = handler.unauthorization_response(request)
-        self.assertIsInstance(resp, response.HttpResponsePermanentRedirect)
+        self.assertIsInstance(resp, response.HttpResponseRedirect)
         client = WeChatOAuth(self.app.appid, self.app.appsecret)
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, state))
@@ -110,7 +142,7 @@ class OAuthTestCase(WeChatTestCase):
         )
 
         # 传入普通response
-        resp_func = lambda request, *args, **kwargs: response.HttpResponseForbidden(request.path)
+        resp_func = lambda request: response.HttpResponseForbidden(request.path)
         request = rf.get(path)
         handler = self._make_handler(request, response=resp_func)
         resp = handler.unauthorization_response(request)
@@ -149,8 +181,13 @@ class OAuthTestCase(WeChatTestCase):
         with oauth_api(openid):
             resp = handler.auth()
             self.assertEqual(resp["openid"], openid)
+
         # snsinfo授权
-        pass
+        handler = self._make_handler(request, scope=WeChatSNSScope.USERINFO)
+        with oauth_api(openid), snsinfo_api(openid, nickname=code):
+            resp = handler.auth()
+            self.assertEqual(resp["openid"], openid)
+            self.assertEqual(resp["nickname"], code)
 
     def test_session(self):
         """测试授权后session状态保持"""
@@ -168,26 +205,82 @@ class OAuthTestCase(WeChatTestCase):
         def ban_api(*args, **kwargs):
             self.assertFalse(True)
         request = rf.get("/test?code=123")
-        request.COOKIES["wechat_test_user"] = resp.cookies["wechat_test_user"].value
+        request.COOKIES[session_key] = resp.cookies[session_key].value
         with oauth_api(openid, ban_api):
             resp = handler.dispatch(request)
         request = rf.get("/")
-        request.COOKIES["wechat_test_user"] = resp.cookies["wechat_test_user"].value
+        request.COOKIES[session_key] = resp.cookies[session_key].value
         with oauth_api(openid, ban_api):
             resp = handler.dispatch(request)
     
-    def test_request(self):
-        # 未授权
-        pass
-        
-        # 授权
-        pass
-
-        # 已授权
+    def test_user_update(self):
+        "测试更新授权数据"
         pass
     
+    def test_request(self):
+        "测试请求"
+        redirect_uri = "https://mp.weixin.qq.com/wiki"
+        host = "example.com"
+        url = "/test"
+        rf = RequestFactory(HTTP_HOST=host)
+        request = rf.get(url)
+
+        # 设置了response
+        resp = response.HttpResponseForbidden()
+        handler = self._make_handler(
+            request, redirect_uri=redirect_uri, response=resp)
+        self.assertIs(handler.dispatch(request), resp)
+
+        # 未授权
+        handler = self._make_handler(request, redirect_uri=redirect_uri)
+        resp = handler.dispatch(request)
+        self.assertIsInstance(resp, response.HttpResponseRedirect)
+        self.assertEqual(resp.url, request.wechat.oauth_uri)
+        
+        # 授权
+        request = rf.get(url + "?code=123")
+        openid = "456"
+        view = lambda request, *args, **kwargs: request.wechat.openid
+        handler = self._make_handler(request, redirect_uri=redirect_uri, view=view)
+        with oauth_api(openid):
+            resp = handler.dispatch(request)
+            self.assertEqual(resp.content, openid.encode())
+
+        # 已授权
+        session_key = "wechat_test_user"
+        request.COOKIES[session_key] = resp.cookies[session_key].value
+        resp = handler.dispatch(request)
+        self.assertEqual(resp.content, openid.encode())
+    
     def test_view(self):
-        pass
+        """测试view是否正常"""
+        args = "t"
+        openid = "666"
+        host = "example.com"
+        path = "/test/" + args
+
+        resp = self.client.get(path, HTTP_HOST="example.com")
+        self.assertEqual(resp.status_code, 302)
+        parsed_url = urlparse(resp.url)
+        self.assertEqual(parsed_url.netloc, "open.weixin.qq.com")
+        query = dict(parse_qsl(parsed_url.query))
+        self.assertEqual(query["appid"], self.app.appid)
+        self.assertEqual(query["response_type"], "code")
+        self.assertEqual(query["scope"], WeChatSNSScope.BASE)
+        self.assertEqual(query["state"], "state")
+        self.assertEqual(parsed_url.fragment, "wechat_redirect")
+        self.assertEqual(query["redirect_uri"], "http://" + host + path)
+        
+        with oauth_api(openid):
+            resp = self.client.get(path + "?code=123", follow=True,
+                HTTP_HOST=host)
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content.decode())
+        self.assertEqual(data["openid"], openid)
+        self.assertEqual(data["args"], [args])
+        id = data["id"]
+        user = WeChatUser.objects.get(id=id)
+        self.assertEqual(user.openid, openid)
     
     def _make_handler(self, request, appname="", **kwargs):
         view = kwargs.pop("view", lambda request, *args, **kwargs: "")
