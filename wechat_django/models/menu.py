@@ -63,14 +63,15 @@ class Menu(m.Model):
         try:
             data = resp["selfmenu_info"]["button"]
         except KeyError:
-            return []
+            data = []
 
         with transaction.atomic():
             # 旧menu
             app.menus.all().delete()
             # 移除同步菜单产生的message handler
-            app.message_handlers.filter(src=MessageHandler.Source.MENU).delete()
-            rv = [Menu.json2menu(menu, app) for menu in data]
+            app.message_handlers.filter(
+                src=MessageHandler.Source.MENU).delete()
+            rv = [cls.json2menu(menu, app) for menu in data]
         app.ext_info["current_menus"] = cls.menus2json(app)
         app.save()
         return rv

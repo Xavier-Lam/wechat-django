@@ -16,13 +16,12 @@ class PermissionTestCase(WeChatTestCase):
         # 测试相关权限是否一起授权
         for p in permissions:
             user = User.objects.create_user(p)
-            perm = self._get_permission(p)
+            perm = pm.get_permission_model(p)
             user.user_permissions.add(perm)
             user.save()
             needed_perms = pm.get_require_permissions(self.app.name, p)
-            codenames = list(map(lambda o: o.split(".")[1], needed_perms))
-            for codename in codenames:
-                self.assertHasPermission(user, codename)
+            for permission in needed_perms:
+                self.assertHasPermission(user, permission)
         
         # 测试组授权
         pass
@@ -34,13 +33,7 @@ class PermissionTestCase(WeChatTestCase):
     def test_menus_permissions(self):
         """测试菜单权限"""
         pass
-    
-    def _get_permission(self, codename):
-        return Permission.objects.get(
-            codename=codename,
-            content_type__app_label="wechat_django"
-        )
 
     def assertHasPermission(self, user, permission):
-        permission = self._get_permission(permission)
+        permission = pm.get_permission_model(permission)
         self.assertIn(permission, user.user_permissions.all())

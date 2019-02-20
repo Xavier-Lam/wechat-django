@@ -1,81 +1,81 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from ..models import Menu
+from unittest import mock
+
+from wechatpy.client.api import WeChatMenu
+
+from ..models import Article, Material, Menu
 from .bases import WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken
 
 
 class MenuTestCase(WeChatTestCase):
-    def test_sync(self):
+    def test_sync(self, *args):
         """测试同步菜单"""
+        permenant_media = "permenant_media_id"
+
         app = self.app
-        url = "/cgi-bin/get_current_selfmenu_info"
 
-        # # 同步微信菜单
-        # def check_menus(menus, buttons):
-        #     count = menus.count()
-        #     self.assertEqual(count, len(buttons))
-        #     for i in range(count):
-        #         menu = menus[i]
-        #         button = buttons[i]
-        #         self.assertEqual(menu.name, button["name"])
-        #         if button.get("sub_button"):
-        #             self.assertIsNone(menu.type)
-        #             sub_buttons = button["sub_button"]["list"]
-        #             check_menus(menu.sub_button, sub_buttons)
-        #         elif button.get("type") == "view":
-        #             self.assertEqual(menu.type, Menu.Event.VIEW)
-        #             self.assertEqual(menu.content["url"], button["url"])
-        #         else:
-        #             # 转换为click
-        #             self.assertEqual(menu.type, Menu.Event.CLICK)
-        #             # 检查事件处理
-        #             pass
+        # 微信官方菜单
+        data = self.mp_menu_data
+        buttons = data["selfmenu_info"]["button"]
+        with mock.patch.object(Material, "as_permenant"),\
+            mock.patch.object(Article, "sync"),\
+            mock.patch.object(WeChatMenu, "get_menu_info"):
+            
+            Material.as_permenant.return_value = permenant_media
+            Article.sync.return_value = None
+            WeChatMenu.get_menu_info.return_value = data
 
-        # data = self.mp_menu_data
-        # buttons = data["selfmenu_info"]["button"]
-        # with wechatapi_accesstoken(), wechatapi(url, data):
-        #     Menu.sync(app)
-        # check_menus(self.menus, buttons)
+            Menu.sync(app)
+            self.assertMenusEqual(self.menus, buttons)
 
         # 微信菜单不存在
         data = {
             "is_menu_open": 0
         }
-        with wechatapi_accesstoken(), wechatapi(url, data):
+        with mock.patch.object(WeChatMenu, "get_menu_info"):
+            WeChatMenu.get_menu_info.return_value = data
+
             Menu.sync(app)
-        menus = self.menus
-        self.assertEqual(menus.count(), 0)
+            self.assertEqual(self.menus.count(), 0)
 
         # 同步自定义菜单
         data = self.self_menu_data
         buttons = data["selfmenu_info"]["button"]
-        with wechatapi_accesstoken(), wechatapi(url, data):
+        with mock.patch.object(WeChatMenu, "get_menu_info"):
+            WeChatMenu.get_menu_info.return_value = data
+
             Menu.sync(app)
-        menus = self.menus
-        count = menus.count()
-        self.assertEqual(count, len(buttons))
-        for i in range(count):
-            menu = menus[i]
-            self.assertEqual(menu.name, buttons[i]["name"])
-            self.assertIsNone(menu.type)
-            sub_menus = menu.sub_button.all()
-            sub_counts = len(sub_menus)
-            for j in range(sub_counts):
-                menu = sub_menus[j]
-                button = buttons[i]["sub_button"]["list"][j]
-                self.assertEqual(menu.name, button["name"])
-                self.assertEqual(menu.type, button["type"])
-                if menu.type == Menu.Event.CLICK:
-                    self.assertEqual(menu.content["key"], button["key"])
-                elif menu.type == Menu.Event.VIEW:
-                    self.assertEqual(menu.content["url"], button["url"])
+            self.assertMenusEqual(self.menus, buttons)
 
     @property
     def test_menu_publish(self):
         # 菜单发布
         pass
+
+    def assertMenusEqual(self, menus, buttons):
+        self.assertEqual(len(menus), len(buttons))
+        for menu, button in zip(menus, buttons):
+            self.assertMenuEqual(menu, button)
+
+    def assertMenuEqual(self, menu, button):
+        self.assertEqual(menu.name, button["name"])
+        if "sub_button" in button:
+            self.assertIsNone(menu.type)
+            sub_menus = menu.sub_button.all()
+            sub_buttons = button["sub_button"]["list"]
+            self.assertMenusEqual(sub_menus, sub_buttons)
+        elif button["type"] == Menu.Event.CLICK:
+            self.assertEqual(menu.type, button["type"])
+            self.assertEqual(menu.content["key"], button["key"])
+        elif button["type"] == Menu.Event.VIEW:
+            self.assertEqual(menu.type, button["type"])
+            self.assertEqual(menu.content["url"], button["url"])
+        else:
+            # 回复转换为handler
+            pass
 
     @property
     def menus(self):
@@ -83,6 +83,7 @@ class MenuTestCase(WeChatTestCase):
             .filter(parent_id__isnull=True)
             .all())
 
+    #region data
     @property
     def mp_menu_data(self):
         return {
@@ -237,3 +238,4 @@ class MenuTestCase(WeChatTestCase):
                 ]
             }
         }
+    #endregion

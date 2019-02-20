@@ -166,7 +166,7 @@ class WeChatAdmin(admin.ModelAdmin):
         if not hasattr(request, "app"):
             app_id = self._get_request_params(request, "app_id")
             try:
-                request.app = WeChatApp.get_by_id(app_id)
+                request.app = WeChatApp.objects.get_by_id(app_id)
             except WeChatApp.DoesNotExist:
                 if not nullable:
                     raise

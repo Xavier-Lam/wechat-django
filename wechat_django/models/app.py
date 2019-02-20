@@ -14,6 +14,14 @@ from .. import settings
 from .permission import get_permission_desc, list_permissions
 
 
+class WeChatAppManager(m.Manager):
+    def get_by_name(self, name):
+        return self.get(name=name)
+
+    def get_by_id(self, id):
+        return self.get(id=id)
+
+
 class WeChatApp(m.Model):
     class EncodingMode(object):
         PLAIN = 0
@@ -47,18 +55,7 @@ class WeChatApp(m.Model):
     created = m.DateTimeField(_("created"), auto_now_add=True)
     updated = m.DateTimeField(_("updated"), auto_now=True)
 
-    @classmethod
-    def get_by_id(cls, id):
-        return cls.objects.get(id=id)
-
-    @classmethod
-    def get_by_name(cls, name):
-        """:rtype: WeChatApp"""
-        return cls.objects.get(name=name)
-
-    # @classmethod
-    # def get_by_appid(cls, appid):
-    #     return cls.objects.get(appid=appid)
+    objects = WeChatAppManager()
 
     @property
     def client(self):

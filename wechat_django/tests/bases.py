@@ -16,7 +16,7 @@ class WeChatTestCase(TestCase):
             appid="appid1", appsecret="secret", token="token")
 
     def setUp(self):
-        self.app = WeChatApp.get_by_name("test")
+        self.app = WeChatApp.objects.get_by_name("test")
 
     @property
     def base_url(self):

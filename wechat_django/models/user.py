@@ -12,6 +12,15 @@ from ..utils.admin import enum2choices
 from . import WeChatApp
 
 
+class WeChatUserManager(m.Manager):
+    def get_by_openid(self, app, openid):
+        # TODO: cache
+        try:
+            return self.get(app=app, openid=openid)
+        except self.model.DoesNotExist:
+            return self.model.fetch_user(app, openid)
+
+
 class WeChatUser(m.Model):
     class Gender(object):
         UNKNOWN = 0
@@ -59,6 +68,8 @@ class WeChatUser(m.Model):
 
     synced = m.DateTimeField(_("synced"), null=True, default=None)
 
+    objects = WeChatUserManager()
+
     class Meta(object):
         ordering = ("app", "-created")
         unique_together = (("app", "openid"), ("app", "unionid"))
@@ -66,14 +77,6 @@ class WeChatUser(m.Model):
     def avatar(self, size=132):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
-
-    @classmethod
-    def get_by_openid(cls, app, openid):
-        # TODO: cache
-        try:
-            return cls.objects.get(app=app, openid=openid)
-        except cls.DoesNotExist:
-            return cls.fetch_user(app, openid)
 
     @classmethod
     def sync(cls, app, all=False, detail=True):
@@ -156,6 +159,11 @@ class WeChatUser(m.Model):
                 yield openids[page*count: page*count+count]
             if not next_openid:
                 raise StopIteration
+    
+    def update(self):
+        """重新同步用户数据"""
+        self.fetch_user(self.app, self.openid)
+        self.refresh_from_db()
 
     def __str__(self):
         return "{nickname}({openid})".format(nickname=self.nickname or "",

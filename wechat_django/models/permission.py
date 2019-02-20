@@ -138,3 +138,16 @@ def match_perm(perm):
         return match.group("appname"), match.group("perm")
     else:
         return None, None
+
+
+def get_permission_model(permission):
+    """由permission获取permission model"""
+    try:
+        applabel, codename = permission.split(".")
+    except:
+        applabel = "wechat_django"
+        codename = permission
+    return Permission.objects.get(
+        codename=codename,
+        content_type__app_label=applabel
+    )

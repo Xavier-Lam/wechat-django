@@ -172,11 +172,11 @@ class ReplyTestCase(WeChatTestCase):
         # 测试不属于本app的自定义回复
         handler_success = _get_handler("app_only_handler")
         handler_fail = _get_handler("app_only_handler",
-            WeChatApp.get_by_name("test1"))
+            WeChatApp.objects.get_by_name("test1"))
         reply = handler_success.reply(message)
         self.assertIsInstance(reply, replies.TextReply)
         self.assertEqual(reply.content, success_reply)
-        message._app = WeChatApp.get_by_name("test1")
+        message._app = WeChatApp.objects.get_by_name("test1")
         self.assertRaises(MessageHandleError, lambda: handler_fail.reply(message))
 
     def test_forward(self):

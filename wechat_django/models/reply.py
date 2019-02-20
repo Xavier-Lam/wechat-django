@@ -201,8 +201,10 @@ class Reply(m.Model):
         if type == cls.MsgType.TEXT:
             content = dict(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
-            content = dict(media_id=Material.as_permenant(
-                data["value"], handler.app, False)) if handler else data["value"]
+            content = dict(
+                media_id=Material.as_permenant(
+                    data["value"], handler.app, False)
+            ) if handler else data["value"]
         elif type == cls.MsgType.NEWS:
             media_id = data["value"]
             # 同步图文
