@@ -50,7 +50,7 @@
     var typeChanged = function(e) {
         setForm($(this).closest(".dynamic-replies"), $(this).val());
     }, setForm = function($row, type) {
-        $row.find(".form-row:not(.field-msg_type)").hide();
+        $row.find(".form-row:not(.field-type)").hide();
         switch(type) {
             case "custom":
                 $row.find(".form-row.field-program").show();
@@ -83,7 +83,7 @@
         $(".dynamic-replies").each(function() {
             var $row = $(this);
             var id = $row.attr("id");
-            var type = $row.find('[name=' + id + '-msg_type]').on("change", typeChanged)
+            var type = $row.find('[name=' + id + '-type]').on("change", typeChanged)
                 .val();
             setForm($row, type);
         });
@@ -92,7 +92,7 @@
     $(document).on('formset:added', function(event, $row, formsetName) {
         if(formsetName == "replies") {
             var id = $row.attr("id");
-            $row.find('[name=' + id + '-msg_type]').on("change", typeChanged);
+            $row.find('[name=' + id + '-type]').on("change", typeChanged);
             setForm($row);
         }
     });

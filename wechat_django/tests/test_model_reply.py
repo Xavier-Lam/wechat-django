@@ -22,18 +22,18 @@ from .interceptors import (common_interceptor, wechatapi,
 class ReplyTestCase(WeChatTestCase):
     def test_reply(self):
         """测试一般回复"""
-        def _create_reply(msg_type, **kwargs):
-            return Reply(msg_type=msg_type, content=kwargs)
+        def _create_reply(type, **kwargs):
+            return Reply(type=type, **kwargs)
         sender = "openid"
         message = messages.TextMessage(dict(
             FromUserName=sender,
             content="xyz"
         ))
 
-        def _test_reply(msg_type, **kwargs):
+        def _test_reply(type, **kwargs):
             reply = Reply(
-                msg_type=msg_type,
-                content={
+                type=type,
+                **{
                     k: v
                     for k, v in kwargs.items()
                     if v is not None
@@ -41,7 +41,7 @@ class ReplyTestCase(WeChatTestCase):
             )
             reply_message = reply.normal_reply(message)
             self.assertEqual(reply_message.target, sender)
-            self.assertEqual(reply_message.type, msg_type)
+            self.assertEqual(reply_message.type, type)
             return reply_message
 
         # 测试文本回复
@@ -101,11 +101,11 @@ class ReplyTestCase(WeChatTestCase):
         reply1 = "abc"
         reply2 = "def"
         replies = [dict(
-            msg_type=Reply.MsgType.TEXT,
-            content=dict(content=reply1)
+            type=Reply.MsgType.TEXT,
+            content=reply1
         ), dict(
-            msg_type=Reply.MsgType.TEXT,
-            content=dict(content=reply2)
+            type=Reply.MsgType.TEXT,
+            content=reply2
         )]
         handler_all = self._create_handler(replies=replies,
             strategy=MessageHandler.ReplyStrategy.ALL)
@@ -146,10 +146,8 @@ class ReplyTestCase(WeChatTestCase):
 
         def _get_handler(handler, app=None):
             return self._create_handler(replies=dict(
-                msg_type=Reply.MsgType.CUSTOM,
-                content=dict(
-                    program="wechat_django.tests.test_model_handler." + handler
-                )
+                type=Reply.MsgType.CUSTOM,
+                program="wechat_django.tests.test_model_handler." + handler
             ), app=app)
 
         sender = "openid"
@@ -238,8 +236,8 @@ class ReplyTestCase(WeChatTestCase):
             return response(content=reply.render())
 
         handler = self._create_handler(replies=dict(
-            msg_type=Reply.MsgType.FORWARD,
-            content=dict(url=url)
+            type=Reply.MsgType.FORWARD,
+            url=url
         ))
 
         with common_interceptor(reply_test):
@@ -256,8 +254,6 @@ class ReplyTestCase(WeChatTestCase):
 
     def test_send(self):
         """测试客服回复"""
-        def _create_reply(msg_type, **kwargs):
-            return Reply(msg_type=msg_type, content=kwargs)
         sender = "openid"
         message = messages.TextMessage(dict(
             FromUserName=sender,
@@ -276,7 +272,7 @@ class ReplyTestCase(WeChatTestCase):
         # 文本消息转换
         content = "test"
         msg_type = Reply.MsgType.TEXT
-        reply = _create_reply(msg_type, content=content).reply(message)
+        reply = Reply(type=msg_type, content=content).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
         self.assertEqual(funcname, "send_text")
@@ -285,7 +281,7 @@ class ReplyTestCase(WeChatTestCase):
         # 图片消息转换
         media_id = "media_id"
         msg_type = Reply.MsgType.IMAGE
-        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        reply = Reply(type=msg_type, media_id=media_id).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
         self.assertEqual(funcname, "send_image")
@@ -293,7 +289,7 @@ class ReplyTestCase(WeChatTestCase):
 
         # 声音消息转换
         msg_type = Reply.MsgType.VOICE
-        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        reply = Reply(type=msg_type, media_id=media_id).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
         self.assertEqual(funcname, "send_voice")
@@ -303,7 +299,7 @@ class ReplyTestCase(WeChatTestCase):
         title = "title"
         description = "desc"
         msg_type = Reply.MsgType.VIDEO
-        reply = _create_reply(msg_type, media_id=media_id, title=title,
+        reply = Reply(type=msg_type, media_id=media_id, title=title,
             description=description).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
@@ -312,7 +308,7 @@ class ReplyTestCase(WeChatTestCase):
         self.assertEqual(reply.title, kwargs["title"])
         self.assertEqual(reply.description, kwargs["description"])
         # 选填字段
-        reply = _create_reply(msg_type, media_id=media_id).reply(message)
+        reply = Reply(type=msg_type, media_id=media_id).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
         self.assertEqual(funcname, "send_video")
@@ -324,7 +320,7 @@ class ReplyTestCase(WeChatTestCase):
         music_url = "music_url"
         hq_music_url = "hq_music_url"
         msg_type = Reply.MsgType.MUSIC
-        reply = _create_reply(msg_type, thumb_media_id=media_id, title=title,
+        reply = Reply(type=msg_type, thumb_media_id=media_id, title=title,
             description=description, music_url=music_url,
             hq_music_url=hq_music_url).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
@@ -336,7 +332,7 @@ class ReplyTestCase(WeChatTestCase):
         self.assertEqual(reply.title, kwargs["title"])
         self.assertEqual(reply.description, kwargs["description"])
         # 选填字段
-        reply = _create_reply(msg_type, thumb_media_id=media_id).reply(message)
+        reply = Reply(type=msg_type, thumb_media_id=media_id).reply(message)
         funcname, kwargs = Reply.reply2send(reply)
         self.assertTrue(hasattr(client, funcname))
         self.assertEqual(funcname, "send_music")
@@ -351,8 +347,8 @@ class ReplyTestCase(WeChatTestCase):
 
         # 确认消息发送
         handler = self._create_handler(replies=dict(
-            msg_type=Reply.MsgType.TEXT,
-            content=dict(content=content)
+            type=Reply.MsgType.TEXT,
+            content=content
         ))
 
         def callback(url, request, response):

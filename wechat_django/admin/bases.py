@@ -193,7 +193,7 @@ class WeChatAdmin(admin.ModelAdmin):
 
 
 class DynamicChoiceForm(forms.ModelForm):
-    content_field = "content"
+    content_field = "_content"
     type_field = "type"
     origin_fields = tuple()
 

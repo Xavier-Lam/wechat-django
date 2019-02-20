@@ -13,7 +13,17 @@ from . import WeChatApp
 
 class MessageHandlerManager(m.Manager):
     def create_handler(self, rules=None, replies=None, **kwargs):
-        pass
+        """:rtype: wechat_django.models.MessageHandler"""
+        handler = self.create(**kwargs)
+        if rules:
+            for rule in rules:
+                rule.handler = handler
+            handler.rules.bulk_create(rules)
+        if replies:
+            for reply in replies:
+                reply.handler = handler
+            handler.replies.bulk_create(replies)
+        return handler
 
 
 class MessageHandler(m.Model):
@@ -58,6 +68,8 @@ class MessageHandler(m.Model):
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated_at"), auto_now=True)
+
+    objects = MessageHandlerManager()
 
     class Meta:
         ordering = ("-weight", "-created_at", "-id")
@@ -133,62 +145,64 @@ class MessageHandler(m.Model):
 
             if resp.get("message_default_autoreply_info"):
                 # 自动回复
-                handler = MessageHandler.objects.create(
+                handler = cls.objects.create_handler(
                     app=app,
                     name="微信配置自动回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_autoreply_open")),
-                    created=timezone.datetime.fromtimestamp(0)
+                    created=timezone.datetime.fromtimestamp(0),
+                    rules=[Rule(type=Rule.Type.ALL)],
+                    replies=[
+                        Reply.from_mp(
+                            resp["message_default_autoreply_info"], app)
+                    ]
                 )
                 handlers.append(handler)
-                Rule.objects.create(type=Rule.Type.ALL, handler=handler)
-                reply = Reply.from_mp(
-                    resp["message_default_autoreply_info"], handler)
-                reply.save()
 
             if resp.get("add_friend_autoreply_info"):
                 # 关注回复
-                handler = MessageHandler.objects.create(
+                handler = cls.objects.create_handler(
                     app=app,
                     name="微信配置关注回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_add_friend_reply_open")),
-                    created=timezone.datetime.fromtimestamp(0)
+                    created=timezone.datetime.fromtimestamp(0),
+                    rules=[Rule(
+                        type=Rule.Type.EVENT,
+                        event=cls.EventType.SUBSCRIBE
+                    )],
+                    replies=[
+                        Reply.from_mp(resp["add_friend_autoreply_info"], app)
+                    ]
                 )
                 handlers.append(handler)
-                rule = Rule.objects.create(
-                    type=Rule.Type.EVENT,
-                    content=dict(event=cls.EventType.SUBSCRIBE),
-                    handler=handler
-                )
-                reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
-                reply.save()
 
             if (resp.get("keyword_autoreply_info")
                 and resp["keyword_autoreply_info"].get("list")):
-                for handler in resp["keyword_autoreply_info"]["list"][::-1]:
-                    handlers.append(MessageHandler.from_mp(handler, app))
+                handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
+                handlers.extend(
+                    MessageHandler.from_mp(handler, app)
+                    for handler in handlers_list
+                )
             return handlers
 
     @classmethod
     def from_mp(cls, handler, app):
-        from . import Reply, Rule
-        rv = cls.objects.create(
+        return cls.objects.create_handler(
             app=app,
             name=handler["rule_name"],
             src=MessageHandler.Source.MP,
             created=timezone.datetime.fromtimestamp(handler["create_time"]),
-            strategy=handler["reply_mode"]
+            strategy=handler["reply_mode"],
+            rules=[
+                Rule.from_mp(rule)
+                for rule in handler["keyword_list_info"][::-1]
+            ],
+            replies=[
+                Reply.from_mp(reply, app)
+                for reply in handler["reply_list_info"][::-1]
+            ]
         )
-        rv.rules.bulk_create([
-            Rule.from_mp(rule, rv)
-            for rule in handler["keyword_list_info"][::-1]
-        ])
-        rv.replies.bulk_create([
-            Reply.from_mp(reply, rv)
-            for reply in handler["reply_list_info"][::-1]
-        ])
-        return rv
 
     @classmethod
     def from_menu(cls, menu, data, app):
@@ -196,21 +210,17 @@ class MessageHandler(m.Model):
         :type menu: .Menu
         """
         from . import Reply, Rule
-        handler = cls.objects.create(
+        return cls.objects.create_handler(
             app=app,
             name="菜单[{0}]事件".format(data["name"]),
-            src=cls.Source.MENU
-        )
-        Rule.objects.create(
-            type=Rule.Type.EVENTKEY,
-            content=dict(
+            src=cls.Source.MENU,
+            rules=[Rule(
+                type=Rule.Type.EVENTKEY,
                 event=cls.EventType.CLICK,
                 key=menu.content["key"]
-            ),
-            handler=handler
+            )],
+            replies=[Reply.from_menu(data, app)]
         )
-        Reply.from_menu(data, handler).save()
-        return handler
 
     def __str__(self):
         return self.name

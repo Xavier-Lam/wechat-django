@@ -6,7 +6,6 @@ import re
 from django.db import models as m
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
-from wechatpy.events import BaseEvent
 
 from ..utils.admin import enum2choices
 from . import MessageHandler, MsgType
@@ -33,20 +32,33 @@ class Rule(m.Model):
 
     type = m.CharField(
         _("type"), max_length=16, choices=enum2choices(Type))  # 规则类型
-    content = JSONField(blank=True)  # 规则内容
+    _content = JSONField(db_column="content", blank=True)  # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
+    @property
+    def content(self):
+        return self._content
+
     class Meta:
         ordering = ("-weight", )
+
+    def __init__(self, *args, **kwargs):
+        field_names = set(map(lambda f: f.name, self._meta.fields))
+        content_keys = set(kwargs.keys()) - field_names
+        content = dict()
+        for key in content_keys:
+            content[key] = kwargs.pop(key)
+        kwargs["_content"] = content
+        super(Rule, self).__init__(*args, **kwargs)
 
     def match(self, message_info):
         """
         :type message_info: wechat_django.models.WeChatMessageInfo
         """
         return self._match(message_info.message)
-    
+
     def _match(self, message):
         """
         :type message: wechatpy.messages.BaseMessage
@@ -81,7 +93,7 @@ class Rule(m.Model):
         return cls(
             handler=handler,
             type=data["match_mode"],
-            content=dict(pattern=data["content"])
+            pattern=data["content"]
         )
 
     def __str__(self):

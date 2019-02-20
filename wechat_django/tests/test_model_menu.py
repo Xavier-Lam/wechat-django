@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from unittest import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from wechatpy.client.api import WeChatMenu
 

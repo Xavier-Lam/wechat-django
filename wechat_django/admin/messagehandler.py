@@ -52,9 +52,7 @@ class ReplyInline(admin.StackedInline):
     extra = 0
 
     class ReplyForm(DynamicChoiceForm):
-        content_field = "content"
-        origin_fields = ("msg_type",)
-        type_field = "msg_type"
+        origin_fields = ("type",)
 
         program = forms.CharField(label=_("program"), required=False)
         url = forms.URLField(label=_("url"), required=False)
@@ -71,7 +69,7 @@ class ReplyInline(admin.StackedInline):
 
         class Meta(object):
             model = Reply
-            fields = ("msg_type", )
+            fields = ("type", )
 
         def allowed_fields(self, type, cleaned_data):
             if type == Reply.MsgType.FORWARD:

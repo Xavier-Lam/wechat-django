@@ -22,16 +22,30 @@ class Reply(m.Model):
         CUSTOM = "custom" # 自定义业务
         FORWARD = "forward"  # 转发
 
-    handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
-        related_name="replies")
+    handler = m.ForeignKey(
+        MessageHandler, related_name="replies", on_delete=m.CASCADE)
 
-    msg_type = m.CharField(
-        _("type"), max_length=16, choices=enum2choices(MsgType))
-    content = JSONField()
+    type = m.CharField(
+        _("type"), db_column="type", max_length=16,
+        choices=enum2choices(MsgType))
+    _content = JSONField(db_column="content")
 
     @property
     def app(self):
         return self.handler.app
+    
+    @property
+    def content(self):
+        return self._content
+
+    def __init__(self, *args, **kwargs):
+        field_names = set(map(lambda f: f.name, self._meta.fields))
+        content_keys = set(kwargs.keys()) - field_names
+        content = dict()
+        for key in content_keys:
+            content[key] = kwargs.pop(key)
+        kwargs["_content"] = content
+        super(Reply, self).__init__(*args, **kwargs)
 
     def send(self, message_info):
         """主动回复
@@ -40,17 +54,17 @@ class Reply(m.Model):
         reply = self.reply(message_info)
         funcname, kwargs = self.reply2send(reply)
         func = funcname and getattr(self.app.client.message, funcname)
-        return func(**kwargs)
+        return func and func(**kwargs)
 
     def reply(self, message_info):
         """被动回复
         :type message_info: wechat_django.models.WeChatMessageInfo
         :rtype: wechatpy.replies.BaseReply
         """
-        if self.msg_type == self.MsgType.FORWARD:
+        if self.type == self.MsgType.FORWARD:
             # 转发业务
             reply = self.reply_forward(message_info)
-        elif self.msg_type == self.MsgType.CUSTOM:
+        elif self.type == self.MsgType.CUSTOM:
             # 自定义业务
             reply = self.reply_custom(message_info)
         else:
@@ -62,7 +76,8 @@ class Reply(m.Model):
         """
         :type message_info: wechat_django.models.WeChatMessageInfo
         """
-        resp = requests.post(self.content["url"], message_info.raw,
+        resp = requests.post(
+            self.content["url"], message_info.raw, 
             params=message_info.request.GET, timeout=4.5)
         resp.raise_for_status()
         return replies.deserialize_reply(resp.content)
@@ -98,21 +113,21 @@ class Reply(m.Model):
         """
         :type message: wechatpy.messages.BaseMessage
         """
-        if self.msg_type == self.MsgType.NEWS:
+        if self.type == self.MsgType.NEWS:
             klass = replies.ArticlesReply
             media = Material.get_by_media(self.app, self.content["media_id"])
             # 将media_id转为content
             data = dict(articles=media.articles_json)
-        elif self.msg_type == self.MsgType.MUSIC:
+        elif self.type == self.MsgType.MUSIC:
             klass = replies.MusicReply
             data = dict(**self.content)
-        elif self.msg_type == self.MsgType.VIDEO:
+        elif self.type == self.MsgType.VIDEO:
             klass = replies.VideoReply
             data = dict(**self.content)
-        elif self.msg_type == self.MsgType.IMAGE:
+        elif self.type == self.MsgType.IMAGE:
             klass = replies.ImageReply
             data = dict(media_id=self.content["media_id"])
-        elif self.msg_type == self.MsgType.VOICE:
+        elif self.type == self.MsgType.VOICE:
             klass = replies.VoiceReply
             data = dict(media_id=self.content["media_id"])
         else:
@@ -154,7 +169,7 @@ class Reply(m.Model):
         return funcname, kwargs
 
     @classmethod
-    def from_mp(cls, data, handler):
+    def from_mp(cls, data, app):
         type = data["type"]
         if type == "img":
             type = cls.MsgType.IMAGE
@@ -164,28 +179,27 @@ class Reply(m.Model):
             data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["content"], _("video")))
 
-        reply = cls(msg_type=type, handler=handler)
+        kwargs = dict(type=type)
         if type == cls.MsgType.TEXT:
-            content = dict(content=data["content"])
+            kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
             # 按照文档 是临时素材 需要转换为永久素材
-            content = dict(media_id=Material.as_permenant(
-                data["content"], handler.app, False))
+            media_id = Material.as_permenant(data["content"], app, False)
+            kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:
             media_id = data["content"]
             # 同步图文
-            Article.sync(handler.app, media_id)
-            content = dict(
+            Article.sync(app, media_id)
+            kwargs.update(
                 media_id=media_id,
                 content=data["news_info"]["list"]
             )
         else:
             raise ValueError("unknown reply type %s"%type)
-        reply.content = content
-        return reply
+        return cls(**kwargs)
 
     @classmethod
-    def from_menu(cls, data, handler):
+    def from_menu(cls, data, app):
         type = data["type"]
         if type == "img":
             type = cls.MsgType.IMAGE
@@ -195,26 +209,24 @@ class Reply(m.Model):
             data = dict(content='<a href="{0}">{1}</a>'.format(
                 data["value"], data.get("name", _("video"))))
 
-        rv = cls(msg_type=type, handler=handler)
+        kwargs = dict(type=type)
         if type == cls.MsgType.TEXT:
-            content = dict(content=data["content"])
+            kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
-            content = dict(
-                media_id=Material.as_permenant(
-                    data["value"], handler.app, False)
-            ) if handler else data["value"]
+            media_id = Material.as_permenant(data["value"], app, False) if app\
+                else data["value"]
+            kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:
             media_id = data["value"]
             # 同步图文
-            Article.sync(handler.app, media_id)
-            content = dict(
+            Article.sync(app, media_id)
+            kwargs.update(
                 media_id=media_id,
                 content=data["news_info"]["list"]
             )
         else:
             raise ValueError("unknown menu reply type %s"%type)
-        rv.content = content
-        return rv
+        return cls(**kwargs)
 
     def __str__(self):
         if self.handler:

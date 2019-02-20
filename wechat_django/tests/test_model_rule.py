@@ -10,9 +10,6 @@ from .bases import WeChatTestCase
 class HandlerTestCase(WeChatTestCase):
     def test_match(self):
         """测试匹配"""
-        def _create_rule(type, **kwargs):
-            return Rule(type=type, content=kwargs)
-
         def _create_msg(type, **kwargs):
             rv = type(dict())
             for k, v in kwargs.items():
@@ -36,25 +33,25 @@ class HandlerTestCase(WeChatTestCase):
         another_click_event = _create_msg(events.ClickEvent, key=another_key)
 
         # 所有消息
-        rule = _create_rule(Rule.Type.ALL)
+        rule = Rule(type=Rule.Type.ALL)
         self.assertMatch(rule, text_message)
         self.assertMatch(rule, image_message)
 
         # 测试类型匹配
-        rule = _create_rule(
+        rule = Rule(type=
             Rule.Type.MSGTYPE, msg_type=Rule.ReceiveMsgType.IMAGE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, image_message)
 
         # 测试事件匹配
-        rule = _create_rule(
+        rule = Rule(type=
             Rule.Type.EVENT, event=MessageHandler.EventType.SUBSCRIBE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, sub_event)
         self.assertNotMatch(rule, click_event)
 
         # 测试指定事件匹配
-        rule = _create_rule(
+        rule = Rule(type=
             Rule.Type.EVENTKEY, event=MessageHandler.EventType.CLICK,
             key=event_key)
         self.assertNotMatch(rule, text_message)
@@ -63,21 +60,21 @@ class HandlerTestCase(WeChatTestCase):
         self.assertNotMatch(rule, another_click_event)
 
         # 测试包含匹配
-        rule = _create_rule(Rule.Type.CONTAIN, pattern="中")
+        rule = Rule(type=Rule.Type.CONTAIN, pattern="中")
         self.assertMatch(rule, text_message)
         self.assertNotMatch(rule, another_text_message)
         self.assertNotMatch(rule, image_message)
         self.assertNotMatch(rule, click_event)
 
         # 测试相等匹配
-        rule = _create_rule(Rule.Type.EQUAL, pattern=content)
+        rule = Rule(type=Rule.Type.EQUAL, pattern=content)
         self.assertMatch(rule, text_message)
         self.assertNotMatch(rule, another_text_message)
         self.assertNotMatch(rule, image_message)
         self.assertNotMatch(rule, click_event)
 
         # 测试正则匹配
-        rule = _create_rule(Rule.Type.REGEX, pattern=r"[a-c]+")
+        rule = Rule(type=Rule.Type.REGEX, pattern=r"[a-c]+")
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, another_text_message)
         self.assertNotMatch(rule, image_message)
@@ -86,14 +83,10 @@ class HandlerTestCase(WeChatTestCase):
         # 测试handler匹配
         handler3 = self._create_handler(rules=[dict(
             type=Rule.Type.EQUAL,
-            content=dict(
-                pattern=content
-            )
+            pattern=content
         ), dict(
             type=Rule.Type.EQUAL,
-            content=dict(
-                pattern=another_content
-            )
+            pattern=another_content
         )], name="3")
         self.assertTrue(handler3.is_match(
             self._msg2info(text_message)))
@@ -105,22 +98,16 @@ class HandlerTestCase(WeChatTestCase):
         # 测试匹配顺序
         handler1 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENTKEY,
-            content=dict(
-                event=MessageHandler.EventType.CLICK,
-                key=event_key
-            )
+            event=MessageHandler.EventType.CLICK,
+            key=event_key
         )], name="1", weight=5)
         handler2 = self._create_handler(rules=[dict(
             type=Rule.Type.EQUAL,
-            content=dict(
-                pattern=content
-            )
+            pattern=content
         )], name="2")
         handler4 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENT,
-            content=dict(
-                event=MessageHandler.EventType.CLICK
-            )
+            event=MessageHandler.EventType.CLICK
         )], name="4", weight=-5)
         matches = MessageHandler.matches(self._msg2info(text_message))
         self.assertEqual(len(matches), 1)

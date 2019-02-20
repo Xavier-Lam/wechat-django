@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
             name='Reply',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('msg_type', models.CharField(choices=[('custom', 'CUSTOM'), ('forward', 'FORWARD'), ('image', 'IMAGE'), ('music', 'MUSIC'), ('news', 'NEWS'), ('text', 'TEXT'), ('video', 'VIDEO'), ('voice', 'VOICE')], max_length=16, verbose_name='type')),
+                ('type', models.CharField(choices=[('custom', 'CUSTOM'), ('forward', 'FORWARD'), ('image', 'IMAGE'), ('music', 'MUSIC'), ('news', 'NEWS'), ('text', 'TEXT'), ('video', 'VIDEO'), ('voice', 'VOICE')], max_length=16, verbose_name='type')),
                 ('content', jsonfield.fields.JSONField()),
                 ('handler', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='wechat_django.MessageHandler')),
             ],

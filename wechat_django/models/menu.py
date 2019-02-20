@@ -35,7 +35,7 @@ class Menu(m.Model):
         MINIPROGRAM = "miniprogram"
 
     app = m.ForeignKey(
-        WeChatApp, on_delete=m.CASCADE, related_name="menus")
+        WeChatApp, related_name="menus", on_delete=m.CASCADE)
     name = m.CharField(_("name"), max_length=16)
     menuid = m.IntegerField(_("menuid"), null=True, blank=True)
     parent = m.ForeignKey(
