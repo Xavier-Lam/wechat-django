@@ -19,7 +19,7 @@ class HandlerTestCase(WeChatTestCase):
     def setUp(self):
         super(HandlerTestCase, self).setUp()
         handler = MessageHandler.objects.create(app=self.app)
-        rule = Rule.objects.create(type=Rule.Type.EQUAL, rule=dict(
+        rule = Rule.objects.create(type=Rule.Type.EQUAL, content=dict(
             pattern=self.match_str
         ), handler=handler)
         reply = Reply.objects.create(msg_type=Reply.MsgType.TEXT, content=dict(

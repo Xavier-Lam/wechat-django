@@ -51,7 +51,7 @@ def create_data(apps, schema_editor):
     handler = MessageHandler.objects.create(
         app=app, name="debug custom reply", log=True)
     Rule.objects.create(
-        handler=handler, type=Rule.Type.CONTAIN, rule=dict(pattern="ab"))
+        handler=handler, type=Rule.Type.CONTAIN, content=dict(pattern="ab"))
     Reply.objects.create(handler=handler, msg_type=Reply.MsgType.CUSTOM,
         content=dict(program="sample.wechat.views.custom_business"))
     Reply.objects.create(handler=handler, msg_type=Reply.MsgType.TEXT,

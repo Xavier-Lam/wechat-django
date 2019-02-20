@@ -8,9 +8,10 @@ from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import WeChatApp, WeChatUser
-from .bases import DynamicChoiceForm, WeChatAdmin
+from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
 
 
+@register_admin(WeChatUser)
 class WeChatUserAdmin(WeChatAdmin):
     __category__ = "user"
 
@@ -79,6 +80,3 @@ class WeChatUserAdmin(WeChatAdmin):
 
     def has_add_permission(self, request):
         return False
-
-
-admin.site.register(WeChatUser, WeChatUserAdmin)

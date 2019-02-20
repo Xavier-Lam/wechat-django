@@ -27,6 +27,11 @@ class WeChatApp(m.Model):
         PLAIN = 0
         BOTH = 1
         SAFE = 2
+    
+    class Type(object):
+        SERVICE = 1
+        SUBSCRIBE = 2
+        MINIPROGRAM = 3
 
     title = m.CharField(_("title"), max_length=16, null=False,
         help_text=_("公众号名称,用于后台辨识公众号"))
@@ -36,24 +41,29 @@ class WeChatApp(m.Model):
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
-    appsecret = m.CharField(_("AppSecret"),
-        max_length=64, null=False)
+    appsecret = m.CharField(_("AppSecret"), max_length=64, null=True)
+    type = m.PositiveSmallIntegerField(_("type"), choices=(
+        (Type.SERVICE, _("service app")),
+        (Type.SUBSCRIBE, _("subscribe app")),
+        (Type.MINIPROGRAM, _("miniprogram")),
+    ), default=Type.SERVICE)
     token = m.CharField(max_length=32, null=True, blank=True)
-    encoding_aes_key = m.CharField(_("EncodingAESKey"),
-        max_length=43, null=True, blank=True)
-    encoding_mode = m.PositiveSmallIntegerField(_("encoding mode"), choices=(
-        (EncodingMode.PLAIN, _("plain")),
-        # (EncodingMode.BOTH, "both"),
-        (EncodingMode.SAFE, _("safe"))
-    ), default=EncodingMode.PLAIN)
+    encoding_aes_key = m.CharField(
+        _("EncodingAESKey"), max_length=43, null=True, blank=True)
+    encoding_mode = m.PositiveSmallIntegerField(
+        _("encoding mode"), default=EncodingMode.PLAIN, choices=(
+            (EncodingMode.PLAIN, _("plain")),
+            # (EncodingMode.BOTH, "both"),
+            (EncodingMode.SAFE, _("safe"))
+    ))
 
     flags = m.IntegerField(_("flags"), default=0)
 
     ext_info = JSONField(db_column="ext_info", default={})
     configurations = JSONField(db_column="configurations", default={})
 
-    created = m.DateTimeField(_("created"), auto_now_add=True)
-    updated = m.DateTimeField(_("updated"), auto_now=True)
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
     objects = WeChatAppManager()
 

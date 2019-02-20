@@ -20,20 +20,20 @@ class Material(m.Model):
         NEWS = "news"
         VOICE = "voice"
 
-    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
-        related_name="materials")
-    type = m.CharField(_("type"), max_length=5,
-        choices=(enum2choices(Type)))
+    app = m.ForeignKey(
+        WeChatApp, on_delete=m.CASCADE, related_name="materials")
+    type = m.CharField(
+        _("type"), max_length=5, choices=(enum2choices(Type)))
     media_id = m.CharField(_("media_id"), max_length=64)
     name = m.CharField(_("name"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)
-    update_time = m.IntegerField(_("update time"), editable=False,
-        null=True)
+    update_time = m.IntegerField(
+        _("update time"), editable=False, null=True)
 
     comment = m.TextField(_("comment"), blank=True)
 
-    created = m.DateTimeField(_("created"), auto_now_add=True)
-    updated = m.DateTimeField(_("updated"), auto_now=True)
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta(object):
         unique_together = (("app", "media_id"),)

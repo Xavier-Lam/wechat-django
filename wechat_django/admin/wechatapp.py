@@ -15,11 +15,11 @@ from .bases import has_wechat_permission
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
     list_display = ("title", "name", "appid", "short_desc", "interactable",
-        "created", "updated")
+        "created_at", "updated_at")
     search_fields = ("title", "name", "appid", "short_desc")
 
     fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",
-        "encoding_mode", "desc", "callback", "created", "updated")
+        "encoding_mode", "desc", "callback", "created_at", "updated_at")
 
     def short_desc(self, obj):
         return truncatechars(obj.desc, 35)
@@ -33,14 +33,14 @@ class WeChatAppAdmin(admin.ModelAdmin):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
         if not obj:
             fields.remove("callback")
-            fields.remove("created")
-            fields.remove("updated")
+            fields.remove("created_at")
+            fields.remove("updated_at")
         return fields
 
     def get_readonly_fields(self, request, obj=None):
         rv = super(WeChatAppAdmin, self).get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("name", "appid", "created", "updated", "callback")
+            rv = rv + ("name", "appid", "created_at", "updated_at", "callback")
         return rv
 
     def get_queryset(self, request):
@@ -85,6 +85,3 @@ class WeChatAppAdmin(admin.ModelAdmin):
             )
 
     form = WeChatAppForm
-
-
-admin.site.register(WeChatApp, WeChatAppAdmin)

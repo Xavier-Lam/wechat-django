@@ -28,15 +28,15 @@ class Rule(m.Model):
         SHORTVIDEO = "shortvideo"
         EVENT = "event"
 
-    handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
-        related_name="rules", null=False)
+    handler = m.ForeignKey(
+        MessageHandler, on_delete=m.CASCADE, related_name="rules", null=False)
 
-    type = m.CharField(_("type"), max_length=16,
-        choices=enum2choices(Type))  # 规则类型
-    rule = JSONField(blank=True)  # 规则内容
+    type = m.CharField(
+        _("type"), max_length=16, choices=enum2choices(Type))  # 规则类型
+    content = JSONField(blank=True)  # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
-    created = m.DateTimeField(_("created"), auto_now_add=True)
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta:
         ordering = ("-weight", )
@@ -56,24 +56,24 @@ class Rule(m.Model):
         if self.type == self.Type.ALL:
             return True
         elif self.type == self.Type.MSGTYPE:
-            return message.type == self.rule["msg_type"]
+            return message.type == self.content["msg_type"]
         elif self.type == self.Type.EVENT:
             return (message.type == self.ReceiveMsgType.EVENT
-                and s_eq(message.event, self.rule["event"]))
+                and s_eq(message.event, self.content["event"]))
         elif self.type == self.Type.EVENTKEY:
             return (message.type == self.ReceiveMsgType.EVENT
-                and s_eq(message.event, self.rule["event"])
+                and s_eq(message.event, self.content["event"])
                 and hasattr(message, "key")
-                and message.key == self.rule["key"])
+                and message.key == self.content["key"])
         elif self.type == self.Type.CONTAIN:
             return (message.type == self.ReceiveMsgType.TEXT
-                and self.rule["pattern"] in message.content)
+                and self.content["pattern"] in message.content)
         elif self.type == self.Type.EQUAL:
             return (message.type == self.ReceiveMsgType.TEXT
-                and message.content == self.rule["pattern"])
+                and message.content == self.content["pattern"])
         elif self.type == self.Type.REGEX:
             return (message.type == self.ReceiveMsgType.TEXT
-                and re.search(self.rule["pattern"], message.content))
+                and re.search(self.content["pattern"], message.content))
         return False
 
     @classmethod
@@ -81,7 +81,7 @@ class Rule(m.Model):
         return cls(
             handler=handler,
             type=data["match_mode"],
-            rule=dict(pattern=data["content"])
+            content=dict(pattern=data["content"])
         )
 
     def __str__(self):

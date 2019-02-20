@@ -15,20 +15,18 @@ from . import Article, Material, MessageHandler, MsgType as BaseMsgType
 
 
 class Reply(m.Model):
-    class MsgType(BaseMsgType):  # 响应
+    class MsgType(BaseMsgType):
         MUSIC = "music"
         NEWS = "news"
 
-        # 自定义业务
-        # LOG = "log"
-        CUSTOM = "custom"
+        CUSTOM = "custom" # 自定义业务
         FORWARD = "forward"  # 转发
 
     handler = m.ForeignKey(MessageHandler, on_delete=m.CASCADE,
         related_name="replies")
 
-    msg_type = m.CharField(_("type"), max_length=16,
-        choices=enum2choices(MsgType))
+    msg_type = m.CharField(
+        _("type"), max_length=16, choices=enum2choices(MsgType))
     content = JSONField()
 
     @property

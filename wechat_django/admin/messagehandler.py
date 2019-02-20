@@ -9,7 +9,7 @@ from wechatpy.exceptions import WeChatException
 
 from ..models import MessageHandler, Reply, Rule, WeChatApp
 from ..utils.admin import enum2choices
-from .bases import DynamicChoiceForm, WeChatAdmin
+from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
 
 
 class RuleInline(admin.StackedInline):
@@ -18,9 +18,7 @@ class RuleInline(admin.StackedInline):
     min_num = 1
 
     class RuleForm(DynamicChoiceForm):
-        content_field = "rule"
         origin_fields = ("type", "weight")
-        type_field = "type"
 
         msg_type = forms.ChoiceField(label=_("message type"),
             choices=enum2choices(Rule.ReceiveMsgType), required=False)
@@ -97,6 +95,7 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 
+@register_admin(MessageHandler)
 class MessageHandlerAdmin(WeChatAdmin):
     __category__ = "messagehandler"
 
@@ -115,15 +114,16 @@ class MessageHandlerAdmin(WeChatAdmin):
             return queryset
 
     actions = ("sync", )
-    list_display = ("name", "is_sync", "available", "enabled", "weight",
-        "starts", "ends", "updated", "created")
+    list_display = (
+        "name", "is_sync", "available", "enabled", "weight", "starts", "ends",
+        "updated_at", "created_at")
     list_editable = ("weight",)
     list_filter = (AvailableFilter, )
-    search_fields = ("name", "rules__rule", "replies__content")
+    search_fields = ("name", "rules__content", "replies__content")
 
     inlines = (RuleInline, ReplyInline)
     fields = ("name", "strategy", "starts", "ends", "enabled", "log",
-        "weight", "created", "updated")
+        "weight", "created_at", "updated_at")
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
@@ -157,20 +157,17 @@ class MessageHandlerAdmin(WeChatAdmin):
     def get_fields(self, request, obj=None):
         fields = list(super(MessageHandlerAdmin, self).get_fields(request, obj))
         if not obj:
-            fields.remove("created")
-            fields.remove("updated")
+            fields.remove("created_at")
+            fields.remove("updated_at")
         return fields
 
     def get_readonly_fields(self, request, obj=None):
         rv = super(MessageHandlerAdmin, self).get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("created", "updated")
+            rv = rv + ("created_at", "updated_at")
         return rv
 
     def save_model(self, request, obj, form, change):
         obj.src = MessageHandler.Source.SELF
         return super(MessageHandlerAdmin, self).save_model(
             request, obj, form, change)
-
-
-admin.site.register(MessageHandler, MessageHandlerAdmin)

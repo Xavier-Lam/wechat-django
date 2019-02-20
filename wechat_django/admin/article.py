@@ -8,9 +8,10 @@ from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Article
-from .bases import WeChatAdmin
+from .bases import register_admin, WeChatAdmin
 
 
+@register_admin(Article)
 class ArticleAdmin(WeChatAdmin):
     __category__ = "article"
 
@@ -98,6 +99,3 @@ class ArticleAdmin(WeChatAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-admin.site.register(Article, ArticleAdmin)

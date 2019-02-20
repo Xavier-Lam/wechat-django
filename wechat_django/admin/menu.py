@@ -10,20 +10,23 @@ from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Menu, WeChatApp
-from .bases import DynamicChoiceForm, WeChatAdmin
+from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
 
 
+@register_admin(Menu)
 class MenuAdmin(WeChatAdmin):
     __category__ = "menu"
 
     actions = ("sync", "publish")
 
-    list_display = ("operates", "id", "parent_id", "title", "type",
-        "detail", "weight", "updated")
+    list_display = (
+        "operates", "id", "parent_id", "title", "type", "detail", "weight",
+        "updated_at")
     list_display_links = ("title",)
     list_editable = ("weight", )
-    fields = ("name", "type", "key", "url", "appid", "pagepath",
-        "created", "updated")
+    fields = (
+        "name", "type", "key", "url", "appid", "pagepath", "created_at",
+        "updated_at")
 
     def title(self, obj):
         if obj.parent:
@@ -99,14 +102,14 @@ class MenuAdmin(WeChatAdmin):
     def get_fields(self, request, obj=None):
         fields = list(super(MenuAdmin, self).get_fields(request, obj))
         if not obj:
-            fields.remove("created")
-            fields.remove("updated")
+            fields.remove("created_at")
+            fields.remove("updated_at")
         return fields
 
     def get_readonly_fields(self, request, obj=None):
         rv = super(MenuAdmin, self).get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("created", "updated")
+            rv = rv + ("created_at", "updated_at")
         return rv
 
     def get_queryset(self, request):
@@ -157,6 +160,3 @@ class MenuAdmin(WeChatAdmin):
             return q.count() < 5
         else:
             return q.filter(parent_id__isnull=True).count() < 3
-
-
-admin.site.register(Menu, MenuAdmin)

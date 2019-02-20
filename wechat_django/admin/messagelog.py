@@ -8,9 +8,10 @@ from django.utils.translation import ugettext as _
 
 from ..models import MessageLog, WeChatApp
 from ..utils.admin import linkify
-from .bases import WeChatAdmin
+from .bases import register_admin, WeChatAdmin
 
 
+@register_admin(MessageLog)
 class MessageLogAdmin(WeChatAdmin):
     __category__ = "messagelog"
 
@@ -32,6 +33,3 @@ class MessageLogAdmin(WeChatAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-admin.site.register(MessageLog, MessageLogAdmin)

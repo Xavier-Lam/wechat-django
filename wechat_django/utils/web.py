@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
+
 from django.http import response
 from six.moves.urllib.parse import parse_qsl, urlparse
 from six import text_type
+
+
+@contextmanager
+def mutable_GET(request):
+    request.GET._mutable = True
+    try:
+        yield request.GET
+    finally:
+        request.GET._mutable = False
 
 
 def get_ip(request):

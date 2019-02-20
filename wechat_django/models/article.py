@@ -14,25 +14,28 @@ class Article(m.Model):
     title = m.CharField(_("title"), max_length=64)
     thumb_media_id = m.CharField(_("thumb_media_id"), max_length=64)
     show_cover_pic = m.BooleanField(_("show cover"), default=True)
-    author = m.CharField(_("author"), max_length=24,
-        blank=True, null=True, default="")
-    digest = m.CharField(_("digest"), max_length=256,
-        blank=True, null=True, default="")
+    author = m.CharField(
+        _("author"), max_length=24, blank=True, null=True, default="")
+    digest = m.CharField(
+        _("digest"), max_length=256, blank=True, null=True, default="")
     content = m.TextField(_("content"))
     url = m.CharField(_("url"), max_length=256)
-    content_source_url = m.CharField(_("content source url"), max_length=256)
+    content_source_url = m.CharField(
+        _("content source url"), max_length=256)
 
-    need_open_comment = m.NullBooleanField(_("need open comment"), default=None)
-    only_fans_can_comment = m.NullBooleanField(_("need open comment"),
-        default=None)
+    need_open_comment = m.NullBooleanField(
+        _("need open comment"), default=None)
+    only_fans_can_comment = m.NullBooleanField(
+        _("only fans can comment"), default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
-    _thumb_url = m.CharField(db_column="thumb_url", max_length=256, null=True, default=None)
+    _thumb_url = m.CharField(
+        db_column="thumb_url", max_length=256, null=True, default=None)
 
-    synced_at = m.DateTimeField(_("updated"), auto_now_add=True)
+    synced_at = m.DateTimeField(_("synchronized at"), auto_now_add=True)
 
     class Meta(object):
-        unique_together = ("material", "index")
+        unique_together = (("material", "index"),)
         ordering = ("material", "index")
 
     @property
@@ -47,9 +50,8 @@ class Article(m.Model):
     def thumb_url(self):
         if self._thumb_url is None and self.thumb_media_id:
             # 不存在url时通过thumb_media_id同步
-            app = self.material.app
             image = Material.objects.filter(
-                app=app, media_id=self.thumb_media_id).first()
+                app=self.app, media_id=self.thumb_media_id).first()
             self._thumb_url = image and image.url
             self._thumb_url is not None and self.save()
         return self._thumb_url

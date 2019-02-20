@@ -11,6 +11,11 @@ from ..exceptions import MessageHandleError
 from . import WeChatApp
 
 
+class MessageHandlerManager(m.Manager):
+    def create_handler(self, rules=None, replies=None, **kwargs):
+        pass
+
+
 class MessageHandler(m.Model):
     class Source(object):
         SELF = 0  # 自己的后台
@@ -30,8 +35,9 @@ class MessageHandler(m.Model):
         CLICK = "CLICK"
         VIEW = "VIEW"
 
-    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
-        related_name="message_handlers", null=False, editable=False)
+    app = m.ForeignKey(
+        WeChatApp, on_delete=m.CASCADE, related_name="message_handlers",
+        null=False, editable=False)
     name = m.CharField(_("name"), max_length=60)
     src = m.PositiveSmallIntegerField(choices=(
         (Source.MP, "wechat"),
@@ -50,13 +56,13 @@ class MessageHandler(m.Model):
     enabled = m.BooleanField(_("enabled"), null=False, default=True)
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
-    created = m.DateTimeField(_("created"), auto_now_add=True)
-    updated = m.DateTimeField(_("updated"), auto_now=True)
+    created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated_at"), auto_now=True)
 
     class Meta:
-        ordering = ("-weight", "-created", "-id")
+        ordering = ("-weight", "-created_at", "-id")
         index_together = (
-            ("app", "weight", "created"),
+            ("app", "weight", "created_at"),
         )
 
     def available(self):
@@ -135,9 +141,9 @@ class MessageHandler(m.Model):
                     created=timezone.datetime.fromtimestamp(0)
                 )
                 handlers.append(handler)
-                rule = Rule.objects.create(type=Rule.Type.ALL, handler=handler)
-                reply = Reply.from_mp(resp["message_default_autoreply_info"],
-                    handler)
+                Rule.objects.create(type=Rule.Type.ALL, handler=handler)
+                reply = Reply.from_mp(
+                    resp["message_default_autoreply_info"], handler)
                 reply.save()
 
             if resp.get("add_friend_autoreply_info"):
@@ -152,7 +158,7 @@ class MessageHandler(m.Model):
                 handlers.append(handler)
                 rule = Rule.objects.create(
                     type=Rule.Type.EVENT,
-                    rule=dict(event=cls.EventType.SUBSCRIBE),
+                    content=dict(event=cls.EventType.SUBSCRIBE),
                     handler=handler
                 )
                 reply = Reply.from_mp(resp["add_friend_autoreply_info"], handler)
@@ -197,7 +203,7 @@ class MessageHandler(m.Model):
         )
         Rule.objects.create(
             type=Rule.Type.EVENTKEY,
-            rule=dict(
+            content=dict(
                 event=cls.EventType.CLICK,
                 key=menu.content["key"]
             ),

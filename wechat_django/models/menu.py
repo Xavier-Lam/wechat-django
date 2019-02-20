@@ -34,19 +34,21 @@ class Menu(m.Model):
 
         MINIPROGRAM = "miniprogram"
 
-    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
-        related_name="menus")
+    app = m.ForeignKey(
+        WeChatApp, on_delete=m.CASCADE, related_name="menus")
     name = m.CharField(_("name"), max_length=16)
     menuid = m.IntegerField(_("menuid"), null=True, blank=True)
-    parent = m.ForeignKey("Menu", on_delete=m.CASCADE,
-        null=True, blank=True, related_name="sub_button")
-    type = m.CharField(_("type"), max_length=20, choices=enum2choices(Event),
+    parent = m.ForeignKey(
+        "Menu", on_delete=m.CASCADE, null=True, blank=True,
+        related_name="sub_button")
+    type = m.CharField(
+        _("type"), max_length=20, choices=enum2choices(Event),
         null=True, blank=True)
     content = JSONField()
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
-    created = m.DateTimeField(auto_now_add=True)
-    updated = m.DateTimeField(auto_now=True)
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta(object):
         ordering = ("app", "-weight", "id")

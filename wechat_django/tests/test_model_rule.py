@@ -11,7 +11,7 @@ class HandlerTestCase(WeChatTestCase):
     def test_match(self):
         """测试匹配"""
         def _create_rule(type, **kwargs):
-            return Rule(type=type, rule=kwargs)
+            return Rule(type=type, content=kwargs)
 
         def _create_msg(type, **kwargs):
             rv = type(dict())
@@ -41,21 +41,22 @@ class HandlerTestCase(WeChatTestCase):
         self.assertMatch(rule, image_message)
 
         # 测试类型匹配
-        rule = _create_rule(Rule.Type.MSGTYPE, 
-            msg_type=Rule.ReceiveMsgType.IMAGE)
+        rule = _create_rule(
+            Rule.Type.MSGTYPE, msg_type=Rule.ReceiveMsgType.IMAGE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, image_message)
 
         # 测试事件匹配
-        rule = _create_rule(Rule.Type.EVENT,
-            event=MessageHandler.EventType.SUBSCRIBE)
+        rule = _create_rule(
+            Rule.Type.EVENT, event=MessageHandler.EventType.SUBSCRIBE)
         self.assertNotMatch(rule, text_message)
         self.assertMatch(rule, sub_event)
         self.assertNotMatch(rule, click_event)
 
         # 测试指定事件匹配
-        rule = _create_rule(Rule.Type.EVENTKEY, 
-            event=MessageHandler.EventType.CLICK, key=event_key)
+        rule = _create_rule(
+            Rule.Type.EVENTKEY, event=MessageHandler.EventType.CLICK,
+            key=event_key)
         self.assertNotMatch(rule, text_message)
         self.assertNotMatch(rule, sub_event)
         self.assertMatch(rule, click_event)
@@ -85,12 +86,12 @@ class HandlerTestCase(WeChatTestCase):
         # 测试handler匹配
         handler3 = self._create_handler(rules=[dict(
             type=Rule.Type.EQUAL,
-            rule=dict(
+            content=dict(
                 pattern=content
             )
         ), dict(
             type=Rule.Type.EQUAL,
-            rule=dict(
+            content=dict(
                 pattern=another_content
             )
         )], name="3")
@@ -104,20 +105,20 @@ class HandlerTestCase(WeChatTestCase):
         # 测试匹配顺序
         handler1 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENTKEY,
-            rule=dict(
+            content=dict(
                 event=MessageHandler.EventType.CLICK,
                 key=event_key
             )
         )], name="1", weight=5)
         handler2 = self._create_handler(rules=[dict(
             type=Rule.Type.EQUAL,
-            rule=dict(
+            content=dict(
                 pattern=content
             )
         )], name="2")
         handler4 = self._create_handler(rules=[dict(
             type=Rule.Type.EVENT,
-            rule=dict(
+            content=dict(
                 event=MessageHandler.EventType.CLICK
             )
         )], name="4", weight=-5)
