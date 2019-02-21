@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.utils.module_loading import import_string
 
 from .. import settings
-from . import (
+from . import ( # NOQA
     bases,
     wechatapp,
     user,

@@ -1,0 +1,48 @@
+{% load i18n %}
+
+{% trans "PLAIN" %}
+{% trans "SAFE" %}
+{% trans "SERVICEAPP" %}
+{% trans "SUBSCRIBEAPP" %}
+{% trans "MINIPROGRAM" %}
+
+{% trans "TEXT" %}
+{% trans "IMAGE" %}
+{% trans "VOICE" %}
+{% trans "VIDEO" %}
+{% trans "NEWS" %}
+{% trans "MUSIC" %}
+{% trans "CUSTOM" %}
+{% trans "FORWARD" %}
+
+{% trans "SELF" %}
+{% trans "MENU" %}
+{% trans "MP" %}
+
+{% trans "REPLYALL" %}
+{% trans "RANDOM" %}
+{% trans "NONE" %}
+
+{% trans "MSGTYPE" %}
+{% trans "EVENTKEY" %}
+{% trans "CONTAIN" %}
+{% trans "EQUAL" %}
+{% trans "REGEX" %}
+{% trans "ALL" %}
+
+{% trans "LINK" %}
+{% trans "SHORTVIDEO" %}
+{% trans "EVENT" %}
+
+{% trans "SUBSCRIBE" %}
+{% trans "UNSUBSCRIBE" %}
+{% trans "SCAN" %}
+{% trans "LOCATION" %}
+
+{% trans "CLICK" %}
+{% trans "VIEW" %}
+{% trans "MINIPROGRAM" %}
+
+{% trans "UNKNOWN" %}
+{% trans "MALE" %}
+{% trans "FEMALE" %}

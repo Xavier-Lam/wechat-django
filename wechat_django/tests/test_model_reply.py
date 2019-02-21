@@ -106,7 +106,7 @@ class ReplyTestCase(WeChatTestCase):
             content=reply2
         )]
         handler_all = self._create_handler(
-            replies=replies, strategy=MessageHandler.ReplyStrategy.ALL)
+            replies=replies, strategy=MessageHandler.ReplyStrategy.REPLYALL)
         handler_rand = self._create_handler(
             replies=replies, strategy=MessageHandler.ReplyStrategy.RANDOM)
 
@@ -126,6 +126,7 @@ class ReplyTestCase(WeChatTestCase):
 
         # 回复一条正常消息以及一条客服消息
         counter = dict(calls=0)
+
         def callback(url, request, response):
             counter["calls"] += 1
             data = json.loads(request.body.decode())
@@ -215,6 +216,7 @@ class ReplyTestCase(WeChatTestCase):
         message = request.wechat
 
         reply_text = "abc"
+
         def reply_test(url, request):
             self.assertEqual(url.scheme, scheme)
             self.assertEqual(url.netloc, netloc)

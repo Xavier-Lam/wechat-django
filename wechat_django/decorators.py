@@ -45,6 +45,7 @@ def wechat_route(route, methods=None, name=""):
     """
     if not methods:
         methods = ("GET",)
+
     def decorator(func):
         func = csrf_exempt(func)
         func = require_http_methods(methods)(func)

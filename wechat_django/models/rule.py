@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from django.db import models as m
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
@@ -101,5 +101,5 @@ class Rule(m.Model):
 
     def __str__(self):
         if self.handler_id:
-            return "<Rule: {0} - {1}>".format(self.handler.name, self.type)
-        return "<Rule: {0}>".format(self.type)
+            return "{0} - {1}".format(self.handler.name, self.type)
+        return "{0}".format(self.type)

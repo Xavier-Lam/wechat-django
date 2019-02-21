@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """权限模块
-约定: 
+约定:
 对于manage,article 这种每个公众号拥有的权限,变量名用permission
 对于{prefix}{appname}|{perm} 这种permission表中的codename,变量名用perm_name
 对于可能携带applabel的codename,变量名亦用perm_name
@@ -16,23 +16,24 @@ import re
 from django.contrib.auth.models import Group, Permission, User
 from django.db import models as m
 from django.dispatch import receiver
+from django.utils.translation import ugettext_lazy as _
 
 WECHATPERM_PREFIX = "app|"
 
 permissions = {
-    "manage": "can manage {appname}",
-    "article": "can edit {appname} articles",
-    "article_sync": "can sync {appname} articles",
-    "material": "can edit {appname} materials",
-    "material_sync": "can sync {appname} materials",
-    "menu": "can edit {appname} menus",
-    "menu_sync": "can sync {appname} menus",
-    "menu_publish": "can publish {appname} menus",
-    "messagehandler": "can edit {appname} message handlers",
-    "messagehandler_sync": "can sync {appname} message handlers",
-    "messagelog": "can view {appname} message logs",
-    "user": "can edit {appname} users",
-    "user_sync": "can sync {appname} users",
+    "manage": _("Can manage %(appname)s"),
+    "article": _("Can edit %(appname)s articles"),
+    "article_sync": _("Can sync %(appname)s articles"),
+    "material": _("Can edit %(appname)s materials"),
+    "material_sync": _("Can sync %(appname)s materials"),
+    "menu": _("Can edit %(appname)s menus"),
+    "menu_sync": _("Can sync %(appname)s menus"),
+    "menu_publish": _("Can publish %(appname)s menus"),
+    "messagehandler": _("Can edit %(appname)s message handlers"),
+    "messagehandler_sync": _("Can sync %(appname)s message handlers"),
+    "messagelog": _("Can view %(appname)s message logs"),
+    "user": _("Can edit %(appname)s users"),
+    "user_sync": _("Can sync %(appname)s users"),
 }
 
 permission_required = {
@@ -85,8 +86,8 @@ def get_perm_name(app, permission=""):
 def get_perm_desc(perm_name, app):
     appname, permission = match_permission(perm_name)
     desc = permissions[permission] if permission\
-        else "can full control {appname}"
-    return "{0} | {1}".format(appname, desc).format(appname=app.title)
+        else _("Can full control %(appname)s")
+    return "{0} | {1}".format(appname, desc) % dict(appname=app.name)
 
 
 def get_require_perm_names(appname, permission=None):

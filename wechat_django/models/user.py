@@ -5,7 +5,7 @@ import math
 import re
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone as tz
 
 from ..utils.admin import enum2choices
@@ -121,6 +121,7 @@ class WeChatUser(m.Model):
     @classmethod
     def fetch_users(cls, app, openids):
         fields = set(map(lambda o: o.name, cls._meta.fields))
+        # TODO: 根据当前语言拉取用户数据
         update_dicts = map(
             lambda o: {k: v for k, v in o.items() if k in fields},
             app.client.user.get_batch(openids)

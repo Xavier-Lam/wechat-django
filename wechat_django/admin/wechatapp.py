@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from ..models import WeChatApp
 from ..models.permission import get_user_permissions
@@ -33,6 +33,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def callback(self, obj):
         return obj and self.request.build_absolute_uri(reverse(
             "wechat_django:handler", kwargs=dict(appname=obj.name)))
+    callback.short_description = _("message callback url")
 
     def get_fields(self, request, obj=None):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
@@ -45,7 +46,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         rv = super(WeChatAppAdmin, self).get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("name", "appid", "created_at", "updated_at", "callback")
+            rv = rv + ("name", "appid", "type", "callback",
+                "created_at", "updated_at")
         return rv
 
     def get_queryset(self, request):

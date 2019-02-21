@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from . import Material
 
@@ -86,4 +86,4 @@ class Article(m.Model):
         )
 
     def __str__(self):
-        return "<Article: {0}>".format(self.title)
+        return "{0}".format(self.title)

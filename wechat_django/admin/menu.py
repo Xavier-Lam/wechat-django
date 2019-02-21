@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Menu, WeChatApp
@@ -36,13 +36,15 @@ class MenuAdmin(WeChatAdmin):
 
     @mark_safe
     def detail(self, obj):
+        rv = ""
         if obj.type == Menu.Event.CLICK:
-            return obj.content.get("key")
+            rv = obj.content.get("key")
         elif obj.type == Menu.Event.VIEW:
-            return '<a href="{0}">{1}</a>'.format(
+            rv = '<a href="{0}">{1}</a>'.format(
                 obj.content.get("url"), _("link"))
         elif obj.type == Menu.Event.MINIPROGRAM:
-            return obj.content.get("appid")
+            rv = obj.content.get("appid")
+        return rv or ""
     detail.short_description = _("detail")
     detail.allow_tags = True
 
@@ -70,9 +72,9 @@ class MenuAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             Menu.sync(app)
-            self.message_user(request, "menus successfully synchronized")
+            self.message_user(request, _("menus successfully synchronized"))
         except Exception as e:
-            msg = "sync failed with {0}".format(e)
+            msg = _("sync failed with %(exc)s") % dict(exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
@@ -85,9 +87,9 @@ class MenuAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             Menu.publish(app)
-            self.message_user(request, "menus successfully published")
+            self.message_user(request, _("menus successfully published"))
         except Exception as e:
-            msg = "publish failed with {0}".format(e)
+            msg = _("publish failed with %(exc)s") % dict(exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:

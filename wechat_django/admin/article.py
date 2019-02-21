@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Article
@@ -89,10 +89,10 @@ class ArticleAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             materials = Article.sync(app)
-            self.message_user(request,
-                "%d articles successfully synchronized"%len(materials))
+            msg = "%(count)d articles successfully synchronized"
+            self.message_user(request, msg % dict(count=len(materials)))
         except Exception as e:
-            msg = "sync failed with {0}".format(e)
+            msg = "sync failed with %(exc)s" % dict(exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:

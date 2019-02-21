@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Material
@@ -69,10 +69,10 @@ class MaterialAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             materials = Material.sync(app)
-            self.message_user(request,
-                "%d materials successfully synchronized"%len(materials))
+            msg = "%(count)d materials successfully synchronized"
+            self.message_user(request, msg % dict(count=len(materials)))
         except Exception as e:
-            msg = "sync failed with {0}".format(e)
+            msg = "sync failed with %(exc)s" % dict(exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
@@ -85,7 +85,7 @@ class MaterialAdmin(WeChatAdmin):
             try:
                 o.delete()
             except WeChatException:
-                msg = "delete material failed: {0}".format(obj)
+                msg = _("delete material failed: %(obj)s") % dict(obj=obj)
                 self.logger(request).warning(msg, exc_info=True)
                 raise
     delete_selected.short_description = _("delete selected")

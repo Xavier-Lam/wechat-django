@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models as m
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 import requests
 from six import text_type
@@ -234,6 +234,6 @@ class Reply(m.Model):
         return cls(**kwargs)
 
     def __str__(self):
-        if self.handler:
-            return self.handler.name
-        return super(Reply, self).__str__()
+        if self.handler_id:
+            return "{0} - {1}".format(self.handler.name, self.type)
+        return "{0}".format(self.type)

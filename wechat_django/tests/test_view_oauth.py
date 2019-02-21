@@ -206,6 +206,7 @@ class OAuthTestCase(WeChatTestCase):
 
         # 首次授权后不再授权
         session_key = "wechat_test_user"
+
         def ban_api(*args, **kwargs):
             self.assertFalse(True)
         request = rf.get("/test?code=123")

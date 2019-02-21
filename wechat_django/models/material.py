@@ -5,7 +5,7 @@ import mimetypes
 import re
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 

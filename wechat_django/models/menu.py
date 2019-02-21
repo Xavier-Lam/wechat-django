@@ -5,7 +5,7 @@ from hashlib import md5
 import json
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
@@ -144,4 +144,4 @@ class Menu(m.Model):
         return rv
 
     def __str__(self):
-        return "<Menu: {0}>".format(self.name)
+        return "{0}".format(self.name)

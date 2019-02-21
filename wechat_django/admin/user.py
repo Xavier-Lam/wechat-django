@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import WeChatUser
@@ -35,7 +35,7 @@ class WeChatUserAdmin(WeChatAdmin):
 
     def subscribetime(self, obj):
         return obj.subscribe_time and timezone.datetime.fromtimestamp(obj.subscribe_time)
-    subscribetime.short_description = "subscribe time"
+    subscribetime.short_description = _("subscribe time")
 
     def sync(self, request, queryset, method="sync", kwargs=None):
         self.check_wechat_permission(request, "sync")
@@ -44,10 +44,10 @@ class WeChatUserAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             users = getattr(WeChatUser, method)(app, **kwargs)
-            self.message_user(request,
-                "%d users successfully synchronized"%len(users))
+            msg = _("%(count)d users successfully synchronized")
+            self.message_user(request, msg % dict(count=len(users)))
         except Exception as e:
-            msg = method + " failed with {0}".format(e)
+            msg = method + " failed with %(exc)s" % e
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:

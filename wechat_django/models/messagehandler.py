@@ -6,10 +6,11 @@ import random
 
 from django.db import models as m, transaction
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..exceptions import MessageHandleError
+from ..utils.admin import enum2choices
 from ..utils.web import get_ip
 from . import WeChatApp
 
@@ -36,7 +37,7 @@ class MessageHandler(m.Model):
         MP = 2  # 微信后台
 
     class ReplyStrategy(object):
-        ALL = "reply_all"
+        REPLYALL = "reply_all"
         RANDOM = "random_one"
         NONE = "none"
 
@@ -60,11 +61,8 @@ class MessageHandler(m.Model):
         (Source.SELF, "self"),
         (Source.MENU, "menu")
     ), default=Source.SELF, editable=False)
-    strategy = m.CharField(_("strategy"), max_length=10, choices=(
-        (ReplyStrategy.ALL, "reply_all"),
-        (ReplyStrategy.RANDOM, "random_one"),
-        (ReplyStrategy.NONE, "none")
-    ), default=ReplyStrategy.ALL)
+    strategy = m.CharField(_("strategy"), max_length=10,
+        choices=enum2choices(ReplyStrategy), default=ReplyStrategy.REPLYALL)
     # TODO: 改为flags
     log = m.BooleanField(_("log"), default=False)
 
@@ -128,7 +126,7 @@ class MessageHandler(m.Model):
             replies = list(self.replies.all())
             if not replies:
                 pass
-            elif self.strategy == self.ReplyStrategy.ALL:
+            elif self.strategy == self.ReplyStrategy.REPLYALL:
                 for reply in replies[:-1]:
                     try:
                         reply.send(message_info)
@@ -195,8 +193,8 @@ class MessageHandler(m.Model):
                 )
                 handlers.append(handler)
 
-            if (resp.get("keyword_autoreply_info") and
-                resp["keyword_autoreply_info"].get("list")):
+            if (resp.get("keyword_autoreply_info")
+                and resp["keyword_autoreply_info"].get("list")):
                 handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
                 handlers.extend(
                     MessageHandler.from_mp(handler, app)
@@ -254,4 +252,4 @@ class MessageHandler(m.Model):
         return lambda lvl, msg, **kwargs: logger.log(lvl, s % msg, **kwargs)
 
     def __str__(self):
-        return "<MessageHandler: {0}>".format(self.name)
+        return "{0}".format(self.name)

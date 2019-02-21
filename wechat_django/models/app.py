@@ -6,11 +6,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models as m
 from django.dispatch import receiver
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from six import text_type
 
 from .. import settings
+from ..utils.admin import enum2choices
 from .permission import get_perm_desc, list_perm_names
 
 
@@ -25,12 +26,12 @@ class WeChatAppManager(m.Manager):
 class WeChatApp(m.Model):
     class EncodingMode(object):
         PLAIN = 0
-        BOTH = 1
+        # BOTH = 1
         SAFE = 2
 
     class Type(object):
-        SERVICE = 1
-        SUBSCRIBE = 2
+        SERVICEAPP = 1
+        SUBSCRIBEAPP = 2
         MINIPROGRAM = 3
 
     title = m.CharField(
@@ -43,21 +44,15 @@ class WeChatApp(m.Model):
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
     appsecret = m.CharField(_("AppSecret"), max_length=64, null=True)
-    type = m.PositiveSmallIntegerField(_("type"), choices=(
-        (Type.SERVICE, _("service app")),
-        (Type.SUBSCRIBE, _("subscribe app")),
-        (Type.MINIPROGRAM, _("miniprogram")),
-    ), default=Type.SERVICE)
+    type = m.PositiveSmallIntegerField(_("type"), default=Type.SERVICEAPP,
+        choices=enum2choices(Type))
 
     token = m.CharField(max_length=32, null=True, blank=True)
     encoding_aes_key = m.CharField(
         _("EncodingAESKey"), max_length=43, null=True, blank=True)
     encoding_mode = m.PositiveSmallIntegerField(
-        _("encoding mode"), default=EncodingMode.PLAIN, choices=(
-            (EncodingMode.PLAIN, _("plain")),
-            # (EncodingMode.BOTH, "both"),
-            (EncodingMode.SAFE, _("safe"))
-    ))
+        _("encoding mode"), default=EncodingMode.PLAIN,
+        choices=enum2choices(EncodingMode))
 
     flags = m.IntegerField(_("flags"), default=0)
 
