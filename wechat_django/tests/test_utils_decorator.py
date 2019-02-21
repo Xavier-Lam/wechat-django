@@ -19,7 +19,7 @@ class UtilDecoratorTestCase(WeChatTestCase):
         api2 = "api2/"
         name = "test1"
         wechat_route(api2, methods=["POST"], name=name)(test)
-        
+
         fullurl = "/wechat/" + self.app.name + "/" + api1
         url = reverse(
             "wechat_django:" + test.__name__, kwargs=dict(appname=self.app.name))

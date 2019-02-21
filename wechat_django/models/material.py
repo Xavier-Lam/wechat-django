@@ -13,6 +13,11 @@ from ..utils.admin import enum2choices
 from . import WeChatApp
 
 
+class MaterialManager(m.Manager):
+    def get_by_media(self, app, media_id):
+        return self.get(app=app, media_id=media_id)
+
+
 class Material(m.Model):
     class Type(object):
         IMAGE = "image"
@@ -35,13 +40,11 @@ class Material(m.Model):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
+    objects = MaterialManager()
+
     class Meta(object):
         unique_together = (("app", "media_id"),)
         ordering = ("app", "-update_time")
-
-    @classmethod
-    def get_by_media(cls, app, media_id):
-        return cls.objects.get(app=app, media_id=media_id)
 
     @classmethod
     def sync(cls, app, id=None, type=None):

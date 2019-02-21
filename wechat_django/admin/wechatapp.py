@@ -14,12 +14,17 @@ from .bases import has_wechat_permission
 
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
-    list_display = ("title", "name", "appid", "short_desc", "interactable",
-        "created_at", "updated_at")
+    list_display = (
+        "title", "name", "type", "appid", "short_desc", "interactable",
+        "created_at", "updated_at"
+    )
     search_fields = ("title", "name", "appid", "short_desc")
 
-    fields = ("title", "name", "appid", "appsecret", "token", "encoding_aes_key",
-        "encoding_mode", "desc", "callback", "created_at", "updated_at")
+    fields = (
+        "title", "name", "appid", "appsecret", "type", "token",
+        "encoding_aes_key", "encoding_mode", "desc", "callback",
+        "created_at", "updated_at"
+    )
 
     def short_desc(self, obj):
         return truncatechars(obj.desc, 35)

@@ -27,7 +27,7 @@ class WeChatApp(m.Model):
         PLAIN = 0
         BOTH = 1
         SAFE = 2
-    
+
     class Type(object):
         SERVICE = 1
         SUBSCRIBE = 2
@@ -47,6 +47,7 @@ class WeChatApp(m.Model):
         (Type.SUBSCRIBE, _("subscribe app")),
         (Type.MINIPROGRAM, _("miniprogram")),
     ), default=Type.SERVICE)
+
     token = m.CharField(max_length=32, null=True, blank=True)
     encoding_aes_key = m.CharField(
         _("EncodingAESKey"), max_length=43, null=True, blank=True)
@@ -87,7 +88,7 @@ class WeChatApp(m.Model):
             )
             client.appname = self.name
             # API BASE URL
-            client.ACCESSTOKEN_URL = self.configurations.get("ACCESSTOKEN_URL")
+            # client.ACCESSTOKEN_URL = self.configurations.get("ACCESSTOKEN_URL")
 
             # TODO: 移除
             # self._client._http.proxies = dict(
@@ -109,6 +110,7 @@ class WeChatApp(m.Model):
         return self._oauth
 
     def interactable(self):
+        """可与微信服务器交互的"""
         rv = self.appsecret and self.token
         if self.encoding_mode == self.EncodingMode.SAFE:
             rv = rv and self.encoding_aes_key
@@ -121,7 +123,7 @@ class WeChatApp(m.Model):
 
 
 @receiver(m.signals.post_save, sender=WeChatApp)
-def execute_after_save(sender, instance, created, *args, **kwargs):
+def create_app_permissions(sender, instance, created, *args, **kwargs):
     if created:
         # 添加
         content_type = ContentType.objects.get_for_model(WeChatApp)
@@ -136,7 +138,7 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
 
 
 @receiver(m.signals.post_delete, sender=WeChatApp)
-def execute_after_delete(sender, instance, *args, **kwargs):
+def delete_app_permissions(sender, instance, *args, **kwargs):
     content_type = ContentType.objects.get_for_model(WeChatApp)
     Permission.objects.filter(
         content_type=content_type,

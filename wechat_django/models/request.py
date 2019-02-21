@@ -142,7 +142,7 @@ class WeChatOAuthInfo(WeChatInfo):
     def scope(self):
         """授权的scope"""
         return self._scope
-    
+
     _state = ""
     @property
     def state(self):
@@ -156,12 +156,12 @@ class WeChatOAuthInfo(WeChatInfo):
             self.scope,
             self.state
         )
-    
+
     @property
     def redirect_uri(self):
         """授权后重定向回的地址"""
         return self._redirect_uri
-    
+
     @property
     def openid(self):
         if not hasattr(self, "_openid"):

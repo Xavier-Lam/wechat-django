@@ -28,7 +28,7 @@ class Rule(m.Model):
         EVENT = "event"
 
     handler = m.ForeignKey(
-        MessageHandler, on_delete=m.CASCADE, related_name="rules", null=False)
+        MessageHandler, related_name="rules", null=False, on_delete=m.CASCADE)
 
     type = m.CharField(
         _("type"), max_length=16, choices=enum2choices(Type))  # 规则类型
@@ -97,6 +97,6 @@ class Rule(m.Model):
         )
 
     def __str__(self):
-        if hasattr(self, "handler") and self.handler is not None:
-            return self.handler.name
+        if self.handler_id:
+            return "<Rule: {0} - {1}>".format(self.handler.name, self.type)
         return "<Rule: {0}>".format(self.type)

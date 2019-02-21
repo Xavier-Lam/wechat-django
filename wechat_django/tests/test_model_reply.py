@@ -131,13 +131,13 @@ class ReplyTestCase(WeChatTestCase):
         def callback(url, request, response):
             counter["calls"] += 1
             data = json.loads(request.body.decode())
-            self.assertEqual(data["text"]["content"], reply2)
+            self.assertEqual(data["text"]["content"], reply1)
             self.assertEqual(data["touser"], sender)
         with wechatapi_accesstoken(), wechatapi(api, dict(errcode=0, errmsg=""), callback):
             reply = handler_all.reply(message)
             self.assertEqual(reply.type, Reply.MsgType.TEXT)
             self.assertEqual(reply.target, sender)
-            self.assertEqual(reply.content, reply1)
+            self.assertEqual(reply.content, reply2)
             self.assertEqual(counter["calls"], 1)
 
     def test_custom(self):

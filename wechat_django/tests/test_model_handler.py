@@ -53,4 +53,3 @@ class HandlerTestCase(WeChatTestCase):
     def test_sync(self):
         """测试同步"""
         pass
-    

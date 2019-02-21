@@ -28,7 +28,7 @@ class Handler(View):
         """
         :type request: wechat_django.models.WeChatHttpRequest
         """
-        log = self._log(request)
+        log = MessageHandler.handlerlog(request)
         try:
             self._verify(request)
             resp = super(Handler, self).dispatch(request)
@@ -51,7 +51,7 @@ class Handler(View):
             log(logging.WARNING, "handle message failed", exc_info=True)
             return ""
         except:
-            log(logging.ERROR, "an unexcept error occurred", exc_info=True)
+            log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
             return ""
 
     def get(self, request):
@@ -123,17 +123,6 @@ class Handler(View):
         """记录消息日志"""
         if flags:
             MessageLog.from_message_info(message_info)
-
-    def _log(self, request):
-        logger = logging.getLogger(
-            "wechat.handler.{0}".format(request.wechat.app.name))
-        args = dict(
-            params=request.GET,
-            body=request.body,
-            ip=get_ip(request)
-        )
-        s = "%s - {0}".format(args)
-        return lambda lvl, msg, **kwargs: logger.log(lvl, s % msg, **kwargs)
 
 
 handler = Handler.as_view()

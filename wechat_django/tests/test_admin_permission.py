@@ -22,7 +22,7 @@ class PermissionTestCase(WeChatTestCase):
             needed_perms = pm.get_require_permissions(self.app.name, p)
             for permission in needed_perms:
                 self.assertHasPermission(user, permission)
-        
+
         # 测试组授权
         pass
 

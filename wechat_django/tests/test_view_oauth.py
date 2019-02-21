@@ -76,7 +76,7 @@ class OAuthTestCase(WeChatTestCase):
     def test_oauth_api(self):
         """测试oauth接口请求"""
         pass
-    
+
     def test_redirect_uri(self):
         """测试redirect_uri生成"""
         host = "example.com"
@@ -168,7 +168,7 @@ class OAuthTestCase(WeChatTestCase):
     #     self.assertEqual(resp, "")
     #     self.assertEqual(handler.get_params("code"), code)
     #     self.assertEqual(handler.get_params("state"), state)
-    
+
     def test_auth(self):
         """测试授权"""
         rf = RequestFactory()
@@ -212,11 +212,11 @@ class OAuthTestCase(WeChatTestCase):
         request.COOKIES[session_key] = resp.cookies[session_key].value
         with oauth_api(openid, ban_api):
             resp = handler.dispatch(request)
-    
+
     def test_user_update(self):
         "测试更新授权数据"
         pass
-    
+
     def test_request(self):
         "测试请求"
         redirect_uri = "https://mp.weixin.qq.com/wiki"
@@ -236,7 +236,7 @@ class OAuthTestCase(WeChatTestCase):
         resp = handler.dispatch(request)
         self.assertIsInstance(resp, response.HttpResponseRedirect)
         self.assertEqual(resp.url, request.wechat.oauth_uri)
-        
+
         # 授权
         request = rf.get(url + "?code=123")
         openid = "456"
@@ -251,7 +251,7 @@ class OAuthTestCase(WeChatTestCase):
         request.COOKIES[session_key] = resp.cookies[session_key].value
         resp = handler.dispatch(request)
         self.assertEqual(resp.content, openid.encode())
-    
+
     def test_view(self):
         """测试view是否正常"""
         args = "t"
@@ -270,7 +270,7 @@ class OAuthTestCase(WeChatTestCase):
         self.assertEqual(query["state"], "state")
         self.assertEqual(parsed_url.fragment, "wechat_redirect")
         self.assertEqual(query["redirect_uri"], "http://" + host + path)
-        
+
         with oauth_api(openid):
             resp = self.client.get(path + "?code=123", follow=True,
                 HTTP_HOST=host)
@@ -281,7 +281,7 @@ class OAuthTestCase(WeChatTestCase):
         id = data["id"]
         user = WeChatUser.objects.get(id=id)
         self.assertEqual(user.openid, openid)
-    
+
     def _make_handler(self, request, appname="", **kwargs):
         view = kwargs.pop("view", lambda request, *args, **kwargs: "")
         appname = appname or self.app.name

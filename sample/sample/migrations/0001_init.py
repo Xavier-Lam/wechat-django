@@ -48,14 +48,22 @@ def create_data(apps, schema_editor):
     user.save()
 
     # 增加一个示例handler
-    handler = MessageHandler.objects.create(
-        app=app, name="debug custom reply", log=True)
-    Rule.objects.create(
-        handler=handler, type=Rule.Type.CONTAIN, content=dict(pattern="ab"))
-    Reply.objects.create(handler=handler, msg_type=Reply.MsgType.CUSTOM,
-        content=dict(program="sample.wechat.views.custom_business"))
-    Reply.objects.create(handler=handler, msg_type=Reply.MsgType.TEXT,
-        content=dict(content="hello!"))
+    MessageHandler.objects.create_handler(
+        app=app,
+        name="debug custom reply",
+        log=True,
+        rules=[Rule(
+            type=Rule.Type.CONTAIN,
+            pattern="ab"
+        )],
+        replies=[Reply(
+            type=Reply.MsgType.CUSTOM,
+            program="sample.wechat.views.custom_business"
+        ), Reply(
+            type=Reply.MsgType.TEXT,
+            content="hello!"
+        )]
+    )
 
 def delete_data(apps, schema_editor):
     try:

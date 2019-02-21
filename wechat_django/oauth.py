@@ -39,8 +39,8 @@ class wechat_auth(object):
         """
         scope = scope or WeChatSNSScope.BASE
         assert (
-            response is None or callable(response) or
-            isinstance(response, HttpResponse)
+            response is None or callable(response)
+            or isinstance(response, HttpResponse)
         ), "incorrect response"
         assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
             "incorrect scope"
@@ -54,14 +54,14 @@ class wechat_auth(object):
 
     def redirect_uri(self, request):
         return request.build_absolute_uri(
-            self._redirect_uri or
-            (request.is_ajax() and request.META.get("HTTP_REFERER")) or
-            request.build_absolute_uri()
+            self._redirect_uri
+            or (request.is_ajax() and request.META.get("HTTP_REFERER"))
+            or request.build_absolute_uri()
         )
 
     def __call__(self, view):
         return WeChatOAuthHandler(self, view)
-    
+
     def __str__(self):
         return "<wechat_auth appname: {appname} scope: {scope}>".format(
             appname=self.appname,
@@ -159,5 +159,5 @@ class WeChatOAuthHandler(object):
             scope=self.oauth_info.scope,
             state=self.oauth_info.state
         )
-    
+
     __call__ = dispatch

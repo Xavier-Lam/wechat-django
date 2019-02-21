@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
+from django.utils import timezone
 from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 
@@ -16,21 +17,27 @@ class MessageLog(m.Model):
         LOG_RESPONSE = 0x04
         LOG_RESPONSE_RAW = 0x08
 
+    class Direct(object):
+        USER2APP = False
+        APP2USER = True
+
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE)
     user = m.ForeignKey(WeChatUser, on_delete=m.CASCADE)
 
-    msg_id = m.BigIntegerField(_("msgid"))
-    type = m.CharField(_("message type"), max_length=24,
+    msg_id = m.BigIntegerField(_("msgid"), null=True)
+    type = m.CharField(
+        _("message type"), max_length=24,
         choices=enum2choices(Rule.ReceiveMsgType))
     content = JSONField()
-    # raw = m.TextField()
-    createtime = m.IntegerField(_("createtime"))
+    direct = m.BooleanField(_("direct"), default=Direct.USER2APP)
 
-    created = m.DateTimeField(_("created_at"), auto_now_add=True)
+    raw = m.TextField(null=True, blank=True, default=None)
+
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta(object):
-        index_together = (("app", "created"),)
-        ordering = ("app", "-created")
+        index_together = (("app", "created_at"),)
+        ordering = ("app", "-created_at")
 
     @classmethod
     def from_message_info(cls, message_info):
@@ -40,23 +47,50 @@ class MessageLog(m.Model):
         return cls._from_message(
             message_info.message,
             message_info.app,
-            message_info.user
+            message_info.user,
+            # message_info.raw
         )
-    
+
     @classmethod
-    def _from_message(cls, message, app, user):
-        # TODO: 是否记录原始记录
+    def _from_message(cls, message, app, user, raw=""):
         content = {
             key: getattr(message, key)
             for key in message._fields
             if key not in ("id", "source", "target", "create_time", "time")
         }
 
-        return cls.objects.create(
+        kwargs = dict(
             app=app,
             user=user,
             msg_id=message.id,
             type=message.type,
-            createtime=message.time,
-            content=content
+            content=content,
+            raw=raw,
+            direct=cls.Direct.USER2APP
         )
+        if message.time:
+            kwargs["created_at"] = timezone.datetime.fromtimestamp(
+                message.time)
+        return cls.objects.create(**kwargs)
+
+    @classmethod
+    def from_reply(cls, reply, app, user):
+        """:type reply: wechatpy.replies.BaseReply"""
+        content = {
+            key: getattr(reply, key)
+            for key in reply._fields
+            if key not in ("id", "source", "target", "create_time", "time")
+        }
+
+        kwargs = dict(
+            app=app,
+            user=user,
+            type=reply.type,
+            content=content,
+            # raw=reply.render(),
+            direct=cls.Direct.APP2USER
+        )
+        if reply.time:
+            kwargs["created_at"] = timezone.datetime.fromtimestamp(
+                reply.time)
+        return cls.objects.create(**kwargs)

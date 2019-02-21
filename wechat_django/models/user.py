@@ -159,7 +159,7 @@ class WeChatUser(m.Model):
                 yield openids[page*count: page*count+count]
             if not next_openid:
                 raise StopIteration
-    
+
     def update(self):
         """重新同步用户数据"""
         self.fetch_user(self.app, self.openid)

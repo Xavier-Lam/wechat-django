@@ -23,11 +23,11 @@ class WeChatTestCase(TestCase):
         return "http://localhost/"
 
     #region utils
-    def _create_handler(self, rules=None, name="", replies=None, app=None, 
+    def _create_handler(self, rules=None, name="", replies=None, app=None,
         **kwargs):
         """:rtype: MessageHandler"""
         from ..models import MessageHandler, Reply, Rule
-        
+
         if not rules:
             rules = [dict(type=Rule.Type.ALL)]
         if isinstance(rules, dict):
@@ -51,7 +51,7 @@ class WeChatTestCase(TestCase):
             name=name,
             rules=rules,
             replies=replies,
-            **kwargs            
+            **kwargs
         )
 
     def _msg2info(self, message, app=None, **kwargs):

@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
 import random
 
 from django.db import models as m, transaction
 from django.utils import timezone
 from django.utils.translation import ugettext as _
+from wechatpy.exceptions import WeChatClientException
 
 from ..exceptions import MessageHandleError
+from ..utils.web import get_ip
 from . import WeChatApp
 
 
@@ -45,6 +48,9 @@ class MessageHandler(m.Model):
         CLICK = "CLICK"
         VIEW = "VIEW"
 
+    class Flag(object):
+        TERMINALONEXCEPTION = 0x01 # 当回复全部时 一个回复发生异常 中断其他回复
+
     app = m.ForeignKey(
         WeChatApp, on_delete=m.CASCADE, related_name="message_handlers",
         null=False, editable=False)
@@ -59,6 +65,7 @@ class MessageHandler(m.Model):
         (ReplyStrategy.RANDOM, "random_one"),
         (ReplyStrategy.NONE, "none")
     ), default=ReplyStrategy.ALL)
+    # TODO: 改为flags
     log = m.BooleanField(_("log"), default=False)
 
     starts = m.DateTimeField(_("starts"), null=True, blank=True)
@@ -108,7 +115,7 @@ class MessageHandler(m.Model):
 
     def reply(self, message_info):
         """
-        :type message: wechatpy.messages.BaseMessage
+        :type message_info: wechat_django.models.WeChatMessageInfo
         :rtype: wechatpy.replies.BaseReply
         """
         reply = ""
@@ -119,10 +126,18 @@ class MessageHandler(m.Model):
             if not replies:
                 pass
             elif self.strategy == self.ReplyStrategy.ALL:
-                for reply in replies[1:]:
-                    # TODO: 异常处理
-                    reply.send(message_info)
-                reply = replies[0]
+                for reply in replies[:-1]:
+                    try:
+                        reply.send(message_info)
+                    except Exception as e:
+                        # 发送异常 继续处理其他程序
+                        log = self.handlerlog(message_info.request)
+                        msg = "an unexcepted error occurred when send msg"
+                        level = logging.WARNING\
+                            if isinstance(e, WeChatClientException)\
+                            else logging.ERROR
+                        log(level, msg)
+                reply = replies[-1]
             elif self.strategy == self.ReplyStrategy.RANDOM:
                 reply = random.choice(replies)
             else:
@@ -150,7 +165,7 @@ class MessageHandler(m.Model):
                     name="微信配置自动回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_autoreply_open")),
-                    created=timezone.datetime.fromtimestamp(0),
+                    created_at=timezone.datetime.fromtimestamp(0),
                     rules=[Rule(type=Rule.Type.ALL)],
                     replies=[
                         Reply.from_mp(
@@ -166,7 +181,7 @@ class MessageHandler(m.Model):
                     name="微信配置关注回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_add_friend_reply_open")),
-                    created=timezone.datetime.fromtimestamp(0),
+                    created_at=timezone.datetime.fromtimestamp(0),
                     rules=[Rule(
                         type=Rule.Type.EVENT,
                         event=cls.EventType.SUBSCRIBE
@@ -177,8 +192,8 @@ class MessageHandler(m.Model):
                 )
                 handlers.append(handler)
 
-            if (resp.get("keyword_autoreply_info")
-                and resp["keyword_autoreply_info"].get("list")):
+            if (resp.get("keyword_autoreply_info") and
+                resp["keyword_autoreply_info"].get("list")):
                 handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
                 handlers.extend(
                     MessageHandler.from_mp(handler, app)
@@ -188,11 +203,12 @@ class MessageHandler(m.Model):
 
     @classmethod
     def from_mp(cls, handler, app):
+        from . import Reply, Rule
         return cls.objects.create_handler(
             app=app,
             name=handler["rule_name"],
             src=MessageHandler.Source.MP,
-            created=timezone.datetime.fromtimestamp(handler["create_time"]),
+            created_at=timezone.datetime.fromtimestamp(handler["create_time"]),
             strategy=handler["reply_mode"],
             rules=[
                 Rule.from_mp(rule)
@@ -222,5 +238,18 @@ class MessageHandler(m.Model):
             replies=[Reply.from_menu(data, app)]
         )
 
+    @classmethod
+    def handlerlog(cls, request):
+        logger = logging.getLogger(
+            "wechat.handler.{0}".format(request.wechat.appname))
+        args = dict(
+            params=request.GET,
+            body=request.body,
+            ip=get_ip(request)
+        )
+        s = "%s - {0}".format(args)
+        return lambda lvl, msg, **kwargs: logger.log(lvl, s % msg, **kwargs)
+
+
     def __str__(self):
-        return self.name
+        return "<MessageHandler: {0}>".format(self.name)

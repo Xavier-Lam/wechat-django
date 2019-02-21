@@ -26,7 +26,7 @@ class MenuTestCase(WeChatTestCase):
         with mock.patch.object(Material, "as_permenant"),\
             mock.patch.object(Article, "sync"),\
             mock.patch.object(WeChatMenu, "get_menu_info"):
-            
+
             Material.as_permenant.return_value = permenant_media
             Article.sync.return_value = None
             WeChatMenu.get_menu_info.return_value = data

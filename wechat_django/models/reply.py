@@ -28,12 +28,12 @@ class Reply(m.Model):
     type = m.CharField(
         _("type"), db_column="type", max_length=16,
         choices=enum2choices(MsgType))
-    _content = JSONField(db_column="content")
+    _content = JSONField(db_column="content", default=dict)
 
     @property
     def app(self):
         return self.handler.app
-    
+
     @property
     def content(self):
         return self._content
@@ -77,7 +77,7 @@ class Reply(m.Model):
         :type message_info: wechat_django.models.WeChatMessageInfo
         """
         resp = requests.post(
-            self.content["url"], message_info.raw, 
+            self.content["url"], message_info.raw,
             params=message_info.request.GET, timeout=4.5)
         resp.raise_for_status()
         return replies.deserialize_reply(resp.content)
@@ -96,8 +96,8 @@ class Reply(m.Model):
             if not hasattr(func, "message_handler"):
                 e = "handler must be decorated by wechat_django.decorators.message_handler"
                 raise MessageHandleError(e)
-            elif (hasattr(func.message_handler, "__contains__") and
-                appname not in func.message_handler):
+            elif (hasattr(func.message_handler, "__contains__")
+                and appname not in func.message_handler):
                 e = "this handler cannot assigned to {0}".format(appname)
                 raise MessageHandleError(e)
             reply = func(message_info)
@@ -115,7 +115,8 @@ class Reply(m.Model):
         """
         if self.type == self.MsgType.NEWS:
             klass = replies.ArticlesReply
-            media = Material.get_by_media(self.app, self.content["media_id"])
+            media = Material.objects.get_by_media(
+                self.app, self.content["media_id"])
             # 将media_id转为content
             data = dict(articles=media.articles_json)
         elif self.type == self.MsgType.MUSIC:
@@ -163,7 +164,7 @@ class Reply(m.Model):
         elif isinstance(reply, replies.TextReply):
             kwargs["content"] = reply.content
         else:
-            raise ValueError("unknown reply type")
+            raise MessageHandleError("unknown reply type")
         type = type or reply.type
         funcname = "send_" + type
         return funcname, kwargs

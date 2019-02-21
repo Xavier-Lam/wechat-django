@@ -65,7 +65,15 @@ class ChangeList(_ChangeList):
         return prefix + query
 
 
-class WeChatAdmin(admin.ModelAdmin):
+class WeChatAdminMetaClass(forms.MediaDefiningClass):
+    def __new__(cls, name, bases, attrs):
+        self = super(WeChatAdminMetaClass, cls).__new__(
+            cls, name, bases, attrs)
+        if name != "WeChatAdmin":
+            registered_admins.append(self)
+        return self
+
+class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
     def changelist_view(self, request, extra_context=None):
         # 允许没有选中的actions
         post = request.POST.copy()
@@ -77,16 +85,16 @@ class WeChatAdmin(admin.ModelAdmin):
 
     def history_view(self, request, object_id, extra_context=None):
         extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).history_view(request, object_id,
-            extra_context)
+        return super(WeChatAdmin, self).history_view(
+            request, object_id, extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):
         extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).delete_view(request, object_id,
-            extra_context)
+        return super(WeChatAdmin, self).delete_view(
+            request, object_id, extra_context)
 
-    def changeform_view(self, request, object_id=None, form_url="",
-        extra_context=None):
+    def changeform_view(
+        self, request, object_id=None, form_url="", extra_context=None):
         if object_id and not self.get_app(request, True):
             # 对于没有app_id的请求,重定向至有app_id的地址
             obj = self.model.objects.get(id=object_id)
@@ -95,8 +103,8 @@ class WeChatAdmin(admin.ModelAdmin):
                 _changelist_filters="app_id=" + str(app_id)
             )), permanent=True)
         form_url = form_url or "?{0}".format(request.GET.urlencode())
-        return super(WeChatAdmin, self).changeform_view(request, object_id,
-            form_url, extra_context)
+        return super(WeChatAdmin, self).changeform_view(
+            request, object_id, form_url, extra_context)
 
     def render_change_form(self, request, context, *args, **kwargs):
         context = self._update_context(request, context)
@@ -326,13 +334,13 @@ def register_admins(site):
     """将admin注册到site中"""
     from .wechatapp import WeChatAppAdmin
     site.register(WeChatApp, WeChatAppAdmin)
-    for model, admin in registered_admins:
-        site.register(model, admin)
+    for admin in registered_admins:
+        site.register(admin.model, admin)
 
 
 def register_admin(model):
     """注册admin 为后续注册到site中做准备"""
     def decorator(cls):
-        registered_admins.append((model, cls))
+        cls.model = model
         return cls
     return decorator
