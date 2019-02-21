@@ -18,7 +18,6 @@ from . import settings
 from .decorators import wechat_route
 from .exceptions import BadMessageRequest, MessageHandleError
 from .models import MessageHandler, MessageLog, WeChatMessageInfo
-from .utils.web import get_ip
 
 __all__ = ("handler", )
 
@@ -26,7 +25,7 @@ __all__ = ("handler", )
 class Handler(View):
     def dispatch(self, request):
         """
-        :type request: wechat_django.models.WeChatHttpRequest
+        :type request: wechat_django.models.request.WeChatMessageRequest
         """
         log = MessageHandler.handlerlog(request)
         try:
@@ -114,15 +113,11 @@ class Handler(View):
 
         handler = handlers[0]
         reply = handler.reply(message_info)
-        self._log_message(handler.log, message_info, reply)
+        if handler.log:
+            MessageLog.from_message_info(message_info)
         if not reply or isinstance(reply, replies.EmptyReply):
             return None
         return reply
-
-    def _log_message(self, flags, message_info, reply):
-        """记录消息日志"""
-        if flags:
-            MessageLog.from_message_info(message_info)
 
 
 handler = Handler.as_view()

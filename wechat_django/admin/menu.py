@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib import admin, messages
-from django.db import models as m
+from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _

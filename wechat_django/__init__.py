@@ -15,4 +15,4 @@ default_app_config = 'wechat_django.apps.WeChatConfig'
 url_patterns = []
 urls = (url_patterns, "wechat_django", "wechat_django")
 
-from . import _patch
+from . import _patch # NOQA

@@ -16,6 +16,7 @@ from ..patches import WeChatOAuth
 from .bases import WeChatTestCase
 from .interceptors import common_interceptor
 
+
 def oauth_api(openid, callback=None):
     kwargs = dict(
         netloc=r"(.*\.)?api\.weixin\.qq\.com$",
@@ -40,6 +41,7 @@ def oauth_api(openid, callback=None):
 
     return common_interceptor(mock, **kwargs)
 
+
 def snsinfo_api(openid, callback=None, **data):
     kwargs = dict(
         netloc=r"(.*\.)?api\.weixin\.qq\.com$",
@@ -58,6 +60,7 @@ def snsinfo_api(openid, callback=None, **data):
 
     return common_interceptor(mock, **kwargs)
 
+
 @wechat_auth("test", state="state")
 def test_oauth_view(request, *args):
     user = request.wechat.user
@@ -70,6 +73,7 @@ def test_oauth_view(request, *args):
 urlpatterns = [
     url(r"^test/(.+)$", test_oauth_view)
 ]
+
 
 @override_settings(ROOT_URLCONF=__name__)
 class OAuthTestCase(WeChatTestCase):

@@ -22,8 +22,6 @@ from .interceptors import (common_interceptor, wechatapi,
 class ReplyTestCase(WeChatTestCase):
     def test_reply(self):
         """测试一般回复"""
-        def _create_reply(type, **kwargs):
-            return Reply(type=type, **kwargs)
         sender = "openid"
         message = messages.TextMessage(dict(
             FromUserName=sender,
@@ -107,10 +105,10 @@ class ReplyTestCase(WeChatTestCase):
             type=Reply.MsgType.TEXT,
             content=reply2
         )]
-        handler_all = self._create_handler(replies=replies,
-            strategy=MessageHandler.ReplyStrategy.ALL)
-        handler_rand = self._create_handler(replies=replies,
-            strategy=MessageHandler.ReplyStrategy.RANDOM)
+        handler_all = self._create_handler(
+            replies=replies, strategy=MessageHandler.ReplyStrategy.ALL)
+        handler_rand = self._create_handler(
+            replies=replies, strategy=MessageHandler.ReplyStrategy.RANDOM)
 
         # 随机回复
         api = "/cgi-bin/message/custom/send"

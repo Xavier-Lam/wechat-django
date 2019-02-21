@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin
-from django.db import models as m
-from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from ..models import MessageLog, WeChatApp

@@ -7,6 +7,7 @@ from wechatpy.crypto import WeChatCrypto
 
 from . import WeChatApp, WeChatUser
 
+
 class WeChatHttpRequest(HttpRequest):
     @property
     def wehcat(self):

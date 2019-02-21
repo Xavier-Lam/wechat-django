@@ -250,6 +250,5 @@ class MessageHandler(m.Model):
         s = "%s - {0}".format(args)
         return lambda lvl, msg, **kwargs: logger.log(lvl, s % msg, **kwargs)
 
-
     def __str__(self):
         return "<MessageHandler: {0}>".format(self.name)

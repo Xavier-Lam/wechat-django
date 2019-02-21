@@ -26,7 +26,7 @@ def linkify(field_name):
         link_url += "?app_id={0}".format(obj.app.id)
         return '<a href="{0}">{1}</a>'.format(link_url, linked_obj)
 
-    _linkify.short_description = field_name  # TODO: change to _(name)
+    _linkify.short_description = _(field_name)
     _linkify.allow_tags = True
     _linkify.admin_order_field = field_name
     return _linkify

@@ -5,6 +5,7 @@ import django
 from django.conf import settings
 from django.test.utils import get_runner
 
+
 def main():
     os.environ["DJANGO_SETTINGS_MODULE"] = "wechat_django.tests.settings"
     django.setup()

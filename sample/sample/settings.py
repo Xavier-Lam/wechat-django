@@ -142,6 +142,10 @@ LOGGING = {
         "wechat.handler": {
             "level": "DEBUG",
             "handlers": ["console"]
+        },
+        "wechat.oauth": {
+            "level": "WARNING",
+            "handlers": ["console"]
         }
     }
 }

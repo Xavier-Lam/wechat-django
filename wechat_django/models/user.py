@@ -37,14 +37,15 @@ class WeChatUser(m.Model):
         ADD_SCENE_PAID = "ADD_SCENE_PAID"  # 支付后关注
         ADD_SCENE_OTHERS = "ADD_SCENE_OTHERS"  # 其他
 
-    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
-        related_name="users", null=False, editable=False)
+    app = m.ForeignKey(
+        WeChatApp, related_name="users", null=False, editable=False,
+        on_delete=m.CASCADE)
     openid = m.CharField(_("openid"), max_length=36, null=False)
     unionid = m.CharField(_("unionid"), max_length=36, null=True)
 
     nickname = m.CharField(_("nickname"), max_length=24, null=True)
-    sex = m.SmallIntegerField(_("gender"), choices=enum2choices(Gender),
-        null=True)
+    sex = m.SmallIntegerField(
+        _("gender"), choices=enum2choices(Gender), null=True)
     headimgurl = m.CharField(_("avatar"), max_length=256, null=True)
     city = m.CharField(_("city"), max_length=24, null=True)
     province = m.CharField(_("province"), max_length=24, null=True)
@@ -53,25 +54,26 @@ class WeChatUser(m.Model):
 
     subscribe = m.NullBooleanField(_("is subscribed"), null=True)
     subscribe_time = m.IntegerField(_("subscribe time"), null=True)
-    subscribe_scene = m.CharField(_("subscribe scene"), max_length=32,
-        null=True, choices=enum2choices(SubscribeScene))
+    subscribe_scene = m.CharField(
+        _("subscribe scene"), max_length=32, null=True,
+        choices=enum2choices(SubscribeScene))
     qr_scene = m.IntegerField(_("qr scene"), null=True)
     qr_scene_str = m.CharField(_("qr_scene_str"), max_length=64, null=True)
 
-    remark = m.CharField(_("remark"), max_length=30,
-        blank=True, null=True)
+    remark = m.CharField(
+        _("remark"), max_length=30, blank=True, null=True)
     comment = m.TextField(_("remark"), blank=True, null=True)
     groupid = m.IntegerField(_("group id"), null=True)
 
-    created = m.DateTimeField(_("created"), auto_now_add=True)
-    updated = m.DateTimeField(_("updated"), auto_now=True)
+    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
-    synced = m.DateTimeField(_("synced"), null=True, default=None)
+    synced_at = m.DateTimeField(_("synchronized at"), null=True, default=None)
 
     objects = WeChatUserManager()
 
     class Meta(object):
-        ordering = ("app", "-created")
+        ordering = ("app", "-created_at")
         unique_together = (("app", "openid"), ("app", "unionid"))
 
     def avatar(self, size=132):
@@ -115,7 +117,7 @@ class WeChatUser(m.Model):
 
     @classmethod
     def fetch_users(cls, app, openids):
-        fields = list(map(lambda o: o.name, cls._meta.fields))
+        fields = set(map(lambda o: o.name, cls._meta.fields))
         update_dicts = map(
             lambda o: {k: v for k, v in o.items() if k in fields},
             app.client.user.get_batch(openids)
@@ -123,7 +125,7 @@ class WeChatUser(m.Model):
         rv = []
         with transaction.atomic():
             for o in update_dicts:
-                o["synced"] = tz.datetime.now()
+                o["synced_at"] = tz.datetime.now()
                 user = cls.objects.update_or_create(
                     defaults=o,
                     app=app,
@@ -140,9 +142,9 @@ class WeChatUser(m.Model):
             k: v for k, v in user_dict.items()
             if k in map(lambda o: o.name, cls._meta.fields)
         }
-        updates["synced"] = tz.datetime.now()
-        return cls.objects.update_or_create(defaults=updates,
-            app=app, openid=updates["openid"])
+        updates["synced_at"] = tz.datetime.now()
+        return cls.objects.update_or_create(
+            defaults=updates, app=app, openid=updates["openid"])[0]
 
     @classmethod
     def _iter_followers_list(cls, app, next_openid=None):

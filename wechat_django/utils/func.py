@@ -11,12 +11,14 @@ class DelayPropertyDescriptor(object):
             self._value = self.delayed.func(instance)
         return self._value
 
+
 class DelayProperty(object):
     def __init__(self, func):
         self.func = func
 
     def add2cls(self, cls, name):
         setattr(cls, name, DelayPropertyDescriptor(self))
+
 
 def DelayProperty(self, func):
     def getter(self):

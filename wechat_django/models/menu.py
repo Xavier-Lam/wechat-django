@@ -39,8 +39,8 @@ class Menu(m.Model):
     name = m.CharField(_("name"), max_length=16)
     menuid = m.IntegerField(_("menuid"), null=True, blank=True)
     parent = m.ForeignKey(
-        "Menu", on_delete=m.CASCADE, null=True, blank=True,
-        related_name="sub_button")
+        "Menu", related_name="sub_button", null=True, blank=True,
+        on_delete=m.CASCADE)
     type = m.CharField(
         _("type"), max_length=20, choices=enum2choices(Event),
         null=True, blank=True)
@@ -116,8 +116,8 @@ class Menu(m.Model):
                 cls.json2menu(sub, app) for sub in
                 (data.get("sub_button") or dict(list=[])).get("list")
             ])
-        elif menu.type in (cls.Event.VIEW, cls.Event.CLICK,
-            cls.Event.MINIPROGRAM):
+        elif menu.type in (
+            cls.Event.VIEW, cls.Event.CLICK, cls.Event.MINIPROGRAM):
             menu.content = data
         else:
             # 要当作回复处理了
@@ -143,4 +143,4 @@ class Menu(m.Model):
         return rv
 
     def __str__(self):
-        return self.name
+        return "<Menu: {0}>".format(self.name)

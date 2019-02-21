@@ -196,7 +196,7 @@ class Reply(m.Model):
                 content=data["news_info"]["list"]
             )
         else:
-            raise ValueError("unknown reply type %s"%type)
+            raise ValueError("unknown reply type {0}".format(type))
         return cls(**kwargs)
 
     @classmethod
@@ -226,7 +226,7 @@ class Reply(m.Model):
                 content=data["news_info"]["list"]
             )
         else:
-            raise ValueError("unknown menu reply type %s"%type)
+            raise ValueError("unknown menu reply type {0}".format(type))
         return cls(**kwargs)
 
     def __str__(self):

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django import forms
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import WeChatApp, WeChatUser
-from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
+from ..models import WeChatUser
+from .bases import register_admin, WeChatAdmin
 
 
 @register_admin(WeChatUser)
@@ -16,14 +15,16 @@ class WeChatUserAdmin(WeChatAdmin):
     __category__ = "user"
 
     actions = ("sync", "sync_all", "update")
-    list_display = ("openid", "nickname", "avatar", "subscribe", "remark",  # "groupid",
-        "created")
+    list_display = (
+        "openid", "nickname", "avatar", "subscribe", "remark",  # "groupid",
+        "created_at")
     search_fields = ("=openid", "=unionid", "nickname", "remark")
 
-    fields = ("avatar", "nickname", "openid", "unionid", "sex",
-        "city", "province", "country", "language", "subscribe",
-        "subscribetime", "subscribe_scene", "qr_scene", "qr_scene_str",
-        "remark", "comment", "groupid", "created", "updated")
+    fields = (
+        "avatar", "nickname", "openid", "unionid", "sex", "city", "province",
+        "country", "language", "subscribe", "subscribetime",
+        "subscribe_scene", "qr_scene", "qr_scene_str", "remark", "comment",
+        "groupid", "created_at", "updated_at")
 
     def avatar(self, obj):
         return obj.headimgurl and '<img src="{0}" />'.format(obj.avatar(46))

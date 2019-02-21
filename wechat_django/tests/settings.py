@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
 import os
-from django.conf.urls import url
-import wechat_django
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOWED_HOSTS = ["example.com"]
@@ -28,8 +27,6 @@ DATABASES = {
     }
 }
 
-urlpatterns = [
-    url(r"^wechat/", wechat_django.urls)
-]
+ROOT_URLCONF = "wechat_django.tests.urls"
 
-ROOT_URLCONF = "wechat_django.tests.settings"
+logging.disable(logging.CRITICAL)

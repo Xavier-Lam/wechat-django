@@ -11,6 +11,8 @@
   > 输入appid与appsecret 留空将生成一个默认appid及secret
 * python manage.py runserver
 
+通过 *http://localhost:8000/admin* 访问站点
+
 超管账号*admin* 密码*123456*
 
 微信管理员账号*wechat_admin* 密码*123546*

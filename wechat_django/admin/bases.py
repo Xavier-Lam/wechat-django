@@ -73,6 +73,7 @@ class WeChatAdminMetaClass(forms.MediaDefiningClass):
             registered_admins.append(self)
         return self
 
+
 class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
     def changelist_view(self, request, extra_context=None):
         # 允许没有选中的actions
@@ -260,7 +261,11 @@ def patch_admin(admin):
 
         if not label:
             # 首页 追加app列表
-            rv[fake_app_label] = _build_wechat_app_dict(self, request)
+            app_dict = _build_wechat_app_dict(self, request)
+            if app_dict["has_module_perms"]:
+                rv[fake_app_label] = app_dict
+        elif not rv:
+            pass
         elif label == app_label:
             app_id = request.resolver_match.kwargs.get("app_id")
             if app_id:
@@ -275,7 +280,6 @@ def patch_admin(admin):
                             ))
                         ))
                         model['add_url'] += "?" + query
-                        # TODO: 修改add_url
             else:
                 # 原始菜单
                 pass
@@ -287,7 +291,9 @@ def patch_admin(admin):
             apps = WeChatApp.objects.all()
         else:
             perms = get_user_permissions(request.user)
-            allowed_apps = perms.keys()
+            allowed_apps = {
+                k for k, ps in perms.items() if ps != {"manage"}
+            }
             apps = WeChatApp.objects.filter(name__in=allowed_apps)
         app_perms = [
             dict(

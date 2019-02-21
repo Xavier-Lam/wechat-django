@@ -11,6 +11,7 @@ from django.db import migrations
 from wechat_django.models import MessageHandler, Reply, Rule, WeChatApp
 from wechat_django.models.permission import WECHATPERM_PREFIX
 
+
 def create_data(apps, schema_editor):
     for app_config in apps.get_app_configs():
         app_config.models_module = True
@@ -65,11 +66,17 @@ def create_data(apps, schema_editor):
         )]
     )
 
+
 def delete_data(apps, schema_editor):
     try:
-        WeChatApp.get_by_name(settings.SAMPLEAPPNAME).delete()
+        WeChatApp.objects.get_by_name(settings.SAMPLEAPPNAME).delete()
     except WeChatApp.DoesNotExist:
         pass
+    try:
+        User.objects.get(username="wechat_admin").delete()
+    except:
+        pass
+
 
 class Migration(migrations.Migration):
 

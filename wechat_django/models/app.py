@@ -11,7 +11,7 @@ from jsonfield import JSONField
 from six import text_type
 
 from .. import settings
-from .permission import get_permission_desc, list_permissions
+from .permission import get_perm_desc, list_perm_names
 
 
 class WeChatAppManager(m.Manager):
@@ -33,11 +33,12 @@ class WeChatApp(m.Model):
         SUBSCRIBE = 2
         MINIPROGRAM = 3
 
-    title = m.CharField(_("title"), max_length=16, null=False,
+    title = m.CharField(
+        _("title"), max_length=16, null=False,
         help_text=_("公众号名称,用于后台辨识公众号"))
-    name = m.CharField(_("name"), max_length=16,
-        help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"),
-        blank=False, null=False, unique=True)
+    name = m.CharField(
+        _("name"), max_length=16, blank=False, null=False, unique=True,
+        help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"))
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
@@ -90,12 +91,6 @@ class WeChatApp(m.Model):
             # API BASE URL
             # client.ACCESSTOKEN_URL = self.configurations.get("ACCESSTOKEN_URL")
 
-            # TODO: 移除
-            # self._client._http.proxies = dict(
-            #     http="localhost:12580",
-            #     https="localhost:12580"
-            # )
-            # self._client._http.verify = False
         return self._client
 
     @property
@@ -129,11 +124,11 @@ def create_app_permissions(sender, instance, created, *args, **kwargs):
         content_type = ContentType.objects.get_for_model(WeChatApp)
         Permission.objects.bulk_create(
             Permission(
-                codename=perm,
-                name=get_permission_desc(perm, instance),
+                codename=perm_name,
+                name=get_perm_desc(perm_name, instance),
                 content_type=content_type
             )
-            for perm in list_permissions(instance)
+            for perm_name in list_perm_names(instance)
         )
 
 
@@ -142,5 +137,5 @@ def delete_app_permissions(sender, instance, *args, **kwargs):
     content_type = ContentType.objects.get_for_model(WeChatApp)
     Permission.objects.filter(
         content_type=content_type,
-        codename__in=[perm for perm in list_permissions(instance)]
+        codename__in=list_perm_names(instance)
     ).delete()

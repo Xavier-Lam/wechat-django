@@ -17,7 +17,7 @@ def oauth(request):
 @message_handler
 def custom_business(message):
     """
-    :type message: wechat_django.models.WeChatMessage
+    :type message: wechat_django.models.WeChatMessageInfo
     """
     user = message.user
     msg = message.message

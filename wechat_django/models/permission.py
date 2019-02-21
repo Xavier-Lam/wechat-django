@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+
+"""权限模块
+约定: 
+对于manage,article 这种每个公众号拥有的权限,变量名用permission
+对于{prefix}{appname}|{perm} 这种permission表中的codename,变量名用perm_name
+对于可能携带applabel的codename,变量名亦用perm_name
+对于Permission对象,变量名用perm
+"""
+
 from __future__ import unicode_literals
 
 from collections import defaultdict
@@ -49,105 +58,117 @@ permission_required = {
 }
 
 
-def list_permissions(app):
+def list_perm_names(app):
     """列举该app下的所有权限"""
     rv = set()
-    rv.add("{prefix}{appname}".format(
-        prefix=WECHATPERM_PREFIX,
-        appname=app.name
-    ))
+    rv.add(get_perm_name(app))
     rv.update(
-        "{prefix}{appname}|{perm}".format(
-            prefix=WECHATPERM_PREFIX,
-            appname=app.name,
-            perm=perm
-        )
-        for perm in permissions
+        get_perm_name(app, permission)
+        for permission in permissions
     )
     return rv
+
+
+def get_perm_name(app, permission=""):
+    if not permission:
+        return "{prefix}{appname}".format(
+            prefix=WECHATPERM_PREFIX,
+            appname=app.name
+        )
+    return "{prefix}{appname}|{permission}".format(
+        prefix=WECHATPERM_PREFIX,
+        appname=app.name,
+        permission=permission
+    )
+
+
+def get_perm_desc(perm_name, app):
+    appname, permission = match_permission(perm_name)
+    desc = permissions[permission] if permission\
+        else "can full control {appname}"
+    return "{0} | {1}".format(appname, desc).format(appname=app.title)
+
+
+def get_require_perm_names(appname, permission=None):
+    """获取依赖的django权限"""
+    rv = set()
+    perms = (permission_required.get(permission, []) if permission
+        else permission_required.keys())
+    for perm in perms:
+        if perm.startswith("wechat_django."):
+            rv.add(perm)
+        else:
+            rv.update(get_require_perm_names(appname, perm))
+    return rv
+
+
+def get_perm_model(perm_name):
+    """由permission获取permission model"""
+    try:
+        applabel, codename = perm_name.split(".")
+    except:
+        applabel = "wechat_django"
+        codename = perm_name
+    return Permission.objects.get(
+        codename=codename,
+        content_type__app_label=applabel
+    )
+
+
+def get_perms_by_codenames(codenames):
+    return (Permission.objects
+        .filter(content_type__app_label="wechat_django")
+        .filter(codename__in=codenames)
+        .all())
 
 
 def get_user_permissions(user, app=None):
     """列举用户所有的微信权限
     :type user: django.contrib.auth.models.User
     """
-    perms = user.get_all_permissions()
+    perm_names = user.get_all_permissions()
     rv = defaultdict(set)
-    for permission in perms:
-        appname, perm = match_perm(permission)
+    for perm_name in perm_names:
+        appname, permission = match_permission(perm_name)
         if appname:
-            if perm:
-                rv[appname].add(perm)
+            if permission:
+                rv[appname].add(permission)
             else:
                 # 所有权限
                 rv[appname] = set(permissions.keys())
     return rv[app.name] if app else dict(rv.items())
 
 
-def get_permission_desc(permission, app):
-    appname, perm = match_perm(permission)
-    desc = permissions[perm] if perm else "can full control {appname}"
-    return "{0} | {1}".format(appname, desc).format(appname=app.title)
-
-
-@receiver(m.signals.m2m_changed, sender=Group.permissions.through)
-@receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
-def before_permission_change(sender, instance, action, *args, **kwargs):
-    if action == "pre_add":
-        if isinstance(instance, User):
-            permissions = instance.user_permissions
-        else:
-            permissions = instance.permissions
-        # 检查相关权限
-        needed_perms = set()
-        perms = Permission.objects.filter(id__in=kwargs["pk_set"]).all()
-        for permission in perms:
-            appname, perm = match_perm(permission.codename)
-            if appname:
-                needed_perms.update(get_require_permissions(appname, perm))
-        if needed_perms:
-            codenames = list(map(lambda o: o.split(".")[1], needed_perms))
-            permissions.add(*Permission.objects
-                .filter(content_type__app_label="wechat_django")
-                .filter(codename__in=codenames)
-                .all())
-
-
-def get_require_permissions(appname, perm=None):
-    """获取依赖的django权限"""
-    rv = set()
-    perms = (permission_required.get(perm, []) if perm else
-        permission_required.keys())
-    for perm in perms:
-        if perm.startswith("wechat_django."):
-            rv.add(perm)
-        else:
-            rv.update(get_require_permissions(appname, perm))
-    return rv
-
-
-def match_perm(perm):
+def match_permission(perm_name):
     """从permission的codename中拿到appname与权限名"""
-    str4format = r"(?:{label}[.])?{prefix}(?P<appname>.+?)(?:|(?P<perm>.+))?$"
+    str4format = r"(?:{label}[.])?{prefix}(?P<appname>.+?)(?:|(?P<permission>.+))?$"
     pattern = str4format.format(
         label="wechat_django",
         prefix=WECHATPERM_PREFIX
     ).replace("|", "[|]")
-    match = re.match(pattern, perm)
+    match = re.match(pattern, perm_name)
     if match:
-        return match.group("appname"), match.group("perm")
+        return match.group("appname"), match.group("permission")
     else:
         return None, None
 
 
-def get_permission_model(permission):
-    """由permission获取permission model"""
-    try:
-        applabel, codename = permission.split(".")
-    except:
-        applabel = "wechat_django"
-        codename = permission
-    return Permission.objects.get(
-        codename=codename,
-        content_type__app_label=applabel
-    )
+@receiver(m.signals.m2m_changed, sender=Group.permissions.through)
+@receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
+def before_perm_change(sender, instance, action, *args, **kwargs):
+    if action == "pre_add":
+        if isinstance(instance, User):
+            perms_set = instance.user_permissions
+        else:
+            perms_set = instance.permissions
+        # 检查相关权限
+        needed_perm_names = set()
+        perms = Permission.objects.filter(id__in=kwargs["pk_set"]).all()
+        for perm in perms:
+            appname, permission = match_permission(perm.codename)
+            if appname:
+                needed_perm_names.update(
+                    get_require_perm_names(appname, permission))
+        if needed_perm_names:
+            codenames = list(map(lambda o: o.split(".")[1], needed_perm_names))
+            perms_set.add(*get_perms_by_codenames(codenames))

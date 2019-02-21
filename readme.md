@@ -6,12 +6,14 @@
 
 本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
 
-目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试
+目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试.
+
+0.1.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
 
 [TOC]
 
 ## 功能
-* 最基本的公众号管理
+* 公众号管理
 * 同步用户及用户查看,备注
 * 菜单同步,查看及发布
 * 同步公众号自动回复,管理自动回复,转发和自定义自动回复业务,接收消息日志
@@ -38,7 +40,7 @@
 
 ### 更新
 1. 运行**pip install -U wechat-django**
-2. 运行**manage.py migrate wechat_django** 来更新数据库结构
+2. 运行**python manage.py migrate wechat_django** 来更新数据库结构
 
 ### 配置
 一般而言,默认配置足以满足需求
@@ -72,6 +74,7 @@
 
     @wechat_auth("your_app_name")
     def your_view(request, *args, **kwargs):
+        """:type request: wechat_django.models.request.WeChatOAuthRequest"""
         user = request.wechat.user
 
 对于默认重定向行为不满意的,可以自定义response,具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
@@ -92,7 +95,7 @@
     @message_handler
     def custom_business(message):
         """
-        :type message: wechat_django.models.WeChatMessage
+        :type message: wechat_django.models.WeChatMessageInfo
         """
         user = message.user
         msg = message.message
@@ -109,13 +112,12 @@
 可参考本项目sample文件夹
 
 ## TODOS:
-* oauth, menu, permission单元测试
-* 重构oauth
-* 整理字段名
+* permission单元测试
 * 整理结构
 * 本地化
 * clear todos
 * 单元测试
+* app层面的message log和reply log
 * 后台表单验证
 * 后台确认页
 

@@ -12,6 +12,7 @@ from .decorators import wechat_route
 
 __all__ = ("material_proxy", )
 
+
 @wechat_route(r"materials/(?P<media_id>[_a-zA-Z\d]+)$")
 def material_proxy(request, media_id):
     """代理下载微信的素材"""

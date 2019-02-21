@@ -8,8 +8,8 @@ from . import Material
 
 
 class Article(m.Model):
-    material = m.ForeignKey(Material, on_delete=m.CASCADE,
-        related_name="articles")
+    material = m.ForeignKey(
+        Material, related_name="articles", on_delete=m.CASCADE)
 
     title = m.CharField(_("title"), max_length=64)
     thumb_media_id = m.CharField(_("thumb_media_id"), max_length=64)
@@ -83,4 +83,4 @@ class Article(m.Model):
         )
 
     def __str__(self):
-        return self.title
+        return "<Article: {0}>".format(self.title)
