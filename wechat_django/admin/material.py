@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
@@ -24,6 +25,7 @@ class MaterialAdmin(WeChatAdmin):
     fields = ("type", "media_id", "name", "open", "comment")
     readonly_fields = ("type", "media_id", "name", "open", "media_id")
 
+    @mark_safe
     def preview(self, obj):
         if obj.type == Material.Type.IMAGE:
             return u'<img src="%s" />'%obj.url
@@ -34,6 +36,7 @@ class MaterialAdmin(WeChatAdmin):
         return timezone.datetime.fromtimestamp(obj.update_time)
     updatetime.short_description = _("update time")
 
+    @mark_safe
     def open(self, obj):
         blank = True
         request = self.request

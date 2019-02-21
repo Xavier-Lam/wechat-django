@@ -69,6 +69,10 @@ class WeChatApp(m.Model):
 
     objects = WeChatAppManager()
 
+    class Meta(object):
+        verbose_name = _("WeChat app")
+        verbose_name_plural = _("WeChat apps")
+
     @property
     def client(self):
         """:rtype: wechatpy.WeChatClient"""

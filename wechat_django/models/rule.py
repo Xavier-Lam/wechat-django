@@ -42,6 +42,9 @@ class Rule(m.Model):
         return self._content
 
     class Meta:
+        verbose_name = _("rule")
+        verbose_name_plural = _("rules")
+
         ordering = ("-weight", )
 
     def __init__(self, *args, **kwargs):

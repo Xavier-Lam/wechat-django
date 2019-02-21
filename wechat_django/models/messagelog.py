@@ -36,6 +36,9 @@ class MessageLog(m.Model):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta(object):
+        verbose_name = _("message log")
+        verbose_name_plural = _("message logs")
+
         index_together = (("app", "created_at"),)
         ordering = ("app", "-created_at")
 

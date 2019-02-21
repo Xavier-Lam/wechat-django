@@ -54,7 +54,7 @@ class ReplyInline(admin.StackedInline):
     class ReplyForm(DynamicChoiceForm):
         origin_fields = ("type",)
 
-        program = forms.CharField(label=_("program"), required=False)
+        program = forms.CharField(label=_("custom program"), required=False)
         url = forms.URLField(label=_("url"), required=False)
         content = forms.CharField(label=_("content"), widget=forms.Textarea,
             required=False)

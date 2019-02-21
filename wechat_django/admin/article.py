@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
@@ -25,6 +26,7 @@ class ArticleAdmin(WeChatAdmin):
         "link", "show_cover_pic", "_content", "content_source_url", "source_url")
     readonly_fields = fields
 
+    @mark_safe
     def link(self, obj):
         return '<a href="{link}">{title}</a>'.format(
             link=obj.url,
@@ -33,6 +35,7 @@ class ArticleAdmin(WeChatAdmin):
     link.short_description = _("link")
     link.allow_tags = True
 
+    @mark_safe
     def source_url(self, obj):
         return obj.content_source_url and '<a href="{link}">{title}</a>'.format(
             link=obj.content_source_url,
@@ -41,11 +44,13 @@ class ArticleAdmin(WeChatAdmin):
     source_url.short_description = _("source_url")
     source_url.allow_tags = True
 
+    @mark_safe
     def thumb_image(self, obj):
         return obj.thumb_url and '<a href="{0}"><img width="200" src="{0}" /></a>'.format(obj.thumb_url)
     thumb_image.short_description = _("thumb_url")
     thumb_image.allow_tags = True
 
+    @mark_safe
     def material_link(self, obj):
         m = obj.material
         if m:
@@ -64,6 +69,7 @@ class ArticleAdmin(WeChatAdmin):
     material_link.short_description = _("material")
     material_link.allow_tags = True
 
+    @mark_safe
     def _content(self, obj):
         return obj.content
     _content.short_description = _("content")

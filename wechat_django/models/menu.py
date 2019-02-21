@@ -14,7 +14,6 @@ from . import MessageHandler, WeChatApp
 
 class MenuManager(m.Manager):
     def get_queryset(self):
-        # TODO: prefetch待测试
         return (super(MenuManager, self).get_queryset()
             .prefetch_related("sub_button"))
 
@@ -51,6 +50,9 @@ class Menu(m.Model):
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta(object):
+        verbose_name = _("menu")
+        verbose_name_plural = _("menus")
+
         ordering = ("app", "-weight", "id")
 
     objects = MenuManager()
@@ -93,10 +95,9 @@ class Menu(m.Model):
     @classmethod
     def get_menus(cls, app, menuid=None):
         """获取数据库中公众号菜单配置"""
-        q = app.menus.prefetch_related("sub_button")
-        q = q.filter(parent_id__isnull=True)
+        q = app.menus.filter(parent_id__isnull=True)
         q = q.filter(menuid=menuid) if menuid else q.filter(menuid__isnull=True)
-        return q.all()
+        return list(q.all())
 
     @classmethod
     def menus2json(cls, app, menuid=None):

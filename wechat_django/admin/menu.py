@@ -5,6 +5,7 @@ from django import forms
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
@@ -33,6 +34,7 @@ class MenuAdmin(WeChatAdmin):
         return obj.name
     title.short_description = _("title")
 
+    @mark_safe
     def detail(self, obj):
         if obj.type == Menu.Event.CLICK:
             return obj.content.get("key")
@@ -44,6 +46,7 @@ class MenuAdmin(WeChatAdmin):
     detail.short_description = _("detail")
     detail.allow_tags = True
 
+    @mark_safe
     def operates(self, obj):
         query = dict(
             _changelist_filters=urlencode(dict(
@@ -126,7 +129,7 @@ class MenuAdmin(WeChatAdmin):
 
         key = forms.CharField(label=_("menu key"), required=False)
         url = forms.URLField(label=_("url"), required=False)
-        appid = forms.CharField(label=_("app_id"), required=False)
+        appid = forms.CharField(label=_("miniprogram app_id"), required=False)
         pagepath = forms.CharField(label=_("pagepath"), required=False)
 
         class Meta(object):

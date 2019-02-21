@@ -93,6 +93,9 @@ class Material(m.Model):
     objects = MaterialManager()
 
     class Meta(object):
+        verbose_name = _("material")
+        verbose_name_plural = _("materials")
+
         unique_together = (("app", "media_id"),)
         ordering = ("app", "-update_time")
 

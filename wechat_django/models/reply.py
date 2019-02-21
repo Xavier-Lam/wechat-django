@@ -30,6 +30,10 @@ class Reply(m.Model):
         choices=enum2choices(MsgType))
     _content = JSONField(db_column="content", default=dict)
 
+    class Meta(object):
+        verbose_name = _("reply")
+        verbose_name_plural = _("replies")
+
     @property
     def app(self):
         return self.handler.app

@@ -8,340 +8,437 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-10 13:16+0800\n"
+"POT-Creation-Date: 2019-02-21 19:11+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: .\admin\article.py:30 .\admin\article.py:32 .\admin\menu.py:31
+#: .\admin\article.py:33 .\admin\article.py:35 .\admin\menu.py:43
 msgid "link"
 msgstr "链接"
 
-#: .\admin\article.py:38 .\admin\article.py:40
+#: .\admin\article.py:42 .\admin\article.py:44
 msgid "source_url"
-msgstr ""
+msgstr "链接"
 
-#: .\admin\article.py:45
+#: .\admin\article.py:50
 msgid "thumb_url"
-msgstr ""
+msgstr "缩略图"
 
-#: .\admin\article.py:63
+#: .\admin\article.py:69 .\models\material.py:96
 msgid "material"
-msgstr ""
+msgstr "素材"
 
-#: .\admin\article.py:68 .\admin\messagehandler.py:60 .\models\article.py:18
+#: .\admin\article.py:75 .\admin\messagehandler.py:59 .\models\article.py:21
 msgid "content"
-msgstr ""
+msgstr "内容"
 
-#: .\admin\article.py:94 .\admin\material.py:76 .\admin\menu.py:50
-#: .\admin\messagehandler.py:138 .\admin\user.py:48
+#: .\admin\article.py:101 .\admin\material.py:81 .\admin\menu.py:81
+#: .\admin\messagehandler.py:140 .\admin\user.py:56
 msgid "sync"
-msgstr ""
+msgstr "同步"
 
-#: .\admin\material.py:28
+#: .\admin\material.py:32
 msgid "preview"
-msgstr ""
+msgstr "预览"
 
-#: .\admin\material.py:33 .\models\material.py:26
+#: .\admin\material.py:37 .\models\material.py:86
 msgid "update time"
-msgstr ""
+msgstr "更新时间"
 
-#: .\admin\material.py:57 .\admin\material.py:59
+#: .\admin\material.py:62 .\admin\material.py:64
 msgid "open"
-msgstr ""
+msgstr "打开"
 
-#: .\admin\material.py:86
+#: .\admin\material.py:91
 msgid "delete selected"
-msgstr ""
+msgstr "删除所选"
 
-#: .\admin\menu.py:24 .\admin\messagehandler.py:63 .\models\app.py:22
-#: .\models\article.py:11
+#: .\admin\menu.py:35 .\admin\messagehandler.py:62 .\models\app.py:37
+#: .\models\article.py:14
 msgid "title"
-msgstr ""
+msgstr "标题"
 
-#: .\admin\menu.py:34
+#: .\admin\menu.py:46
 msgid "detail"
-msgstr ""
+msgstr "详情"
 
-#: .\admin\menu.py:76
+#: .\admin\menu.py:65
+msgid "actions"
+msgstr "操作"
+
+#: .\admin\menu.py:96
+msgid "publish"
+msgstr "发布"
+
+#: .\admin\menu.py:130
 msgid "menu key"
-msgstr ""
+msgstr "菜单KEY值"
 
-#: .\admin\menu.py:77 .\admin\messagehandler.py:59
-#: .\admin\messagehandler.py:66 .\models\article.py:19 .\models\material.py:25
+#: .\admin\menu.py:131 .\admin\messagehandler.py:58
+#: .\admin\messagehandler.py:65 .\models\article.py:22 .\models\material.py:84
 msgid "url"
-msgstr ""
+msgstr "菜单url"
 
-#: .\admin\menu.py:78
-msgid "app_id"
-msgstr ""
+#: .\admin\menu.py:132
+msgid "miniprogram app_id"
+msgstr "小程序AppId"
 
-#: .\admin\menu.py:79
+#: .\admin\menu.py:133
 msgid "pagepath"
-msgstr ""
+msgstr "小程序路径"
 
-#: .\admin\messagehandler.py:22 .\models\messagelog.py:13
+#: .\admin\messagehandler.py:23 .\models\messagelog.py:29
 msgid "message type"
-msgstr ""
+msgstr "消息类型"
 
-#: .\admin\messagehandler.py:24
+#: .\admin\messagehandler.py:25
 msgid "event"
-msgstr ""
-
-#: .\admin\messagehandler.py:26
-msgid "event key"
-msgstr ""
+msgstr "事件"
 
 #: .\admin\messagehandler.py:27
+msgid "event key"
+msgstr "事件Key值"
+
+#: .\admin\messagehandler.py:28
 msgid "pattern"
-msgstr ""
+msgstr "匹配模式"
 
-#: .\admin\messagehandler.py:58
-msgid "program"
-msgstr ""
+#: .\admin\messagehandler.py:57
+msgid "custom program"
+msgstr "自定义程序"
 
-#: .\admin\messagehandler.py:62 .\models\material.py:23
+#: .\admin\messagehandler.py:61 .\models\material.py:82
 msgid "media_id"
-msgstr ""
+msgstr "素材id"
 
-#: .\admin\messagehandler.py:64 .\admin\wechatapp.py:24 .\models\app.py:27
+#: .\admin\messagehandler.py:63 .\admin\wechatapp.py:31 .\models\app.py:42
 msgid "description"
-msgstr ""
+msgstr "描述"
+
+#: .\admin\messagehandler.py:66
+msgid "HQ music url"
+msgstr "高清音乐地址"
 
 #: .\admin\messagehandler.py:67
-msgid "HQ music url"
-msgstr ""
-
-#: .\admin\messagehandler.py:68
 msgid "thumb media_id"
-msgstr ""
+msgstr "缩略图素材id"
 
-#: .\admin\messagehandler.py:100 .\models\messagehandler.py:58
+#: .\admin\messagehandler.py:101 .\models\messagehandler.py:99
 msgid "available"
-msgstr ""
+msgstr "有效"
 
-#: .\admin\messagehandler.py:143
+#: .\admin\messagehandler.py:145
 msgid "synchronized from wechat"
-msgstr ""
+msgstr "从微信同步"
 
-#: .\admin\messagelog.py:24
-msgid "create time"
-msgstr ""
-
-#: .\admin\user.py:25 .\models\user.py:35
+#: .\admin\user.py:33 .\models\user.py:49
 msgid "avatar"
-msgstr ""
+msgstr "头像"
 
-#: .\admin\user.py:51
+#: .\admin\user.py:59
 msgid "sync all"
-msgstr ""
+msgstr "同步所有"
 
-#: .\admin\user.py:56
+#: .\admin\user.py:64
 msgid "update selected"
+msgstr "更新所选"
+
+#: .\apps.py:10 .\apps.py:11
+msgid "WeChat"
+msgstr "微信"
+
+#: .\models\app.py:38
+msgid "公众号名称,用于后台辨识公众号"
 msgstr ""
 
-#: .\models\app.py:23
-msgid "公众号名称"
-msgstr ""
-
-#: .\models\app.py:24 .\models\material.py:24 .\models\menu.py:29
-#: .\models\messagehandler.py:22
+#: .\models\app.py:40 .\models\material.py:83 .\models\menu.py:38
+#: .\models\messagehandler.py:57
 msgid "name"
+msgstr "名称"
+
+#: .\models\app.py:41
+msgid "公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"
 msgstr ""
 
-#: .\models\app.py:24
-msgid "公众号唯一标识,可采用微信号"
-msgstr ""
-
-#: .\models\app.py:29
+#: .\models\app.py:44
 msgid "AppId"
 msgstr ""
 
-#: .\models\app.py:30
+#: .\models\app.py:45
 msgid "AppSecret"
 msgstr ""
 
-#: .\models\app.py:33
+#: .\models\app.py:46 .\models\material.py:81 .\models\menu.py:44
+#: .\models\reply.py:29 .\models\rule.py:34
+msgid "type"
+msgstr "类型"
+
+#: .\models\app.py:47
+msgid "service app"
+msgstr "服务号"
+
+#: .\models\app.py:48
+msgid "subscribe app"
+msgstr "订阅号"
+
+#: .\models\app.py:49
+msgid "miniprogram"
+msgstr "小程序"
+
+#: .\models\app.py:54
 msgid "EncodingAESKey"
 msgstr ""
 
-#: .\models\app.py:35
+#: .\models\app.py:56
 msgid "encoding mode"
-msgstr ""
+msgstr "消息加密方式"
 
-#: .\models\app.py:36
+#: .\models\app.py:57
 msgid "plain"
-msgstr ""
+msgstr "明文模式"
 
-#: .\models\app.py:38
+#: .\models\app.py:59
 msgid "safe"
-msgstr ""
+msgstr "安全模式"
 
-#: .\models\app.py:41
+#: .\models\app.py:62
 msgid "flags"
-msgstr ""
+msgstr "标志位"
 
-#: .\models\app.py:46 .\models\material.py:31 .\models\messagehandler.py:40
-#: .\models\rule.py:29 .\models\user.py:53
-msgid "created"
-msgstr ""
+#: .\models\app.py:67 .\models\material.py:90 .\models\menu.py:49
+#: .\models\messagelog.py:36 .\models\rule.py:38 .\models\user.py:68
+msgid "created at"
+msgstr "创建时间"
 
-#: .\models\app.py:47 .\models\article.py:29 .\models\material.py:32
-#: .\models\messagehandler.py:41 .\models\user.py:54
-msgid "updated"
-msgstr ""
+#: .\models\app.py:68 .\models\material.py:91 .\models\menu.py:50
+#: .\models\user.py:69
+msgid "updated at"
+msgstr "最后更新时间"
 
-#: .\models\app.py:107
+#: .\models\app.py:73
+msgid "WeChat app"
+msgstr "微信号"
+
+#: .\models\app.py:74
+msgid "WeChat apps"
+msgstr "微信号"
+
+#: .\models\app.py:118
 msgid "interactable"
-msgstr ""
+msgstr "可消息交互"
 
-#: .\models\article.py:12
+#: .\models\article.py:15
 msgid "thumb_media_id"
-msgstr ""
-
-#: .\models\article.py:13
-msgid "show cover"
-msgstr ""
-
-#: .\models\article.py:14
-msgid "author"
-msgstr ""
+msgstr "缩略图素材id"
 
 #: .\models\article.py:16
-msgid "digest"
-msgstr ""
+msgid "show cover"
+msgstr "显示封面"
+
+#: .\models\article.py:18
+msgid "author"
+msgstr "作者"
 
 #: .\models\article.py:20
+msgid "digest"
+msgstr "摘要"
+
+#: .\models\article.py:24
 msgid "content source url"
-msgstr ""
+msgstr "原文链接"
 
-#: .\models\article.py:22 .\models\article.py:23
+#: .\models\article.py:27
 msgid "need open comment"
-msgstr ""
+msgstr "打开评论"
 
-#: .\models\article.py:26
+#: .\models\article.py:29
+msgid "only fans can comment"
+msgstr "粉丝才可评论"
+
+#: .\models\article.py:31
 msgid "index"
-msgstr ""
+msgstr "索引"
 
-#: .\models\material.py:21 .\models\menu.py:33 .\models\reply.py:15
-#: .\models\rule.py:24
-msgid "type"
-msgstr ""
+#: .\models\article.py:35 .\models\user.py:71
+msgid "synchronized at"
+msgstr "同步时间"
 
-#: .\models\material.py:29
+#: .\models\article.py:38
+msgid "article"
+msgstr "图文"
+
+#: .\models\article.py:39
+msgid "articles"
+msgstr "图文"
+
+#: .\models\material.py:88
 msgid "comment"
-msgstr ""
+msgstr "备注"
 
-#: .\models\menu.py:30
+#: .\models\material.py:97
+msgid "materials"
+msgstr "素材"
+
+#: .\models\menu.py:39
 msgid "menuid"
-msgstr ""
+msgstr "菜单id"
 
-#: .\models\menu.py:37 .\models\messagehandler.py:39 .\models\rule.py:28
+#: .\models\menu.py:48 .\models\messagehandler.py:75 .\models\rule.py:37
 msgid "weight"
-msgstr ""
+msgstr "权重"
 
-#: .\models\messagehandler.py:28
+#: .\models\menu.py:53
+msgid "menu"
+msgstr "菜单"
+
+#: .\models\menu.py:54
+msgid "menus"
+msgstr "菜单"
+
+#: .\models\messagehandler.py:63
 msgid "strategy"
-msgstr ""
+msgstr "策略"
 
-#: .\models\messagehandler.py:33
+#: .\models\messagehandler.py:69
 msgid "log"
-msgstr ""
+msgstr "日志"
 
-#: .\models\messagehandler.py:35
+#: .\models\messagehandler.py:71
 msgid "starts"
-msgstr ""
+msgstr "开始时间"
 
-#: .\models\messagehandler.py:36
+#: .\models\messagehandler.py:72
 msgid "ends"
-msgstr ""
+msgstr "结束时间"
 
-#: .\models\messagehandler.py:37
+#: .\models\messagehandler.py:73
 msgid "enabled"
-msgstr ""
+msgstr "开启"
 
-#: .\models\messagelog.py:12
-msgid "msgid"
-msgstr ""
-
-#: .\models\messagelog.py:16
-msgid "createtime"
-msgstr ""
-
-#: .\models\messagelog.py:18
+#: .\models\messagehandler.py:76
 msgid "created_at"
-msgstr ""
+msgstr "创建时间"
 
-#: .\models\reply.py:137 .\models\reply.py:168
+#: .\models\messagehandler.py:77
+msgid "updated_at"
+msgstr "最后更新时间"
+
+#: .\models\messagehandler.py:82
+msgid "message handler"
+msgstr "自动回复"
+
+#: .\models\messagehandler.py:83
+msgid "message handlers"
+msgstr "自动回复"
+
+#: .\models\messagelog.py:27
+msgid "msgid"
+msgstr "消息id"
+
+#: .\models\messagelog.py:32
+msgid "direct"
+msgstr "方向"
+
+#: .\models\messagelog.py:39
+msgid "message log"
+msgstr "消息日志"
+
+#: .\models\messagelog.py:40
+msgid "message logs"
+msgstr "消息日志"
+
+#: .\models\reply.py:34
+msgid "reply"
+msgstr "回复"
+
+#: .\models\reply.py:35
+msgid "replies"
+msgstr "回复"
+
+#: .\models\reply.py:185 .\models\reply.py:215
 msgid "video"
-msgstr ""
+msgstr "视频"
 
-#: .\models\user.py:29
+#: .\models\rule.py:45
+msgid "rule"
+msgstr "规则"
+
+#: .\models\rule.py:46
+msgid "rules"
+msgstr "规则"
+
+#: .\models\user.py:43
 msgid "openid"
 msgstr ""
 
-#: .\models\user.py:30
+#: .\models\user.py:44
 msgid "unionid"
 msgstr ""
 
-#: .\models\user.py:32
-msgid "nickname"
-msgstr ""
-
-#: .\models\user.py:33
-msgid "gender"
-msgstr ""
-
-#: .\models\user.py:36
-msgid "city"
-msgstr ""
-
-#: .\models\user.py:37
-msgid "province"
-msgstr ""
-
-#: .\models\user.py:38
-msgid "country"
-msgstr ""
-
-#: .\models\user.py:39
-msgid "language"
-msgstr ""
-
-#: .\models\user.py:41
-msgid "is subscribed"
-msgstr ""
-
-#: .\models\user.py:42
-msgid "subscribe time"
-msgstr ""
-
-#: .\models\user.py:43
-msgid "subscribe scene"
-msgstr ""
-
-#: .\models\user.py:45
-msgid "qr scene"
-msgstr ""
-
 #: .\models\user.py:46
-msgid "qr_scene_str"
-msgstr ""
+msgid "nickname"
+msgstr "昵称"
 
-#: .\models\user.py:48 .\models\user.py:50
-msgid "remark"
-msgstr ""
+#: .\models\user.py:48
+msgid "gender"
+msgstr "性别"
+
+#: .\models\user.py:50
+msgid "city"
+msgstr "城市"
 
 #: .\models\user.py:51
-msgid "group id"
-msgstr ""
+msgid "province"
+msgstr "省份"
 
-#: .\models\user.py:57
-msgid "synced"
-msgstr ""
+#: .\models\user.py:52
+msgid "country"
+msgstr "国家"
+
+#: .\models\user.py:53
+msgid "language"
+msgstr "语言"
+
+#: .\models\user.py:55
+msgid "is subscribed"
+msgstr "已关注"
+
+#: .\models\user.py:56
+msgid "subscribe time"
+msgstr "关注时间"
+
+#: .\models\user.py:58
+msgid "subscribe scene"
+msgstr "关注情景"
+
+#: .\models\user.py:60
+msgid "qr scene"
+msgstr "二维码扫码场景"
+
+#: .\models\user.py:61
+msgid "qr_scene_str"
+msgstr "二维码扫码场景描述"
+
+#: .\models\user.py:64 .\models\user.py:65
+msgid "remark"
+msgstr "备注"
+
+#: .\models\user.py:66
+msgid "group id"
+msgstr "分组id"
+
+#: .\models\user.py:76
+msgid "user"
+msgstr "用户"
+
+#: .\models\user.py:77
+msgid "users"
+msgstr "用户"
 
 #: .\templates\admin\wechat_django\change_form.html:7
 #: .\templates\admin\wechat_django\change_list.html:7

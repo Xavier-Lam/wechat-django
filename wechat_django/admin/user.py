@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from wechatpy.exceptions import WeChatException
 
@@ -26,6 +27,7 @@ class WeChatUserAdmin(WeChatAdmin):
         "subscribe_scene", "qr_scene", "qr_scene_str", "remark", "comment",
         "groupid", "created_at", "updated_at")
 
+    @mark_safe
     def avatar(self, obj):
         return obj.headimgurl and '<img src="{0}" />'.format(obj.avatar(46))
     avatar.short_description = _("avatar")

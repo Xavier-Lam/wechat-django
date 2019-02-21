@@ -314,7 +314,7 @@ def patch_admin(admin):
             for app in apps
         ]
         return {
-            'name': app_label,
+            'name': _(app_label),
             'app_label': app_label,
             # 'app_url': "#", # TODO: 修订app_url
             'has_module_perms': bool(app_perms),

@@ -35,6 +35,9 @@ class Article(m.Model):
     synced_at = m.DateTimeField(_("synchronized at"), auto_now_add=True)
 
     class Meta(object):
+        verbose_name = _("article")
+        verbose_name_plural = _("articles")
+
         unique_together = (("material", "index"),)
         ordering = ("material", "index")
 

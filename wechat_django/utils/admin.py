@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 
@@ -14,6 +15,7 @@ def linkify(field_name):
     If field_name is 'parent', link text will be str(obj.parent)
     Link will be admin url for the admin url for obj.parent.id:change
     """
+    @mark_safe
     def _linkify(obj):
         app_label = obj._meta.app_label
         linked_obj = getattr(obj, field_name)

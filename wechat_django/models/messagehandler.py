@@ -79,6 +79,9 @@ class MessageHandler(m.Model):
     objects = MessageHandlerManager()
 
     class Meta:
+        verbose_name = _("message handler")
+        verbose_name_plural = _("message handlers")
+
         ordering = ("-weight", "-created_at", "-id")
         index_together = (
             ("app", "weight", "created_at"),

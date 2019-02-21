@@ -73,6 +73,9 @@ class WeChatUser(m.Model):
     objects = WeChatUserManager()
 
     class Meta(object):
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
+
         ordering = ("app", "-created_at")
         unique_together = (("app", "openid"), ("app", "unionid"))
 
