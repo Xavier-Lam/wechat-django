@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from copy import deepcopy
+
 from django.db import models as m
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
@@ -28,6 +30,7 @@ class Reply(m.Model):
     type = m.CharField(
         _("type"), db_column="type", max_length=16,
         choices=enum2choices(MsgType))
+    # TODO: 增加权重
     _content = JSONField(db_column="content", default=dict)
 
     class Meta(object):
@@ -122,7 +125,10 @@ class Reply(m.Model):
             media = Material.objects.get_by_media(
                 self.app, self.content["media_id"])
             # 将media_id转为content
-            data = dict(articles=media.articles_json)
+            data = dict(
+                articles=media.articles_json,
+                media_id=self.content["media_id"]
+            )
         elif self.type == self.MsgType.MUSIC:
             klass = replies.MusicReply
             data = dict(**self.content)
@@ -151,7 +157,10 @@ class Reply(m.Model):
         type = ""
         kwargs = dict(user_id=reply.target)
         if isinstance(reply, replies.ArticlesReply):
-            kwargs["articles"] = reply.articles
+            kwargs["articles"] = deepcopy(reply.articles)
+            for article in kwargs["articles"]:
+                article["picurl"] = article["image"]
+                del article["image"]
             type = "articles"
         elif isinstance(reply, replies.MusicReply):
             kwargs["url"] = reply.music_url

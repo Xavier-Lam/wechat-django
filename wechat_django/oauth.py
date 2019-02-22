@@ -5,6 +5,7 @@ import logging
 
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
+import six
 from wechatpy import WeChatOAuthException
 
 from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
@@ -48,7 +49,7 @@ class wechat_auth(object):
                         ]
         """
         scope = scope or (WeChatSNSScope.BASE,)
-        if isinstance(scope, str):
+        if isinstance(scope, six.text_type):
             scope = (scope,)
 
         assert (

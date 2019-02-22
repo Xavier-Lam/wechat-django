@@ -6,6 +6,7 @@ import logging
 
 from wechatpy import (
     exceptions as excs, WeChatClient as _Client, WeChatOAuth as _OAuth)
+from wechatpy.constants import WeChatErrorCode
 from wechatpy.client import api
 
 from .oauth import WeChatSNSScope
@@ -21,11 +22,26 @@ class WeChatMaterial(api.WeChatMaterial):
         )
 
 
+class WeChatMessage(api.WeChatMessage):
+    def send_articles(self, user_id, articles, account=None):
+        try:
+            return super(WeChatMessage, self).send_articles(
+                user_id, articles, account)
+        except excs.WeChatClientException as e:
+            # 对于主动发送图文消息,只发送一条
+            # 参见 https://mp.weixin.qq.com/cgi-bin/announce?action=getannouncement&announce_id=115383153198yAvN
+            if e.errcode == WeChatErrorCode.INVALID_MESSAGE_TYPE:
+                return super(WeChatMessage, self).send_articles(
+                    user_id, articles[:1], account)
+            raise
+
+
 class WeChatClient(_Client):
     """继承原有WeChatClient添加日志功能 追加accesstoken url获取"""
     appname = None
     # 增加raw_get方法
     material = WeChatMaterial()
+    message = WeChatMessage()
 
     ACCESSTOKEN_URL = None
 
