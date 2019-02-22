@@ -136,6 +136,18 @@ class OAuthTestCase(WeChatTestCase):
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, state))
 
+        # 传入callable state
+        state = lambda request: request.path
+        request = rf.get(path)
+        handler = self._make_handler(
+            request, redirect_uri=redirect_uri,
+            scope=WeChatSNSScope.USERINFO, state=state)
+        resp = handler.unauthorization_response(request)
+        self.assertIsInstance(resp, response.HttpResponseRedirect)
+        client = WeChatOAuth(self.app.appid, self.app.appsecret)
+        self.assertEqual(resp.url, client.authorize_url(
+            redirect_uri, WeChatSNSScope.USERINFO, path))
+
         # 传入callback response
         resp = response.HttpResponseForbidden()
         request = rf.get(path)

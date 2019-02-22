@@ -21,10 +21,20 @@ class wechat_auth(object):
         """微信网页授权
         :param appname: WeChatApp的name
         :param scope: 默认WeChatSNSScope.BASE, 可选WeChatSNSScope.USERINFO
+        :type scope: str or iterable
         :param redirect_uri: 未授权时的重定向地址 当未设置response时将自动执行授权
                             当ajax请求时默认取referrer 否则取当前地址
                             注意 请不要在地址上带有code及state参数 否则可能引发问题
         :param state: 授权时需要携带的state
+        :type state: str
+                     or Callable[
+                        [
+                            django.http.request.HttpRequest,
+                            *args,
+                            **kwargs
+                        ],
+                        str
+                     ]
         :param required: 真值必须授权 否则不授权亦可继续访问(只检查session)
         :param response: 未授权的返回 接受一个
         :type response: django.http.response.HttpResponse
@@ -37,20 +47,24 @@ class wechat_auth(object):
                             django.http.response.HttpResponse
                         ]
         """
-        scope = scope or WeChatSNSScope.BASE
+        scope = scope or (WeChatSNSScope.BASE,)
+        if isinstance(scope, str):
+            scope = (scope,)
+
         assert (
             response is None or callable(response)
             or isinstance(response, HttpResponse)
         ), "incorrect response"
-        assert scope in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO), \
-            "incorrect scope"
+        for s in scope:
+            assert s in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO),\
+                "incorrect scope"
 
         self.appname = appname
         self.scope = scope
         self._redirect_uri = redirect_uri
         self.required = required
         self.response = response
-        self.state = state  # TODO: 改为可接受callable
+        self.state = state
 
     def redirect_uri(self, request):
         return request.build_absolute_uri(
@@ -126,7 +140,8 @@ class WeChatOAuthHandler(object):
         code = get_params(self.request, "code")
         data = app.oauth.fetch_access_token(code)
 
-        if self.oauth_info.scope == WeChatSNSScope.USERINFO:
+        if WeChatSNSScope.USERINFO in self.oauth_info.scope:
+            # TODO: 优化授权流程 记录accesstoken及refreshtoken 延迟取userinfo
             # 同步数据
             try:
                 user_info = app.oauth.get_user_info()
@@ -151,13 +166,16 @@ class WeChatOAuthHandler(object):
         appname = self.oauth_info.appname
         return logging.getLogger("wechat:oauth:{0}".format(appname))
 
-    def _patch_request(self, request):
+    def _patch_request(self, request, *args, **kwargs):
+        info = self.oauth_info
+        state = info.state(request, *args, **kwargs) if callable(info.state)\
+            else info.state
         self.request = WeChatOAuthInfo.patch_request(
             request=request,
-            appname=self.oauth_info.appname,
-            redirect_uri=self.oauth_info.redirect_uri(request),
-            scope=self.oauth_info.scope,
-            state=self.oauth_info.state
+            appname=info.appname,
+            redirect_uri=info.redirect_uri(request),
+            scope=info.scope,
+            state=state
         )
 
     __call__ = dispatch

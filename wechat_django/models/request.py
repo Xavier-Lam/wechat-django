@@ -138,10 +138,13 @@ class WeChatOAuthInfo(WeChatInfo):
         rv.wechat._state = state
         return rv
 
-    _scope = WeChatSNSScope.BASE
     @property
     def scope(self):
-        """授权的scope"""
+        """授权的scope
+        :rtype: tuple
+        """
+        if not hasattr(self, "_scope"):
+            self._scope = (WeChatSNSScope.BASE,)
         return self._scope
 
     _state = ""
@@ -154,7 +157,7 @@ class WeChatOAuthInfo(WeChatInfo):
     def oauth_uri(self):
         return self.app.oauth.authorize_url(
             self.redirect_uri,
-            self.scope,
+            ",".join(self.scope),
             self.state
         )
 
