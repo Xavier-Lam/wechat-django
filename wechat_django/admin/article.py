@@ -89,10 +89,10 @@ class ArticleAdmin(WeChatAdmin):
         app = self.get_app(request)
         try:
             materials = Article.sync(app)
-            msg = "%(count)d articles successfully synchronized"
+            msg = _("%(count)d articles successfully synchronized")
             self.message_user(request, msg % dict(count=len(materials)))
         except Exception as e:
-            msg = "sync failed with %(exc)s" % dict(exc=e)
+            msg = _("sync failed with %(exc)s") % dict(exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:

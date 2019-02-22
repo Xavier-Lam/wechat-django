@@ -47,7 +47,8 @@ class WeChatUserAdmin(WeChatAdmin):
             msg = _("%(count)d users successfully synchronized")
             self.message_user(request, msg % dict(count=len(users)))
         except Exception as e:
-            msg = method + " failed with %(exc)s" % e
+            tpl = _("%(method)s failed with %(exc)s")
+            msg = tpl % dict(method=_(method), exc=e)
             if isinstance(e, WeChatException):
                 self.logger(request).warning(msg, exc_info=True)
             else:

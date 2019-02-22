@@ -123,6 +123,27 @@ def get_perms_by_codenames(codenames):
         .all())
 
 
+@receiver(m.signals.m2m_changed, sender=Group.permissions.through)
+@receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
+def add_required_perms(sender, instance, action, *args, **kwargs):
+    if action == "pre_add":
+        if isinstance(instance, User):
+            perms_set = instance.user_permissions
+        else:
+            perms_set = instance.permissions
+        # 检查相关权限
+        perm_names = set()
+        perms = Permission.objects.filter(id__in=kwargs["pk_set"]).all()
+        for perm in perms:
+            appname, permission = match_permission(perm.codename)
+            if appname:
+                perm_names.update(
+                    get_require_perm_names(appname, permission))
+        if perm_names:
+            codenames = list(map(lambda o: o.split(".")[1], perm_names))
+            perms_set.add(*get_perms_by_codenames(codenames))
+
+
 def get_user_permissions(user, app=None):
     """列举用户所有的微信权限
     :type user: django.contrib.auth.models.User
@@ -152,24 +173,3 @@ def match_permission(perm_name):
         return match.group("appname"), match.group("permission")
     else:
         return None, None
-
-
-@receiver(m.signals.m2m_changed, sender=Group.permissions.through)
-@receiver(m.signals.m2m_changed, sender=User.user_permissions.through)
-def before_perm_change(sender, instance, action, *args, **kwargs):
-    if action == "pre_add":
-        if isinstance(instance, User):
-            perms_set = instance.user_permissions
-        else:
-            perms_set = instance.permissions
-        # 检查相关权限
-        needed_perm_names = set()
-        perms = Permission.objects.filter(id__in=kwargs["pk_set"]).all()
-        for perm in perms:
-            appname, permission = match_permission(perm.codename)
-            if appname:
-                needed_perm_names.update(
-                    get_require_perm_names(appname, permission))
-        if needed_perm_names:
-            codenames = list(map(lambda o: o.split(".")[1], needed_perm_names))
-            perms_set.add(*get_perms_by_codenames(codenames))

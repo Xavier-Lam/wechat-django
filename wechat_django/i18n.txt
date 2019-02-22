@@ -46,3 +46,12 @@
 {% trans "UNKNOWN" %}
 {% trans "MALE" %}
 {% trans "FEMALE" %}
+
+{% trans "ADD_SCENE_SEARCH" %}
+{% trans "ADD_SCENE_ACCOUNT_MIGRATION" %}
+{% trans "ADD_SCENE_PROFILE_CARD" %}
+{% trans "ADD_SCENE_QR_CODE" %}
+{% trans "ADD_SCENEPROFILE LINK" %}
+{% trans "ADD_SCENE_PROFILE_ITEM" %}
+{% trans "ADD_SCENE_PAID" %}
+{% trans "ADD_SCENE_OTHERS" %}

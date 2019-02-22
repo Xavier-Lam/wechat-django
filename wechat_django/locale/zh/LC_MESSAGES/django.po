@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-21 22:16+0800\n"
+"POT-Creation-Date: 2019-02-22 11:41+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 
 #: .\admin\article.py:33 .\admin\article.py:35 .\admin\menu.py:44
 msgid "link"
@@ -37,8 +37,19 @@ msgstr "素材"
 msgid "content"
 msgstr "内容"
 
+#: .\admin\article.py:92
+#, python-format
+msgid "%(count)d articles successfully synchronized"
+msgstr "成功同步 %(count)d个图文"
+
+#: .\admin\article.py:95 .\admin\material.py:75 .\admin\menu.py:77
+#: .\admin\messagehandler.py:134
+#, python-format
+msgid "sync failed with %(exc)s"
+msgstr "同步发生错误: %(exc)s"
+
 #: .\admin\article.py:101 .\admin\material.py:81 .\admin\menu.py:83
-#: .\admin\messagehandler.py:140 .\admin\user.py:56
+#: .\admin\messagehandler.py:140 .\admin\user.py:57
 msgid "sync"
 msgstr "同步"
 
@@ -57,6 +68,11 @@ msgstr "更新时间"
 #: .\admin\material.py:62 .\admin\material.py:64
 msgid "open"
 msgstr "打开"
+
+#: .\admin\material.py:72
+#, python-format
+msgid "%(count)d materials successfully synchronized"
+msgstr "成功同步 %(count)d个素材"
 
 #: .\admin\material.py:88
 #, python-format
@@ -83,11 +99,6 @@ msgstr "操作"
 #: .\admin\menu.py:75
 msgid "menus successfully synchronized"
 msgstr "菜单同步成功"
-
-#: .\admin\menu.py:77 .\admin\messagehandler.py:134
-#, python-format
-msgid "sync failed with %(exc)s"
-msgstr "同步发生错误: %(exc)s"
 
 #: .\admin\menu.py:90
 msgid "menus successfully published"
@@ -181,11 +192,16 @@ msgstr "关注时间"
 msgid "%(count)d users successfully synchronized"
 msgstr "成功同步 %(count)d个用户"
 
-#: .\admin\user.py:59
+#: .\admin\user.py:50
+#, python-format
+msgid "%(method)s failed with %(exc)s"
+msgstr "%(method)s发生错误: %(exc)s"
+
+#: .\admin\user.py:60
 msgid "sync all"
 msgstr "同步所有"
 
-#: .\admin\user.py:64
+#: .\admin\user.py:65
 msgid "update selected"
 msgstr "更新所选"
 
@@ -338,14 +354,44 @@ msgid "UNKNOWN"
 msgstr "未知"
 
 #: .\i18n.txt:47
-#, fuzzy
-#| msgid "IMAGE"
 msgid "MALE"
-msgstr "图片"
+msgstr "男性"
 
 #: .\i18n.txt:48
 msgid "FEMALE"
-msgstr ""
+msgstr "女性"
+
+#: .\i18n.txt:50
+msgid "ADD_SCENE_SEARCH"
+msgstr "公众号搜索"
+
+#: .\i18n.txt:51
+msgid "ADD_SCENE_ACCOUNT_MIGRATION"
+msgstr "公众号迁移"
+
+#: .\i18n.txt:52
+msgid "ADD_SCENE_PROFILE_CARD"
+msgstr "名片分享"
+
+#: .\i18n.txt:53
+msgid "ADD_SCENE_QR_CODE"
+msgstr "扫描二维码"
+
+#: .\i18n.txt:54
+msgid "ADD_SCENEPROFILE LINK"
+msgstr "图文页内名称点击"
+
+#: .\i18n.txt:55
+msgid "ADD_SCENE_PROFILE_ITEM"
+msgstr "图文页右上角菜单"
+
+#: .\i18n.txt:56
+msgid "ADD_SCENE_PAID"
+msgstr "支付后关注"
+
+#: .\i18n.txt:57
+msgid "ADD_SCENE_OTHERS"
+msgstr "其他"
 
 #: .\models\app.py:39
 msgid "公众号名称,用于后台辨识公众号"
@@ -581,7 +627,7 @@ msgstr "可以查看 %(appname)s 的消息日志"
 #: .\models\permission.py:35
 #, python-format
 msgid "Can edit %(appname)s users"
-msgstr ""
+msgstr "可以编辑 %(appname)s 的用户"
 
 #: .\models\permission.py:36
 #, python-format
@@ -661,7 +707,11 @@ msgstr "二维码扫码场景"
 msgid "qr_scene_str"
 msgstr "二维码扫码场景描述"
 
-#: .\models\user.py:64 .\models\user.py:65
+#: .\models\user.py:64
+msgid "WeChat remark"
+msgstr "微信备注"
+
+#: .\models\user.py:65
 msgid "remark"
 msgstr "备注"
 
@@ -716,18 +766,3 @@ msgstr ""
 #: .\templates\admin\wechat_django\search_form.html:9
 msgid "Show all"
 msgstr ""
-
-#~ msgid "service app"
-#~ msgstr "服务号"
-
-#~ msgid "subscribe app"
-#~ msgstr "订阅号"
-
-#~ msgid "miniprogram"
-#~ msgstr "小程序"
-
-#~ msgid "plain"
-#~ msgstr "明文模式"
-
-#~ msgid "safe"
-#~ msgstr "安全模式"
