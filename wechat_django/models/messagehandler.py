@@ -137,7 +137,7 @@ class MessageHandler(m.Model):
                         level = logging.WARNING\
                             if isinstance(e, WeChatClientException)\
                             else logging.ERROR
-                        log(level, msg)
+                        log(level, msg, exc_info=True)
                 reply = replies[-1]
             elif self.strategy == self.ReplyStrategy.RANDOM:
                 reply = random.choice(replies)
@@ -175,6 +175,14 @@ class MessageHandler(m.Model):
                 )
                 handlers.append(handler)
 
+            if (resp.get("keyword_autoreply_info")
+                and resp["keyword_autoreply_info"].get("list")):
+                handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
+                handlers.extend(
+                    MessageHandler.from_mp(handler, app)
+                    for handler in handlers_list
+                )
+
             if resp.get("add_friend_autoreply_info"):
                 # 关注回复
                 handler = cls.objects.create_handler(
@@ -192,14 +200,7 @@ class MessageHandler(m.Model):
                     ]
                 )
                 handlers.append(handler)
-
-            if (resp.get("keyword_autoreply_info")
-                and resp["keyword_autoreply_info"].get("list")):
-                handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
-                handlers.extend(
-                    MessageHandler.from_mp(handler, app)
-                    for handler in handlers_list
-                )
+                
             return handlers
 
     @classmethod

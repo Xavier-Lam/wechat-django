@@ -19,7 +19,10 @@ from django.contrib import admin
 
 import wechat_django
 
+import wechat.views
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^wechat/', wechat_django.urls) #!wechat_django 添加wechat_django
+    url(r'^wechat/', wechat_django.urls), #!wechat_django 添加wechat_django
+    url(r'^debug/oauth', wechat.views.oauth)
 ]

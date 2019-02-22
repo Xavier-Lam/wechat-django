@@ -196,7 +196,7 @@ class Material(m.Model):
             description=o.digest,
             image=o.thumb_url,
             url=o.url
-        ), self.articles))
+        ), self.articles.all()))
 
     def delete(self, *args, **kwargs):
         # 先远程素材删除

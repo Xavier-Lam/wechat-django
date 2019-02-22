@@ -1,6 +1,6 @@
 # WeChat-Django
 
-**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的后台管理支持.
+**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的[后台管理支持](docs/admin.md).
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
@@ -104,6 +104,8 @@
         return TextReply(content=text.encode())
 
 ## 后台使用简介
+参见[管理后台使用简介](docs/admin.md) 文档
+
 ### 权限
 可给管理员分配微信管理权限,所有微信权限以 `<appname> | <perm>` 标注.
 > 在赋予用户权限时,系统会自动为用户追加所需的django默认权限,请勿删除!注意,请不要自行分配wechat_django的默认model权限给用户,这是毫无作用的
@@ -112,17 +114,13 @@
 可参考本项目sample文件夹
 
 ## TODOS:
-* permission单元测试
-* 整理结构
-* 本地化
-* clear todos
 * 单元测试
 * app层面的message log和reply log
 * 后台表单验证
 * 后台确认页
 
 ### 计划的功能
-* accesstoken开放给第三方
+* accesstoken开放给第三方并对接第三方accesstoken
 * 用户分组管理
 * 消息响应日志/对话
 * 客服消息

@@ -102,7 +102,7 @@ class MessageHandlerAdmin(WeChatAdmin):
         parameter_name = "available"
 
         def lookups(self, request, model_admin):
-            return [(True, "available")]
+            return [(True, _("available"))]
 
         def queryset(self, request, queryset):
             if self.value():

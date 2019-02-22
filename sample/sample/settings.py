@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'wechat_django', #!wechat_django 添加wechat_django
-    'sample'
+    'wechat'
 ]
 
 MIDDLEWARE = [

@@ -59,7 +59,7 @@ def create_data(apps, schema_editor):
         )],
         replies=[Reply(
             type=Reply.MsgType.CUSTOM,
-            program="sample.wechat.views.custom_business"
+            program="wechat.views.custom_business"
         ), Reply(
             type=Reply.MsgType.TEXT,
             content="hello!"
