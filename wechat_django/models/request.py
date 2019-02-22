@@ -110,7 +110,7 @@ class WeChatMessageInfo(WeChatInfo):
         """
         if not hasattr(self, "_user"):
             self._user = WeChatUser.objects.get_by_openid(
-                self.app, self.message.source)
+                self.app, self.message.source, ignore_errors=True)
         return self._user
 
     @property

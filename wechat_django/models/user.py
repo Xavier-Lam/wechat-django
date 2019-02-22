@@ -7,18 +7,31 @@ import re
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone as tz
+from wechatpy.constants import WeChatErrorCode
+from wechatpy.exceptions import WeChatClientException
 
 from ..utils.admin import enum2choices
 from . import WeChatApp
 
 
 class WeChatUserManager(m.Manager):
-    def get_by_openid(self, app, openid):
+    def get_by_openid(self, app, openid, ignore_errors=False):
         # TODO: cache
         try:
             return self.get(app=app, openid=openid)
         except self.model.DoesNotExist:
-            return self.model.fetch_user(app, openid)
+            try:
+                return self.model.fetch_user(app, openid)
+            except Exception as e:
+                if isinstance(e, WeChatClientException)\
+                    and e.errcode == WeChatErrorCode.INVALID_OPENID:
+                    # 不存在抛异常
+                    raise
+                elif ignore_errors:
+                    pass # TODO: 好歹记个日志吧...
+                else:
+                    raise
+        return self.create(app=app, openid=openid)
 
 
 class WeChatUser(m.Model):
