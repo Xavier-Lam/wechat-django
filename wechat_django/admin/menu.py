@@ -99,8 +99,8 @@ class MenuAdmin(WeChatAdmin):
 
     def get_actions(self, request):
         actions = super(MenuAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
         return actions
 
     def get_fields(self, request, obj=None):

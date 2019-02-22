@@ -10,7 +10,8 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Material
-from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
+from .bases import (
+    delete_selected, DynamicChoiceForm, register_admin, WeChatAdmin)
 
 
 @register_admin(Material)
@@ -80,12 +81,15 @@ class MaterialAdmin(WeChatAdmin):
             self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
 
-    def delete_selected(self, request, obj):
-        for o in obj.all():
+    def delete_selected(self, request, queryset):
+        if not request.POST.get("post"):
+            return super(MaterialAdmin, self).delete_selected(
+                request, queryset)
+        for o in queryset.all():
             try:
                 o.delete()
             except WeChatException:
-                msg = _("delete material failed: %(obj)s") % dict(obj=obj)
+                msg = _("delete material failed: %(obj)s") % dict(obj=o)
                 self.logger(request).warning(msg, exc_info=True)
                 raise
     delete_selected.short_description = _("delete selected")

@@ -7,6 +7,7 @@ import types
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.admin.actions import delete_selected as _delete_selected
 from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.core.exceptions import PermissionDenied
@@ -32,6 +33,12 @@ def search_form(cl):
     搜索form带app_id
     """
     return admin_list.search_form(cl)
+
+
+def delete_selected(modeladmin, request, queryset):
+    rv = _delete_selected(modeladmin, request, queryset)
+    modeladmin._update_context(request, rv.context_data)
+    return rv
 
 
 def has_wechat_permission(request, app, category="", operate="", obj=None):
@@ -75,6 +82,7 @@ class WeChatAdminMetaClass(forms.MediaDefiningClass):
 
 
 class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
+    #region view
     def changelist_view(self, request, extra_context=None):
         # 允许没有选中的actions
         post = request.POST.copy()
@@ -115,21 +123,6 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
     def get_changelist(self, request, **kwargs):
         return ChangeList
 
-    def _update_context(self, request, context):
-        app = self.get_app(request)
-        context = context or dict()
-        context.update(dict(
-            app_id=app.id,
-            app=app
-        ))
-        return context
-
-    def get_queryset(self, request):
-        self.request = request
-        rv = super(WeChatAdmin, self).get_queryset(request)
-        app_id = self.get_app(request).id
-        return self._filter_app_id(rv, app_id) if app_id else rv.none()
-
     def get_preserved_filters(self, request):
         with mutable_GET(request) as GET:
             GET["app_id"] = self.get_app(request).id
@@ -137,15 +130,34 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
                 return super(WeChatAdmin, self).get_preserved_filters(request)
             finally:
                 GET.pop("app_id", None)
+    #endregion
 
-    def _filter_app_id(self, queryset, app_id):
-        return queryset.filter(app_id=app_id)
+    #region actions
+    def get_actions(self, request):
+        actions = super(WeChatAdmin, self).get_actions(request)
+        if "delete_selected" in actions:
+            actions["delete_selected"] = (
+                delete_selected,
+                actions["delete_selected"][1],
+                actions["delete_selected"][2]
+            )
+        return actions
+    #endregion
+
+    #region model
+    def get_queryset(self, request):
+        self.request = request
+        rv = super(WeChatAdmin, self).get_queryset(request)
+        app_id = self.get_app(request).id
+        return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
     def save_model(self, request, obj, form, change):
         if not change:
             obj.app_id = self.get_app(request).id
         return super(WeChatAdmin, self).save_model(request, obj, form, change)
+    #endregion
 
+    #region permissions
     def get_model_perms(self, request):
         # 隐藏首页上的菜单
         if self.get_app(request, True):
@@ -169,6 +181,20 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
 
     def has_delete_permission(self, request, obj=None):
         return self.has_wechat_permission(request, "delete", obj=obj)
+    #endregion
+
+    #region utils
+    def _update_context(self, request, context):
+        app = self.get_app(request)
+        context = context or dict()
+        context.update(dict(
+            app_id=app.id,
+            app=app
+        ))
+        return context
+
+    def _filter_app_id(self, queryset, app_id):
+        return queryset.filter(app_id=app_id)
 
     def get_app(self, request, nullable=False):
         if not hasattr(request, "app"):
@@ -199,6 +225,7 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
         app = self.get_app(request)
         name = "wechat.admin.{0}".format(app.name)
         return logging.getLogger(name)
+    #endregion
 
 
 class DynamicChoiceForm(forms.ModelForm):
