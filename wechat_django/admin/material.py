@@ -83,8 +83,7 @@ class MaterialAdmin(WeChatAdmin):
 
     def delete_selected(self, request, queryset):
         if not request.POST.get("post"):
-            return super(MaterialAdmin, self).delete_selected(
-                request, queryset)
+            return delete_selected(self, request, queryset)
         for o in queryset.all():
             try:
                 o.delete()

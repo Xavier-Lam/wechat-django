@@ -9,6 +9,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from six import text_type
+from wechatpy.crypto import WeChatCrypto
 
 from .. import settings
 from ..utils.admin import enum2choices
@@ -102,6 +103,18 @@ class WeChatApp(m.Model):
                 self._oauth.OAUTH_URL = self.configurations["OAUTH_URL"]
 
         return self._oauth
+
+    @property
+    def crypto(self):
+        if not hasattr(self, "_crypto"):
+            self._crypto = (self.encoding_mode == self.EncodingMode.SAFE
+                and self.interactable() 
+                and WeChatCrypto(
+                    self.token,
+                    self.encoding_aes_key,
+                    self.appid
+                )) or None
+        return self._crypto
 
     def interactable(self):
         """可与微信服务器交互的"""

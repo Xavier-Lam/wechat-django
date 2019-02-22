@@ -37,8 +37,9 @@ def search_form(cl):
 
 def delete_selected(modeladmin, request, queryset):
     rv = _delete_selected(modeladmin, request, queryset)
-    modeladmin._update_context(request, rv.context_data)
+    rv and modeladmin._update_context(request, rv.context_data)
     return rv
+delete_selected.short_description = _delete_selected.short_description
 
 
 def has_wechat_permission(request, app, category="", operate="", obj=None):
@@ -125,7 +126,7 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
 
     def get_preserved_filters(self, request):
         with mutable_GET(request) as GET:
-            GET["app_id"] = self.get_app(request).id
+            GET["app_id"] = str(self.get_app(request).id)
             try:
                 return super(WeChatAdmin, self).get_preserved_filters(request)
             finally:

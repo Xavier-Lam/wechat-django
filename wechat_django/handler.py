@@ -54,15 +54,18 @@ class Handler(View):
             return ""
 
     def get(self, request):
-        if not request.wechat.app.interactable():
-            return response.HttpResponseNotFound()
         return request.GET["echostr"]
 
     def post(self, request):
+        if not request.wechat.app.interactable():
+            return response.HttpResponseNotFound()
         request = WeChatMessageInfo.patch_request(request)
         reply = self._handle(request.wechat)
         if reply:
             xml = reply.render()
+            if request.wechat.app.crypto:
+                xml = request.wechat.app.crypto.encrypt_message(
+                    xml, request.GET["nonce"], request.GET["timestamp"])
             return response.HttpResponse(xml, content_type="text/xml")
         return ""
 

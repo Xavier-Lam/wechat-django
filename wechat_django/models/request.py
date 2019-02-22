@@ -88,19 +88,14 @@ class WeChatMessageInfo(WeChatInfo):
             app = self.app
             request = self.request
             raw = self.raw
-            if app.encoding_mode == WeChatApp.EncodingMode.SAFE:
-                crypto = WeChatCrypto(
-                    app.token,
-                    app.encoding_aes_key,
-                    app.appid
-                )
-                raw = crypto.decrypt_message(
+            if app.crypto:
+                self._raw = app.crypto.decrypt_message(
                     self.raw,
                     request.GET["signature"],
                     request.GET["timestamp"],
                     request.GET["nonce"]
                 )
-            self._message = parse_message(raw)
+            self._message = parse_message(self.raw)
         return self._message
 
     @property
@@ -118,6 +113,8 @@ class WeChatMessageInfo(WeChatInfo):
         """原始消息
         :rtype: str
         """
+        if hasattr(self, "_raw"):
+            return self._raw
         return self.request.body
 
 
