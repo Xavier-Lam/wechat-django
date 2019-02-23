@@ -8,7 +8,8 @@ from django.contrib.auth.management import create_permissions
 from django.contrib.auth.models import ContentType, Permission, User
 from django.db import migrations
 
-from wechat_django.models import MessageHandler, Reply, Rule, WeChatApp
+from wechat_django.models import (
+    MessageHandler, MsgLogFlag, Reply, Rule, WeChatApp)
 from wechat_django.models.permission import WECHATPERM_PREFIX
 
 
@@ -52,7 +53,7 @@ def create_data(apps, schema_editor):
     MessageHandler.objects.create_handler(
         app=app,
         name="debug custom reply",
-        log=True,
+        flags=MsgLogFlag.LOG_MESSAGE,
         rules=[Rule(
             type=Rule.Type.CONTAIN,
             pattern="ab"

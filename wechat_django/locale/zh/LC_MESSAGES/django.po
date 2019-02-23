@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-22 11:41+0800\n"
+"POT-Creation-Date: 2019-02-23 13:51+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 
 #: .\admin\article.py:33 .\admin\article.py:35 .\admin\menu.py:44
 msgid "link"
@@ -33,7 +33,8 @@ msgstr "缩略图"
 msgid "material"
 msgstr "素材"
 
-#: .\admin\article.py:75 .\admin\messagehandler.py:59 .\models\article.py:21
+#: .\admin\article.py:75 .\admin\messagehandler.py:88 .\models\article.py:21
+#: .\models\messagelog.py:25
 msgid "content"
 msgstr "内容"
 
@@ -42,48 +43,48 @@ msgstr "内容"
 msgid "%(count)d articles successfully synchronized"
 msgstr "成功同步 %(count)d个图文"
 
-#: .\admin\article.py:95 .\admin\material.py:75 .\admin\menu.py:77
-#: .\admin\messagehandler.py:134
+#: .\admin\article.py:95 .\admin\material.py:76 .\admin\menu.py:77
+#: .\admin\messagehandler.py:163
 #, python-format
 msgid "sync failed with %(exc)s"
 msgstr "同步发生错误: %(exc)s"
 
-#: .\admin\article.py:101 .\admin\material.py:81 .\admin\menu.py:83
-#: .\admin\messagehandler.py:140 .\admin\user.py:57
+#: .\admin\article.py:101 .\admin\material.py:82 .\admin\menu.py:83
+#: .\admin\messagehandler.py:169 .\admin\user.py:57
 msgid "sync"
 msgstr "同步"
 
-#: .\admin\bases.py:317 .\models\app.py:69
+#: .\admin\bases.py:345 .\models\app.py:72
 msgid "WeChat apps"
 msgstr "微信号"
 
-#: .\admin\material.py:32
+#: .\admin\material.py:33
 msgid "preview"
 msgstr "预览"
 
-#: .\admin\material.py:37 .\models\material.py:86
+#: .\admin\material.py:38 .\models\material.py:86
 msgid "update time"
 msgstr "更新时间"
 
-#: .\admin\material.py:62 .\admin\material.py:64
+#: .\admin\material.py:63 .\admin\material.py:65
 msgid "open"
 msgstr "打开"
 
-#: .\admin\material.py:72
+#: .\admin\material.py:73
 #, python-format
 msgid "%(count)d materials successfully synchronized"
 msgstr "成功同步 %(count)d个素材"
 
-#: .\admin\material.py:88
+#: .\admin\material.py:91
 #, python-format
 msgid "delete material failed: %(obj)s"
 msgstr "%(obj)s 素材删除失败!"
 
-#: .\admin\material.py:91
+#: .\admin\material.py:94
 msgid "delete selected"
 msgstr "删除所选"
 
-#: .\admin\menu.py:35 .\admin\messagehandler.py:62 .\models\app.py:38
+#: .\admin\menu.py:35 .\admin\messagehandler.py:91 .\models\app.py:41
 #: .\models\article.py:14
 msgid "title"
 msgstr "标题"
@@ -117,8 +118,8 @@ msgstr "发布"
 msgid "menu key"
 msgstr "菜单KEY值"
 
-#: .\admin\menu.py:133 .\admin\messagehandler.py:58
-#: .\admin\messagehandler.py:65 .\models\article.py:22 .\models\material.py:84
+#: .\admin\menu.py:133 .\admin\messagehandler.py:87
+#: .\admin\messagehandler.py:94 .\models\article.py:22 .\models\material.py:84
 msgid "url"
 msgstr "菜单url"
 
@@ -130,60 +131,65 @@ msgstr "小程序AppId"
 msgid "pagepath"
 msgstr "小程序路径"
 
-#: .\admin\messagehandler.py:23 .\models\messagelog.py:29
+#: .\admin\messagehandler.py:17 .\admin\wechatapp.py:25
+msgid "log messages"
+msgstr "记录消息"
+
+#: .\admin\messagehandler.py:52 .\models\messagelog.py:23
 msgid "message type"
 msgstr "消息类型"
 
-#: .\admin\messagehandler.py:25
+#: .\admin\messagehandler.py:54
 msgid "event"
 msgstr "事件"
 
-#: .\admin\messagehandler.py:27
+#: .\admin\messagehandler.py:56
 msgid "event key"
 msgstr "事件Key值"
 
-#: .\admin\messagehandler.py:28
+#: .\admin\messagehandler.py:57
 msgid "pattern"
 msgstr "匹配模式"
 
-#: .\admin\messagehandler.py:57
+#: .\admin\messagehandler.py:86
 msgid "custom program"
 msgstr "自定义程序"
 
-#: .\admin\messagehandler.py:61 .\models\material.py:82
+#: .\admin\messagehandler.py:90 .\models\material.py:82
 msgid "media_id"
 msgstr "素材id"
 
-#: .\admin\messagehandler.py:63 .\admin\wechatapp.py:31 .\models\app.py:43
+#: .\admin\messagehandler.py:92 .\admin\wechatapp.py:64 .\models\app.py:46
 msgid "description"
 msgstr "描述"
 
-#: .\admin\messagehandler.py:66
+#: .\admin\messagehandler.py:95
 msgid "HQ music url"
 msgstr "高清音乐地址"
 
-#: .\admin\messagehandler.py:67
+#: .\admin\messagehandler.py:96
 msgid "thumb media_id"
 msgstr "缩略图素材id"
 
-#: .\admin\messagehandler.py:101 .\models\messagehandler.py:97
+#: .\admin\messagehandler.py:130 .\admin\messagehandler.py:134
+#: .\models\messagehandler.py:101
 msgid "available"
 msgstr "有效"
 
-#: .\admin\messagehandler.py:131
+#: .\admin\messagehandler.py:160
 #, python-format
 msgid "%(count)d handlers successfully synchronized"
 msgstr "成功同步 %(count)d个自动回复"
 
-#: .\admin\messagehandler.py:145
+#: .\admin\messagehandler.py:174
 msgid "synchronized from wechat"
 msgstr "从微信同步"
 
-#: .\admin\user.py:33 .\models\user.py:49
+#: .\admin\user.py:33 .\models\user.py:61
 msgid "avatar"
 msgstr "头像"
 
-#: .\admin\user.py:38 .\models\user.py:56
+#: .\admin\user.py:38 .\models\user.py:68
 msgid "subscribe time"
 msgstr "关注时间"
 
@@ -205,7 +211,7 @@ msgstr "同步所有"
 msgid "update selected"
 msgstr "更新所选"
 
-#: .\admin\wechatapp.py:36
+#: .\admin\wechatapp.py:69
 msgid "message callback url"
 msgstr "消息回调服务器地址(URL)"
 
@@ -393,59 +399,59 @@ msgstr "支付后关注"
 msgid "ADD_SCENE_OTHERS"
 msgstr "其他"
 
-#: .\models\app.py:39
+#: .\models\app.py:42
 msgid "公众号名称,用于后台辨识公众号"
 msgstr ""
 
-#: .\models\app.py:41 .\models\material.py:83 .\models\menu.py:38
+#: .\models\app.py:44 .\models\material.py:83 .\models\menu.py:38
 #: .\models\messagehandler.py:58
 msgid "name"
 msgstr "名称"
 
-#: .\models\app.py:42
+#: .\models\app.py:45
 msgid "公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"
 msgstr ""
 
-#: .\models\app.py:45
+#: .\models\app.py:48
 msgid "AppId"
 msgstr ""
 
-#: .\models\app.py:46
+#: .\models\app.py:49
 msgid "AppSecret"
 msgstr ""
 
-#: .\models\app.py:47 .\models\material.py:81 .\models\menu.py:44
-#: .\models\reply.py:29 .\models\rule.py:34
+#: .\models\app.py:50 .\models\material.py:81 .\models\menu.py:44
+#: .\models\reply.py:31 .\models\rule.py:34
 msgid "type"
 msgstr "类型"
 
-#: .\models\app.py:52
+#: .\models\app.py:55
 msgid "EncodingAESKey"
 msgstr ""
 
-#: .\models\app.py:54
+#: .\models\app.py:57
 msgid "encoding mode"
 msgstr "消息加密方式"
 
-#: .\models\app.py:57
+#: .\models\app.py:60 .\models\messagehandler.py:67
 msgid "flags"
 msgstr "标志位"
 
-#: .\models\app.py:62 .\models\material.py:90 .\models\menu.py:49
-#: .\models\messagelog.py:36 .\models\rule.py:38 .\models\user.py:68
+#: .\models\app.py:65 .\models\material.py:90 .\models\menu.py:49
+#: .\models\messagelog.py:30 .\models\user.py:80
 msgid "created at"
 msgstr "创建时间"
 
-#: .\models\app.py:63 .\models\material.py:91 .\models\menu.py:50
-#: .\models\user.py:69
+#: .\models\app.py:66 .\models\material.py:91 .\models\menu.py:50
+#: .\models\user.py:81
 msgid "updated at"
 msgstr "最后更新时间"
 
-#: .\models\app.py:68
+#: .\models\app.py:71
 msgid "WeChat app"
 msgstr "微信号"
 
-#: .\models\app.py:113
+#: .\models\app.py:136
 msgid "interactable"
 msgstr "可消息交互"
 
@@ -481,7 +487,7 @@ msgstr "粉丝才可评论"
 msgid "index"
 msgstr "索引"
 
-#: .\models\article.py:35 .\models\user.py:71
+#: .\models\article.py:35 .\models\user.py:83
 msgid "synchronized at"
 msgstr "同步时间"
 
@@ -505,7 +511,8 @@ msgstr "素材"
 msgid "menuid"
 msgstr "菜单id"
 
-#: .\models\menu.py:48 .\models\messagehandler.py:73 .\models\rule.py:37
+#: .\models\menu.py:48 .\models\messagehandler.py:73 .\models\reply.py:35
+#: .\models\rule.py:37
 msgid "weight"
 msgstr "权重"
 
@@ -521,10 +528,6 @@ msgstr "菜单"
 msgid "strategy"
 msgstr "策略"
 
-#: .\models\messagehandler.py:67
-msgid "log"
-msgstr "日志"
-
 #: .\models\messagehandler.py:69
 msgid "starts"
 msgstr "开始时间"
@@ -537,11 +540,11 @@ msgstr "结束时间"
 msgid "enabled"
 msgstr "开启"
 
-#: .\models\messagehandler.py:74
+#: .\models\messagehandler.py:74 .\models\reply.py:36 .\models\rule.py:38
 msgid "created_at"
 msgstr "创建时间"
 
-#: .\models\messagehandler.py:75
+#: .\models\messagehandler.py:75 .\models\reply.py:37 .\models\rule.py:39
 msgid "updated_at"
 msgstr "最后更新时间"
 
@@ -553,19 +556,19 @@ msgstr "自动回复"
 msgid "message handlers"
 msgstr "自动回复"
 
-#: .\models\messagelog.py:27
+#: .\models\messagelog.py:21
 msgid "msgid"
 msgstr "消息id"
 
-#: .\models\messagelog.py:32
+#: .\models\messagelog.py:26
 msgid "direct"
 msgstr "方向"
 
-#: .\models\messagelog.py:39
+#: .\models\messagelog.py:33
 msgid "message log"
 msgstr "消息日志"
 
-#: .\models\messagelog.py:40
+#: .\models\messagelog.py:34
 msgid "message logs"
 msgstr "消息日志"
 
@@ -639,97 +642,98 @@ msgstr "可以同步 %(appname)s 的用户"
 msgid "Can full control %(appname)s"
 msgstr "拥有 %(appname)s 的所有权限"
 
-#: .\models\reply.py:34
+#: .\models\reply.py:40
 msgid "reply"
 msgstr "回复"
 
-#: .\models\reply.py:35
+#: .\models\reply.py:41
 msgid "replies"
 msgstr "回复"
 
-#: .\models\reply.py:185 .\models\reply.py:215
+#: .\models\reply.py:199 .\models\reply.py:229
 msgid "video"
 msgstr "视频"
 
-#: .\models\rule.py:45
+#: .\models\rule.py:46
 msgid "rule"
 msgstr "规则"
 
-#: .\models\rule.py:46
+#: .\models\rule.py:47
 msgid "rules"
 msgstr "规则"
 
-#: .\models\user.py:43
+#: .\models\user.py:55
 msgid "openid"
 msgstr ""
 
-#: .\models\user.py:44
+#: .\models\user.py:56
 msgid "unionid"
 msgstr ""
 
-#: .\models\user.py:46
+#: .\models\user.py:58
 msgid "nickname"
 msgstr "昵称"
 
-#: .\models\user.py:48
+#: .\models\user.py:60
 msgid "gender"
 msgstr "性别"
 
-#: .\models\user.py:50
+#: .\models\user.py:62
 msgid "city"
 msgstr "城市"
 
-#: .\models\user.py:51
+#: .\models\user.py:63
 msgid "province"
 msgstr "省份"
 
-#: .\models\user.py:52
+#: .\models\user.py:64
 msgid "country"
 msgstr "国家"
 
-#: .\models\user.py:53
+#: .\models\user.py:65
 msgid "language"
 msgstr "语言"
 
-#: .\models\user.py:55
+#: .\models\user.py:67
 msgid "is subscribed"
 msgstr "已关注"
 
-#: .\models\user.py:58
+#: .\models\user.py:70
 msgid "subscribe scene"
 msgstr "关注情景"
 
-#: .\models\user.py:60
+#: .\models\user.py:72
 msgid "qr scene"
 msgstr "二维码扫码场景"
 
-#: .\models\user.py:61
+#: .\models\user.py:73
 msgid "qr_scene_str"
 msgstr "二维码扫码场景描述"
 
-#: .\models\user.py:64
+#: .\models\user.py:76
 msgid "WeChat remark"
 msgstr "微信备注"
 
-#: .\models\user.py:65
+#: .\models\user.py:77
 msgid "remark"
 msgstr "备注"
 
-#: .\models\user.py:66
+#: .\models\user.py:78
 msgid "group id"
 msgstr "分组id"
 
-#: .\models\user.py:76
+#: .\models\user.py:88
 msgid "user"
 msgstr "用户"
 
-#: .\models\user.py:77
+#: .\models\user.py:89
 msgid "users"
 msgstr "用户"
 
 #: .\templates\admin\wechat_django\change_form.html:7
 #: .\templates\admin\wechat_django\change_list.html:7
 #: .\templates\admin\wechat_django\delete_confirmation.html:7
+#: .\templates\admin\wechat_django\delete_selected_confirmation.html:6
 #: .\templates\admin\wechat_django\object_history.html:7
 msgid "Home"
 msgstr ""
@@ -741,6 +745,10 @@ msgstr ""
 
 #: .\templates\admin\wechat_django\delete_confirmation.html:11
 msgid "Delete"
+msgstr ""
+
+#: .\templates\admin\wechat_django\delete_selected_confirmation.html:9
+msgid "Delete multiple objects"
 msgstr ""
 
 #: .\templates\admin\wechat_django\object_history.html:11

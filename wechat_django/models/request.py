@@ -91,7 +91,7 @@ class WeChatMessageInfo(WeChatInfo):
             if app.crypto:
                 self._raw = app.crypto.decrypt_message(
                     self.raw,
-                    request.GET["signature"],
+                    request.GET["msg_signature"],
                     request.GET["timestamp"],
                     request.GET["nonce"]
                 )

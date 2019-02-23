@@ -7,9 +7,42 @@ from django.template.defaultfilters import truncatechars
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from ..models import WeChatApp
+from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
 from .bases import has_wechat_permission
+
+
+class WeChatAppForm(forms.ModelForm):
+    class Meta(object):
+        model = WeChatApp
+        fields = "__all__"
+        widgets = dict(
+            appsecret=forms.PasswordInput(render_value=True),
+            encoding_aes_key=forms.PasswordInput(render_value=True)
+        )
+
+    log_message = forms.BooleanField(
+        label=_("log messages"), initial=False, required=False)
+
+    def __init__(self, *args, **kwargs):
+        inst = kwargs.get("instance")
+        if inst:
+            initial = kwargs.get("initial", {})
+            initial["log_message"] = inst.log_message
+            kwargs["initial"] = initial
+        return super(WeChatAppForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(WeChatAppForm, self).clean()
+        if cleaned_data.get("log_message"):
+            cleaned_data["flags"] = MsgLogFlag.LOG_MESSAGE
+        else:
+            cleaned_data["flags"] = 0
+        return cleaned_data
+
+    def save(self, commit=True):
+        self.instance.flags = self.cleaned_data["flags"]
+        return super(WeChatAppForm, self).save(commit)
 
 
 class WeChatAppAdmin(admin.ModelAdmin):
@@ -22,8 +55,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
     fields = (
         "title", "name", "appid", "appsecret", "type", "token",
-        "encoding_aes_key", "encoding_mode", "desc", "callback",
-        "created_at", "updated_at"
+        "encoding_aes_key", "encoding_mode", "desc", "log_message",
+        "callback", "created_at", "updated_at"
     )
 
     def short_desc(self, obj):
@@ -81,14 +114,5 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def get_model_perms(self, request):
         return ({} if request.resolver_match.kwargs.get("app_id")
             else super(WeChatAppAdmin, self).get_model_perms(request))
-
-    class WeChatAppForm(forms.ModelForm):
-        class Meta(object):
-            model = WeChatApp
-            fields = "__all__"
-            widgets = dict(
-                appsecret=forms.PasswordInput(render_value=True),
-                encoding_aes_key=forms.PasswordInput(render_value=True)
-            )
 
     form = WeChatAppForm

@@ -30,12 +30,17 @@ class Reply(m.Model):
     type = m.CharField(
         _("type"), db_column="type", max_length=16,
         choices=enum2choices(MsgType))
-    # TODO: 增加权重
     _content = JSONField(db_column="content", default=dict)
+
+    weight = m.IntegerField(_("weight"), default=0, null=False)
+    created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated_at"), auto_now=True)
 
     class Meta(object):
         verbose_name = _("reply")
         verbose_name_plural = _("replies")
+
+        ordering = ("-weight", "id")
 
     @property
     def app(self):

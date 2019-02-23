@@ -35,7 +35,8 @@ class Rule(m.Model):
     _content = JSONField(db_column="content", blank=True)  # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
-    created_at = m.DateTimeField(_("created at"), auto_now_add=True)
+    created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
+    updated_at = m.DateTimeField(_("updated_at"), auto_now=True)
 
     @property
     def content(self):
@@ -45,7 +46,7 @@ class Rule(m.Model):
         verbose_name = _("rule")
         verbose_name_plural = _("rules")
 
-        ordering = ("-weight", )
+        ordering = ("-weight", "id")
 
     def __init__(self, *args, **kwargs):
         field_names = set(map(lambda f: f.name, self._meta.fields))

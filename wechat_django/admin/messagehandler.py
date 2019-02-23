@@ -7,9 +7,38 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import MessageHandler, Reply, Rule, WeChatApp
+from ..models import MessageHandler, MsgLogFlag, Reply, Rule, WeChatApp
 from ..utils.admin import enum2choices
 from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
+
+
+class MessageHandlerForm(forms.ModelForm):
+    log_message = forms.BooleanField(
+        label=_("log messages"), initial=False, required=False)
+
+    class Meta(object):
+        model = MessageHandler
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        inst = kwargs.get("instance")
+        if inst:
+            initial = kwargs.get("initial", {})
+            initial["log_message"] = inst.log_message
+            kwargs["initial"] = initial
+        return super(MessageHandlerForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(MessageHandlerForm, self).clean()
+        if cleaned_data.get("log_message"):
+            cleaned_data["flags"] = MsgLogFlag.LOG_MESSAGE
+        else:
+            cleaned_data["flags"] = 0
+        return cleaned_data
+
+    def save(self, commit=True):
+        self.instance.flags = self.cleaned_data["flags"]
+        return super(MessageHandlerForm, self).save(commit)
 
 
 class RuleInline(admin.StackedInline):
@@ -120,7 +149,7 @@ class MessageHandlerAdmin(WeChatAdmin):
     search_fields = ("name", "rules__content", "replies__content")
 
     inlines = (RuleInline, ReplyInline)
-    fields = ("name", "strategy", "starts", "ends", "enabled", "log",
+    fields = ("name", "strategy", "starts", "ends", "enabled", "log_message",
         "weight", "created_at", "updated_at")
 
     def sync(self, request, queryset):
@@ -169,3 +198,5 @@ class MessageHandlerAdmin(WeChatAdmin):
         obj.src = MessageHandler.Source.SELF
         return super(MessageHandlerAdmin, self).save_model(
             request, obj, form, change)
+
+    form = MessageHandlerForm

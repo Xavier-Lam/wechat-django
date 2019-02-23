@@ -2,7 +2,7 @@
 # flake8: noqa
 from __future__ import unicode_literals
 
-from .constants import MsgType
+from .constants import MsgLogFlag, MsgType
 from .permission import permissions
 
 from .app import WeChatApp

@@ -16,7 +16,6 @@ from . import WeChatApp
 
 class WeChatUserManager(m.Manager):
     def get_by_openid(self, app, openid, ignore_errors=False):
-        # TODO: cache
         try:
             return self.get(app=app, openid=openid)
         except self.model.DoesNotExist:

@@ -13,11 +13,13 @@ from wechatpy.crypto import WeChatCrypto
 
 from .. import settings
 from ..utils.admin import enum2choices
+from . import MsgLogFlag
 from .permission import get_perm_desc, list_perm_names
 
 
 class WeChatAppManager(m.Manager):
     def get_by_name(self, name):
+        # TODO: cache
         return self.get(name=name)
 
     def get_by_id(self, id):
@@ -44,7 +46,7 @@ class WeChatApp(m.Model):
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
-    appsecret = m.CharField(_("AppSecret"), max_length=64, null=True)
+    appsecret = m.CharField(_("AppSecret"), max_length=64, blank=True, null=True)
     type = m.PositiveSmallIntegerField(_("type"), default=Type.SERVICEAPP,
         choices=enum2choices(Type))
 
@@ -68,6 +70,14 @@ class WeChatApp(m.Model):
     class Meta(object):
         verbose_name = _("WeChat app")
         verbose_name_plural = _("WeChat apps")
+
+    @property
+    def log_message(self):
+        return bool(self.flags & MsgLogFlag.LOG_MESSAGE)
+
+    @property
+    def log_reply(self):
+        return bool(self.flags & MsgLogFlag.LOG_REPLY)
 
     @property
     def client(self):

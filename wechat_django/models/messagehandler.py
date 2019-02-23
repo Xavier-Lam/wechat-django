@@ -12,7 +12,7 @@ from wechatpy.exceptions import WeChatClientException
 from ..exceptions import MessageHandleError
 from ..utils.admin import enum2choices
 from ..utils.web import get_ip
-from . import WeChatApp
+from . import MsgLogFlag, WeChatApp
 
 
 class MessageHandlerManager(m.Manager):
@@ -63,8 +63,8 @@ class MessageHandler(m.Model):
     ), default=Source.SELF, editable=False)
     strategy = m.CharField(_("strategy"), max_length=10,
         choices=enum2choices(ReplyStrategy), default=ReplyStrategy.REPLYALL)
-    # TODO: 改为flags
-    log = m.BooleanField(_("log"), default=False)
+
+    flags = m.IntegerField(_("flags"), default=False)
 
     starts = m.DateTimeField(_("starts"), null=True, blank=True)
     ends = m.DateTimeField(_("ends"), null=True, blank=True)
@@ -84,6 +84,10 @@ class MessageHandler(m.Model):
         index_together = (
             ("app", "weight", "created_at"),
         )
+
+    @property
+    def log_message(self):
+        return bool(self.flags & MsgLogFlag.LOG_MESSAGE)
 
     def available(self):
         if not self.enabled:

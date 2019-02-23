@@ -116,7 +116,7 @@ class Handler(View):
 
         handler = handlers[0]
         reply = handler.reply(message_info)
-        if handler.log:
+        if handler.log_message or message_info.app.log_message:
             MessageLog.from_message_info(message_info)
         if not reply or isinstance(reply, replies.EmptyReply):
             return None

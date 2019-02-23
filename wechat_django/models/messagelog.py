@@ -11,12 +11,6 @@ from . import Rule, WeChatApp, WeChatUser
 
 
 class MessageLog(m.Model):
-    class Flag(object):
-        LOG_REQUEST = 0x01
-        LOG_REQUEST_RAW = 0x02
-        LOG_RESPONSE = 0x04
-        LOG_RESPONSE_RAW = 0x08
-
     class Direct(object):
         USER2APP = False
         APP2USER = True
@@ -28,7 +22,7 @@ class MessageLog(m.Model):
     type = m.CharField(
         _("message type"), max_length=24,
         choices=enum2choices(Rule.ReceiveMsgType))
-    content = JSONField()
+    content = JSONField(_("content"))
     direct = m.BooleanField(_("direct"), default=Direct.USER2APP)
 
     raw = m.TextField(null=True, blank=True, default=None)
