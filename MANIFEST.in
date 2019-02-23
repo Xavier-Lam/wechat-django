@@ -1,4 +1,8 @@
+recursive-include wechat_django/locale *.[pm]o
 recursive-include wechat_django/static *
 recursive-include wechat_django/templates *
+include LICENSE
+include MANIFEST.in
 include README.md
 include requirements.txt
+include runtests.py

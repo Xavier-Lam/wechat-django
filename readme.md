@@ -1,16 +1,39 @@
 # WeChat-Django
 
+[![PyPI](https://img.shields.io/pypi/v/wechat-django.svg)](https://pypi.org/project/wechat-django)
+
 **WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的[后台管理支持](docs/admin.md).
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
 本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
 
-目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,只在*python3.4 django-1.11, python2.7 django-1.11, python3.4 django-2.0* 下进行了一部分简单的徒手测试.
+目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,并进行了一部分简单的徒手测试.
 
 0.1.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
 
-[TOC]
+目录
+======
+
+- [功能](#功能)
+- [安装及配置](#安装及配置)
+  - [初次安装](#初次安装)
+  - [直接加入项目](#直接加入项目)
+  - [更新](#更新)
+  - [配置](#配置)
+  - [日志](#日志)
+  - [注意事项](#注意事项)
+- [部分功能使用说明](#部分功能使用说明)
+  - [网页授权](#网页授权)
+  - [主动调用微信api](#主动调用微信api)
+  - [自定义微信回复](#自定义微信回复)
+- [后台使用简介](#后台使用简介)
+- [示例项目](#示例项目)
+- [TODOS:](#todos)
+  - [计划的功能](#计划的功能)
+  - [已知bug](#已知bug)
+- [ChangeLog](#changelog)
+  - [0.1.0](#010)
 
 ## 功能
 * 公众号管理
@@ -26,7 +49,7 @@
 
 ## 安装及配置
 ### 初次安装
-1. 安装**pip install wechat-django[cryptography]** 或 **pip install wechat-django[pycrypto]**
+1. 运行**pip install wechat-django[cryptography]** 或 **pip install wechat-django[pycrypto]** 安装
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
 4. 在urls.py 中引入wechat_django.urls, 将其配置到urlpatterns中
@@ -34,9 +57,7 @@
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
 
 ### 直接加入项目
-如果想将拓展安装到自己的项目下,并且自己改写本拓展,可采用pip install -e 安装
-1. 在你的项目的根目录运行**pip install -e git+https://github.com/Xavier-Lam/wechat-django#egg=wechat-django[cryptography] --src ./wechat_django**
-2. 执行上述2-4
+想使用最新特性或是自行编辑代码,可clone本项目后,采用pip install -e 直接安装到你的django项目目录
 
 ### 更新
 1. 运行**pip install -U wechat-django**
@@ -125,8 +146,14 @@
 * 回复及一些查询缓存
 * 菜单导入导出
 
+### 已知bug
+
 ## ChangeLog
 ### 0.1.0
+* 公众号管理及基本用法封装
+* 用户,自动回复,菜单,永久素材,图文的基本管理
+* 微信网页授权
+* 后台权限
 
 
 Xavier-Lam@NetDragon
