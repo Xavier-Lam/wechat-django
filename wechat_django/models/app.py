@@ -128,7 +128,7 @@ class WeChatApp(m.Model):
 
     def interactable(self):
         """可与微信服务器交互的"""
-        rv = self.appsecret and self.token
+        rv = self.token
         if self.encoding_mode == self.EncodingMode.SAFE:
             rv = rv and self.encoding_aes_key
         return bool(rv)

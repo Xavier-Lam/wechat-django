@@ -27,6 +27,8 @@ class Handler(View):
         """
         :type request: wechat_django.models.request.WeChatMessageRequest
         """
+        if not request.wechat.app.interactable():
+            return response.HttpResponseNotFound()
         log = MessageHandler.handlerlog(request)
         try:
             self._verify(request)
@@ -57,8 +59,6 @@ class Handler(View):
         return request.GET["echostr"]
 
     def post(self, request):
-        if not request.wechat.app.interactable():
-            return response.HttpResponseNotFound()
         request = WeChatMessageInfo.patch_request(request)
         reply = self._handle(request.wechat)
         if reply:
