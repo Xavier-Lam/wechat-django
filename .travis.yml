@@ -1,0 +1,25 @@
+dist: xenial
+
+language: python
+
+matrix:
+  include:
+    - env: TOX_ENV=py27-django111
+      python: "2.7"
+    - env: TOX_ENV=py34-django111,py34-django20
+      python: "3.4"
+    - env: TOX_ENV=py35-django111,py35-django20,py35-django21
+      python: "3.5"
+    - env: TOX_ENV=py36-django111,py36-django20,py36-django21
+      python: "3.6"
+    - env: TOX_ENV=py37-django111,py37-django20,py37-django21
+      python: "3.7"
+
+branches:
+  only:
+    - master
+
+install:
+  - pip install tox
+
+script: tox . -e $TOX_ENV

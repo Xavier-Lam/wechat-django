@@ -53,7 +53,8 @@ class wechat_auth(object):
         if isinstance(scope, six.text_type):
             scope = (scope,)
 
-        assert appname and isinstance(appname, str), "incorrect appname"
+        assert appname and isinstance(appname, six.text_type),\
+            "incorrect appname"
         assert (
             response is None or callable(response)
             or isinstance(response, HttpResponse)

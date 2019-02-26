@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 import wechat_django
 
-with open("readme.md", "rb") as f:
+with open("README.md", "rb") as f:
     long_description = f.read().decode("utf-8")
 
 with open("requirements.txt") as f:

@@ -1,8 +1,9 @@
 # WeChat-Django
 
 [![PyPI](https://img.shields.io/pypi/v/wechat-django.svg)](https://pypi.org/project/wechat-django)
+[![Build Status](https://travis-ci.org/Xavier-Lam/wechat-django.svg?branch=master)](https://travis-ci.org/Xavier-Lam/wechat-django)
 
-**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的[后台管理支持](docs/admin.md).
+**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的[**后台管理支持**](docs/admin.md).
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 

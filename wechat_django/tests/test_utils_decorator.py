@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.http import response
 from django.urls import reverse
+from django.urls.resolvers import get_ns_resolver
 
 from .. import urls
 from ..decorators import wechat_route
@@ -19,6 +20,9 @@ class UtilDecoratorTestCase(WeChatTestCase):
         api2 = "api2/"
         name = "test1"
         wechat_route(api2, methods=["POST"], name=name)(test)
+
+        # python2.7在linux下会走到cache 非常的神奇..
+        get_ns_resolver.cache_clear()
 
         fullurl = "/wechat/" + self.app.name + "/" + api1
         url = reverse(

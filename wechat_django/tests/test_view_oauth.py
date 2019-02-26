@@ -272,7 +272,10 @@ class OAuthTestCase(WeChatTestCase):
     def test_classbased_view(self):
         """测试class based view与decorate是否一致"""
         def make_class(attrs=None, initKwargs=None):
-            cls = type("test", (WeChatOAuthView,), attrs or {})
+            try:
+                cls = type("test", (WeChatOAuthView,), attrs or {})
+            except:
+                cls = type(b"test", (WeChatOAuthView,), attrs or {})
             return cls(**initKwargs or {})
 
         def assertAuthInfoEqual(**kwargs):
