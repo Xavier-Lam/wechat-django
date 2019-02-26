@@ -5,13 +5,14 @@ import logging
 
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
+from django.views import View
 import six
 from wechatpy import WeChatOAuthException
 
 from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
 from .utils.web import auto_response, get_params
 
-__all__ = ("wechat_auth", "WeChatOAuthHandler", "WeChatSNSScope")
+__all__ = ("wechat_auth", "WeChatOAuthView", "WeChatSNSScope")
 
 
 class wechat_auth(object):
@@ -52,10 +53,11 @@ class wechat_auth(object):
         if isinstance(scope, six.text_type):
             scope = (scope,)
 
+        assert appname and isinstance(appname, str), "incorrect appname"
         assert (
             response is None or callable(response)
             or isinstance(response, HttpResponse)
-        ), "incorrect response"
+        ), "incorrect response param"
         for s in scope:
             assert s in (WeChatSNSScope.BASE, WeChatSNSScope.USERINFO),\
                 "incorrect scope"
@@ -75,7 +77,7 @@ class wechat_auth(object):
         )
 
     def __call__(self, view):
-        return WeChatOAuthHandler(self, view)
+        return WeChatOAuthView(self, view)
 
     def __str__(self):
         return "<wechat_auth appname: {appname} scope: {scope}>".format(
@@ -84,15 +86,74 @@ class wechat_auth(object):
         )
 
 
-class WeChatOAuthHandler(object):
-    oauth_info = None
+class WeChatOAuthView(View):
+    @property
+    def oauth_info(self):
+        """:rtype: wechat_django.oauth.wechat_auth"""
+        if not self._oauth_info:
+            self._oauth_info = wechat_auth(
+                self.appname, scope=self.scope, state=self.state,
+                redirect_uri=self.redirect_uri, required=self.required,
+                response=self.response)
+        return self._oauth_info
 
-    def __init__(self, oauth_info, view):
+    #region class based view properties
+    appname = None
+    """
+    微信appname 必填
+    """
+
+    scope = (WeChatSNSScope.BASE,)
+    """
+    :type: str or iterable
+    微信授权的scope 默认WeChatSNSScope.BASE
+    """
+
+    redirect_uri = None
+    """
+    未授权时的重定向地址 当未设置response时将自动执行授权
+    当ajax请求时默认取referrer 否则取当前地址
+    注意 请不要在地址上带有code及state参数 否则可能引发问题
+    """
+
+    state = ""
+    """
+    :type: str or Callable[
+        [
+            django.http.request.HttpRequest,
+            *args,
+            **kwargs
+        ],
+        str
+    ]
+    授权时需要携带的state
+    """
+
+    required = True
+    """真值必须授权 否则不授权亦可继续访问(只检查session)"""
+
+    response = None
+    """
+    :type: django.http.response.HttpResponse or Callable[
+        [
+            django.http.request.HttpRequest,
+            *args,
+            **kwargs
+        ],
+        django.http.response.HttpResponse
+    ]
+    """
+    #endregion
+
+
+    def __init__(self, oauth_info=None, view=None, **kwargs):
         """
         :type oauth_info: wechat_django.oauth.wechat_auth
         """
-        self.oauth_info = oauth_info
-        self.get = view
+        self._oauth_info = oauth_info
+        if view:
+            self.get = view
+        super(WeChatOAuthView, self).__init__(**kwargs)
 
     def dispatch(self, request, *args, **kwargs):
         self._patch_request(request)
@@ -129,13 +190,17 @@ class WeChatOAuthHandler(object):
         if self.oauth_info.required and not wechat.openid:
             return self.unauthorization_response(request, *args, **kwargs)
 
-        response = self.get(request, *args, **kwargs)
+        response = super(WeChatOAuthView, self).dispatch(
+            request, *args, **kwargs)
         response = auto_response(response)
         wechat.openid and response.set_signed_cookie(
             wechat.session_key, wechat.openid)
         return response
 
     def auth(self):
+        """执行微信授权 返回微信接口响应的json数据
+        :rtype: dict
+        """
         # 检查code有效性
         app = self.request.wechat.app
         code = get_params(self.request, "code")
@@ -178,5 +243,7 @@ class WeChatOAuthHandler(object):
             scope=info.scope,
             state=state
         )
+        self.args = args
+        self.kwargs = kwargs
 
     __call__ = dispatch

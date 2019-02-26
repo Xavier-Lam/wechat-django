@@ -100,6 +100,8 @@
 
 对于默认重定向行为不满意的,可以自定义response,具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
 
+对于class based view,可继承`wechat_django.oauth.WeChatOAuthView`类,具体参见代码
+
 
 ### 主动调用微信api
     from wechat_django.models import WeChatApp

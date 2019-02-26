@@ -11,7 +11,7 @@ from django.utils.http import urlencode
 from six.moves.urllib.parse import parse_qsl, urlparse
 
 from ..models import WeChatUser
-from ..oauth import wechat_auth, WeChatOAuthHandler, WeChatSNSScope
+from ..oauth import wechat_auth, WeChatOAuthView, WeChatSNSScope
 from ..patches import WeChatOAuth
 from .bases import WeChatTestCase
 from .interceptors import common_interceptor
@@ -174,7 +174,7 @@ class OAuthTestCase(WeChatTestCase):
 
     #     decorator = wechat_auth(self.app.name)
     #     view = lambda request, *args, **kwargs: ""
-    #     handler = WeChatOAuthHandler(decorator, view)
+    #     handler = WeChatOAuthView(decorator, view)
     #     rf = RequestFactory(HTTP_HOST=host)
     #     request = rf.get(path + "?" + urlencode(dict(
     #         code=code,
@@ -269,6 +269,43 @@ class OAuthTestCase(WeChatTestCase):
         resp = handler.dispatch(request)
         self.assertEqual(resp.content, openid.encode())
 
+    def test_classbased_view(self):
+        """测试class based view与decorate是否一致"""
+        def make_class(attrs=None, initKwargs=None):
+            cls = type("test", (WeChatOAuthView,), attrs or {})
+            return cls(**initKwargs or {})
+
+        def assertAuthInfoEqual(**kwargs):
+            class_based = make_class(attrs=kwargs)
+            class_based_init = make_class(initKwargs=kwargs)
+            decorator_based = wechat_auth(**kwargs)(lambda request: None)
+            oauth_info = decorator_based.oauth_info
+            c_info = class_based.oauth_info
+            ci_info = class_based_init.oauth_info
+            self.assertEqual(oauth_info.appname, c_info.appname)
+            self.assertEqual(oauth_info.scope, c_info.scope)
+            self.assertEqual(oauth_info._redirect_uri, c_info._redirect_uri)
+            self.assertEqual(oauth_info.required, c_info.required)
+            self.assertEqual(oauth_info.response, c_info.response)
+            self.assertEqual(oauth_info.state, c_info.state)
+
+            self.assertEqual(oauth_info.appname, ci_info.appname)
+            self.assertEqual(oauth_info.scope, ci_info.scope)
+            self.assertEqual(oauth_info._redirect_uri, ci_info._redirect_uri)
+            self.assertEqual(oauth_info.required, ci_info.required)
+            self.assertEqual(oauth_info.response, ci_info.response)
+            self.assertEqual(oauth_info.state, ci_info.state)
+
+        assertAuthInfoEqual(appname=self.app.name)
+        assertAuthInfoEqual(
+            appname=self.app.name, scope=WeChatSNSScope.USERINFO)
+        assertAuthInfoEqual(
+            appname=self.app.name, redirect_uri="https://mp.weixin.qq.com/")
+        assertAuthInfoEqual(appname=self.app.name, state="state")
+        assertAuthInfoEqual(appname=self.app.name, required=False)
+        assertAuthInfoEqual(
+            appname=self.app.name, response=response.HttpResponse())
+
     def test_view(self):
         """测试view是否正常"""
         args = "t"
@@ -303,6 +340,6 @@ class OAuthTestCase(WeChatTestCase):
         view = kwargs.pop("view", lambda request, *args, **kwargs: "")
         appname = appname or self.app.name
         decorator = wechat_auth(appname, **kwargs)
-        handler = WeChatOAuthHandler(decorator, view)
+        handler = WeChatOAuthView(decorator, view)
         handler._patch_request(request)
         return handler
