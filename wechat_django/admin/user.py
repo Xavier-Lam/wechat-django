@@ -1,14 +1,35 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import messages
+from django import forms
+from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
-from ..models import WeChatUser
+from ..models import UserTag, WeChatUser
 from .bases import register_admin, WeChatAdmin
+
+
+class UserForm(forms.ModelForm):
+    tags = forms.ModelMultipleChoiceField(
+        UserTag.objects.all(),
+        widget=admin.widgets.FilteredSelectMultiple(_("tags"), False),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.initial["tags"] = self.instance.tags.values_list(
+                "pk", flat=True)
+
+    def save(self, *args, **kwargs):
+        instance = super(UserForm, self).save(*args, **kwargs)
+        if instance.pk:
+            instance.tags.set(self.cleaned_data["tags"], clear=False)
+        return instance
 
 
 @register_admin(WeChatUser)
@@ -25,7 +46,7 @@ class WeChatUserAdmin(WeChatAdmin):
         "avatar", "nickname", "openid", "unionid", "sex", "city", "province",
         "country", "language", "subscribe", "subscribetime",
         "subscribe_scene", "qr_scene", "qr_scene_str", "remark", "comment",
-        "groupid", "created_at", "updated_at")
+        "tags", "group", "created_at", "updated_at")
 
     @mark_safe
     def avatar(self, obj):
@@ -70,8 +91,22 @@ class WeChatUserAdmin(WeChatAdmin):
             del actions['delete_selected']
         return actions
 
+    form = UserForm
+
+    def get_form(self, request, obj=None, **kwargs):
+        # 过滤只显示自己app的标签 并过滤系统标签
+        app = self.get_app(request)
+        form = super(WeChatUserAdmin, self).get_form(request, obj, **kwargs)
+        tags_field = form.declared_fields["tags"]
+
+        tags_field.queryset = (tags_field.queryset
+            .filter(app=app)
+            .exclude(id__in=UserTag.SYS_TAGS))
+        return form
+
     def get_readonly_fields(self, request, obj=None):
-        return tuple(o for o in self.fields if o not in ("remark", "comment"))
+        return tuple(o for o in self.fields if o not in (
+            "remark", "tags", "comment"))
 
     def save_model(self, request, obj, form, change):
         if "remark" in form.changed_data:
@@ -84,3 +119,4 @@ class WeChatUserAdmin(WeChatAdmin):
 
     def has_add_permission(self, request):
         return False
+

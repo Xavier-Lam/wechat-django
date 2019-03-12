@@ -91,6 +91,14 @@ class WeChatUser(m.Model):
         ordering = ("app", "-created_at")
         unique_together = (("app", "openid"), ("app", "unionid"))
 
+    @property
+    def group(self):
+        from . import UserTag
+        try:
+            return UserTag.objects.get(app=self.app, id=self.groupid).name
+        except UserTag.DoesNotExist:
+            return None
+
     def avatar(self, size=132):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
@@ -134,6 +142,7 @@ class WeChatUser(m.Model):
     def fetch_users(cls, app, openids):
         fields = set(map(lambda o: o.name, cls._meta.fields))
         # TODO: 根据当前语言拉取用户数据
+        # TODO: 拉取标签数据
         update_dicts = map(
             lambda o: {k: v for k, v in o.items() if k in fields},
             app.client.user.get_batch(openids)

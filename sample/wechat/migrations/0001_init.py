@@ -82,7 +82,7 @@ def delete_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("wechat_django", "__latest__")
+        ("wechat_django", "0001_init")
     ]
 
     operations = [

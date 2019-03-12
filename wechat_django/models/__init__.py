@@ -7,6 +7,7 @@ from .permission import permissions
 
 from .app import WeChatApp
 from .user import WeChatUser
+from .usertag import UserTag
 from .request import WeChatInfo, WeChatMessageInfo, WeChatOAuthInfo, WeChatSNSScope
 from .material import Material
 from .article import Article

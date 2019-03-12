@@ -34,6 +34,8 @@ permissions = {
     "messagelog": _("Can view %(appname)s message logs"),
     "user": _("Can edit %(appname)s users"),
     "user_sync": _("Can sync %(appname)s users"),
+    "usertag": _("Can edit %(appname)s user tags"),
+    "usertag_sync": _("Can sync %(appname)s user tags"),    
 }
 
 permission_required = {
@@ -173,3 +175,7 @@ def match_permission(perm_name):
         return match.group("appname"), match.group("permission")
     else:
         return None, None
+
+
+def migrate_permissions(permissions):
+    pass

@@ -8,6 +8,7 @@ from . import ( # NOQA
     bases,
     wechatapp,
     user,
+    usertag,
     menu,
     messagehandler,
     messagelog,
