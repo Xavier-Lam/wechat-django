@@ -17,6 +17,21 @@ from . import MsgLogFlag
 from .permission import get_perm_desc, list_perm_names
 
 
+class Abilities(object):
+    """微信号能力"""
+
+    def __init__(self, app=None):
+        self._app = app
+
+    @property
+    def interactable(self):
+        """是否可与微信进行消息交互"""
+        rv = self._app.token
+        if self._app.encoding_mode == WeChatApp.EncodingMode.SAFE:
+            rv = rv and self._app.encoding_aes_key
+        return bool(rv)
+
+
 class WeChatAppManager(m.Manager):
     def get_by_name(self, name):
         # TODO: cache
@@ -27,6 +42,11 @@ class WeChatAppManager(m.Manager):
 
 
 class WeChatApp(m.Model):
+    def __new__(cls, *args, **kwargs):
+        self = super(WeChatApp, cls).__new__(cls)
+        self.abilities = Abilities(self)
+        return self
+
     class EncodingMode(object):
         PLAIN = 0
         # BOTH = 1
@@ -66,6 +86,8 @@ class WeChatApp(m.Model):
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
     objects = WeChatAppManager()
+
+    abilities = Abilities()
 
     class Meta(object):
         verbose_name = _("WeChat app")
@@ -118,22 +140,13 @@ class WeChatApp(m.Model):
     def crypto(self):
         if not hasattr(self, "_crypto"):
             self._crypto = (self.encoding_mode == self.EncodingMode.SAFE
-                and self.interactable() 
+                and self.abilities.interactable 
                 and WeChatCrypto(
                     self.token,
                     self.encoding_aes_key,
                     self.appid
                 )) or None
         return self._crypto
-
-    def interactable(self):
-        """可与微信服务器交互的"""
-        rv = self.token
-        if self.encoding_mode == self.EncodingMode.SAFE:
-            rv = rv and self.encoding_aes_key
-        return bool(rv)
-    interactable.boolean = True
-    interactable.short_description = _("interactable")
 
     def __str__(self):
         return "{title} ({name})".format(title=self.title, name=self.name)

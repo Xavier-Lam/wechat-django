@@ -68,6 +68,12 @@ class WeChatAppAdmin(admin.ModelAdmin):
             "wechat_django:handler", kwargs=dict(appname=obj.name)))
     callback.short_description = _("message callback url")
 
+    def interactable(self, obj):
+        """可与微信服务器交互的"""
+        return obj.abilities.interactable
+    interactable.boolean = True
+    interactable.short_description = _("interactable")
+
     def get_fields(self, request, obj=None):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
         if not obj:

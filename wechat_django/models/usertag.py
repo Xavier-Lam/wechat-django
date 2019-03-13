@@ -23,7 +23,8 @@ class UserTag(m.Model):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta(object):
-        unique_together = (("app", "name"), ("app", "id"))
+        unique_together = (("app", "id"), )
+        index_together = (("app", "name"), )
         ordering = ("app", "id")
 
     def sys_tag(self):
@@ -63,6 +64,10 @@ class UserTag(m.Model):
             # 这时这名用户会被认为是tag b的用户
             return rv
 
+    def sync_users(self):
+        """同步该标签下的所有用户"""
+        pass
+
     def save(self, *args, **kwargs):
         # 保存之前 先创建标签
         if not kwargs.get("force_insert"):
@@ -77,6 +82,17 @@ class UserTag(m.Model):
         return super(UserTag, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        take = 50
+        limit = 100000
+        count = self.users.count()
+        if count > limit:
+            # 当count 当于100,000时 要先untag users
+            diff = count - limit
+            for i in range(0, diff, take):
+                # 每次只能至多untag 50条记录
+                users = self.users.all()[:50]
+                self.users.remove(users)
+
         self.app.client.tag.delete(self.id)
         return super(UserTag, self).delete(*args, **kwargs)
 
@@ -87,7 +103,7 @@ class UserTag(m.Model):
 @receiver(m.signals.m2m_changed, sender=UserTag.users.through)
 def tag_user_changed(sender, instance, action, *args, **kwargs):
     """给某个标签添加多个用户 TODO: 同步及整个删除tag时应避免"""
-    if not getattr(sender, "_tag_local", False):
+    if not kwargs["reverse"] and not getattr(instance, "_tag_local", False):
         users = WeChatUser.objects.filter(id__in=kwargs["pk_set"]).all()
         openids = [user.openid for user in users]
         client = instance.app.client.tag
@@ -97,14 +113,15 @@ def tag_user_changed(sender, instance, action, *args, **kwargs):
             client.untag_user(instance.id, openids)
 
 
-# @receiver(m.signals.m2m_changed, sender=WeChatUser.tags.through)
-# def user_tag_changed(sender, instance, action, *args, **kwargs):
-#     """给某个用户添加多个标签"""
-#     tags = UserTag.objects.filter(_id__in=kwargs["pk_set"]).all()
-#     tag_ids = [tag.id for tag in tags]
-#     client = instance.app.client.tag
-#     for tag in tags:
-#         if action == "pre_add":
-#             client.tag_user(tag.id, instance.openid)
-#         elif action == "pre_remove":
-#             client.untag_user(tag.id, instance.openid)
+@receiver(m.signals.m2m_changed, sender=WeChatUser.tags.through)
+def user_tag_changed(sender, instance, action, *args, **kwargs):
+    """给某个用户添加多个标签"""
+    if kwargs["reverse"] and not getattr(instance, "_tag_local", False):
+        tags = UserTag.objects.filter(_id__in=kwargs["pk_set"]).all()
+        tag_ids = [tag.id for tag in tags]
+        client = instance.app.client.tag
+        for tag in tags:
+            if action == "pre_add":
+                client.tag_user(tag.id, instance.openid)
+            elif action == "pre_remove":
+                client.untag_user(tag.id, instance.openid)

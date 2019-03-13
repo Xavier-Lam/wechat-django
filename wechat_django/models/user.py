@@ -118,20 +118,24 @@ class WeChatUser(m.Model):
             first_openid = app.ext_info.get("last_openid", None)
 
         for openids in cls._iter_followers_list(app, first_openid):
-            if detail:
-                users.extend(cls.fetch_users(app, openids))
-            else:
-                with transaction.atomic():
-                    users.extend(
-                        cls.objects.update_or_create(o, **o)[0]
-                        for o in map(lambda openid: dict(
-                            app=app, openid=openid
-                        ), openids)
-                    )
+            users.extend(cls._upsert_by_openids(app, openids, detail))
             # 更新最后更新openid
             app.ext_info["last_openid"] = openids[-1]
             app.save()
         return users
+
+    @classmethod
+    def _upsert_by_openids(cls, app, openids, detail=True):
+        if detail:
+            return cls.fetch_users(app, openids)
+        else:
+            with transaction.atomic():
+                return list(
+                    cls.objects.update_or_create(o, **o)[0]
+                    for o in map(lambda openid: dict(
+                        app=app, openid=openid
+                    ), openids)
+                )
 
     @classmethod
     def fetch_user(cls, app, openid):
@@ -142,20 +146,41 @@ class WeChatUser(m.Model):
     def fetch_users(cls, app, openids):
         fields = set(map(lambda o: o.name, cls._meta.fields))
         # TODO: 根据当前语言拉取用户数据
-        # TODO: 拉取标签数据
+        user_dicts = app.client.user.get_batch(openids)
         update_dicts = map(
             lambda o: {k: v for k, v in o.items() if k in fields},
-            app.client.user.get_batch(openids)
+            user_dicts
         )
         rv = []
         with transaction.atomic():
-            for o in update_dicts:
-                o["synced_at"] = tz.datetime.now()
+            tags = list(app.user_tags.all())
+
+            for user_dict in user_dicts:
+                defaults = {k: v for k, v in user_dict.items() if k in fields}
+                defaults["synced_at"] = tz.datetime.now()
                 user = cls.objects.update_or_create(
-                    defaults=o,
+                    defaults=defaults,
                     app=app,
-                    openid=o["openid"]
+                    openid=defaults["openid"]
                 )[0]
+
+                # 拉取标签数据
+                tagid_list = user_dict.get("tagid_list")
+                if tagid_list:
+                    user._tag_local = True
+                    user_tags = list(filter(lambda o: o.id in tagid_list, tags))
+
+                    if len(user_tags) != len(tagid_list):
+                        # 标签没有完全同步
+                        from . import UserTag
+                        tags = UserTag.sync(app)
+                        user_tags = list(filter(lambda o: o.id in tagid_list, tags))
+
+                    user.tags.set(user_tags, clear=False)
+                    user.save()
+
+                    user._tag_local = False
+
                 rv.append(user)
             return rv
 
@@ -178,14 +203,14 @@ class WeChatUser(m.Model):
             follower_data = app.client.user.get_followers(next_openid)
             next_openid = follower_data["next_openid"]
             if "data" not in follower_data:
-                raise StopIteration
+                return
             openids = follower_data["data"]["openid"]
             # 每100个1个列表返回openid
             pages = math.ceil(len(openids)/count)
             for page in range(pages):
                 yield openids[page*count: page*count+count]
             if not next_openid:
-                raise StopIteration
+                return
 
     def update(self):
         """重新同步用户数据"""

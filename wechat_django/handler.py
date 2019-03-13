@@ -27,7 +27,7 @@ class Handler(View):
         """
         :type request: wechat_django.models.request.WeChatMessageRequest
         """
-        if not request.wechat.app.interactable():
+        if not request.wechat.app.abilities.interactable:
             return response.HttpResponseNotFound()
         log = MessageHandler.handlerlog(request)
         try:

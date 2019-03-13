@@ -2,20 +2,22 @@
 from __future__ import unicode_literals
 
 from django.contrib import messages
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import UserTag
-from .bases import register_admin, WeChatAdmin
+from .bases import RecursiveDeleteActionMixin, register_admin, WeChatAdmin
 
 
 @register_admin(UserTag)
-class UserTagAdmin(WeChatAdmin):
+class UserTagAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
     __category__ = "usertag"
 
-    actions = ("sync", )
+    actions = ("sync",)
     list_display = ("id",  "name", "sys_tag", "count", "created_at")
     search_fields = ("name", )
 
@@ -40,7 +42,16 @@ class UserTagAdmin(WeChatAdmin):
 
     @mark_safe
     def count(self, obj):
-        return obj.users.count()
+        return '<a href="{link}">{count}</a>'.format(
+            link="{0}?{1}".format(
+                reverse("admin:wechat_django_wechatuser_changelist"),
+                urlencode(dict(
+                    app_id=self.get_app(self.request).id,
+                    tags__in=obj._id
+                ))
+            ),
+            count=obj.users.count()
+        )
     count.short_description = _("users count")
     count.allow_tags = True
 

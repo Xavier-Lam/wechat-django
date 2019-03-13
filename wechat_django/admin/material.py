@@ -11,14 +11,15 @@ from wechatpy.exceptions import WeChatException
 
 from ..models import Material
 from .bases import (
-    delete_selected, DynamicChoiceForm, register_admin, WeChatAdmin)
+    RecursiveDeleteActionMixin, DynamicChoiceForm, register_admin, WeChatAdmin
+)
 
 
 @register_admin(Material)
-class MaterialAdmin(WeChatAdmin):
+class MaterialAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
     __category__ = "material"
 
-    actions = ("delete_selected", "sync", )
+    actions = ("sync", )
     list_display = ("media_id", "type", "comment", "updatetime")
     list_filter = ("type", )
     search_fields = ("name", "media_id", "comment")
@@ -80,18 +81,6 @@ class MaterialAdmin(WeChatAdmin):
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
     sync.short_description = _("sync")
-
-    def delete_selected(self, request, queryset):
-        if not request.POST.get("post"):
-            return delete_selected(self, request, queryset)
-        for o in queryset.all():
-            try:
-                o.delete()
-            except WeChatException:
-                msg = _("delete material failed: %(obj)s") % dict(obj=o)
-                self.logger(request).warning(msg, exc_info=True)
-                raise
-    delete_selected.short_description = _("delete selected")
 
     def has_add_permission(self, request):
         return False

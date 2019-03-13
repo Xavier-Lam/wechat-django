@@ -36,10 +36,40 @@ def search_form(cl):
 
 
 def delete_selected(modeladmin, request, queryset):
+    """在删除确认页更新appid"""
     rv = _delete_selected(modeladmin, request, queryset)
     rv and modeladmin._update_context(request, rv.context_data)
     return rv
 delete_selected.short_description = _delete_selected.short_description
+
+
+class RecursiveDeleteActionMixin(object):
+    """逐一删除混合类"""
+    def get_actions(self, request):
+        actions = super(RecursiveDeleteActionMixin, self).get_actions(request)
+        if "delete_selected" in actions:
+            actions["delete_selected"] = (
+                RecursiveDeleteActionMixin.delete_selected_recusively,
+                actions["delete_selected"][1],
+                actions["delete_selected"][2]
+            )
+        return actions
+
+    def delete_selected_recusively(self, request, queryset):
+        """逐一删除"""
+        if not request.POST.get("post"):
+            return delete_selected(self, request, queryset)
+        for o in queryset.all():
+            try:
+                o.delete()
+            except WeChatException:
+                msg = _("delete %(category) failed: %(obj)s") % dict(
+                    category=self.model.verbose_name_plural,
+                    obj=o
+                )
+                self.logger(request).warning(msg, exc_info=True)
+                raise
+    delete_selected.short_description = _("delete selected")
 
 
 def has_wechat_permission(request, app, category="", operate="", obj=None):
