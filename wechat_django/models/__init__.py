@@ -3,9 +3,9 @@
 from __future__ import unicode_literals
 
 from .constants import MsgLogFlag, MsgType
-from .permission import permissions
 
 from .app import WeChatApp
+from .permission import permissions
 from .base import WeChatModel, appmethod
 from .user import WeChatUser
 from .usertag import UserTag

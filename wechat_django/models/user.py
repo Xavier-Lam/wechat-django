@@ -105,7 +105,7 @@ class WeChatUser(WeChatModel):
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
 
     @classmethod
-    @appmethod
+    @appmethod("sync_users")
     def sync(cls, app, all=False, detail=True):
         """
         :type app: wechat_django.models.WeChatApp
@@ -127,6 +127,7 @@ class WeChatUser(WeChatModel):
         return users
 
     @classmethod
+    @appmethod
     def upsert_users(cls, app, openids, detail=True):
         if detail:
             return cls.fetch_users(app, openids)
@@ -140,11 +141,13 @@ class WeChatUser(WeChatModel):
                 )
 
     @classmethod
+    @appmethod
     def fetch_user(cls, app, openid):
         # NotFound重新抛出40003异常
         return cls.fetch_users(app, [openid]).pop()
 
     @classmethod
+    @appmethod
     def fetch_users(cls, app, openids):
         fields = set(map(lambda o: o.name, cls._meta.fields))
         # TODO: 根据当前语言拉取用户数据

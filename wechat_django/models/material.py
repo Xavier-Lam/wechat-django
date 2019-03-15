@@ -10,7 +10,7 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from ..utils.admin import enum2choices
-from . import WeChatApp, WeChatModel
+from . import appmethod, WeChatApp, WeChatModel
 
 
 class MaterialManager(m.Manager):
@@ -100,6 +100,7 @@ class Material(WeChatModel):
         ordering = ("app", "-update_time")
 
     @classmethod
+    @appmethod("sync_materials")
     def sync(cls, app, id=None, type=None):
         """同步所有永久素材"""
         if id:
@@ -112,12 +113,13 @@ class Material(WeChatModel):
             updated = []
             for type, _ in enum2choices(cls.Type):
                 with transaction.atomic():
-                    updates = cls.sync_type(type, app)
+                    updates = cls.sync_type(app, type)
                     updated.extend(updates)
             return updated
 
     @classmethod
-    def sync_type(cls, type, app):
+    @appmethod("sync_type_materials")
+    def sync_type(cls, app, type):
         """同步某种类型的永久素材"""
         count = 20
         offset = 0

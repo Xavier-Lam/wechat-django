@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 
 
 class UserTestCase(WeChatTestCase):

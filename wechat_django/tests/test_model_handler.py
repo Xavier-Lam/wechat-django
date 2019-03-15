@@ -9,7 +9,7 @@ from wechatpy import events, messages, replies
 
 from ..decorators import message_handler
 from ..models import MessageHandler, Reply, Rule, WeChatMessageInfo
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
 

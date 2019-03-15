@@ -14,7 +14,7 @@ from wechatpy.utils import check_signature, WeChatSigner
 
 from ..exceptions import MessageHandleError
 from ..models import MessageHandler, Reply, WeChatMessageInfo
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
 

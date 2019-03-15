@@ -9,7 +9,7 @@ from django.test import RequestFactory
 from django.urls import ResolverMatch
 
 from ..models import permission as pm, WeChatApp
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 
 
 class PermissionTestCase(WeChatTestCase):

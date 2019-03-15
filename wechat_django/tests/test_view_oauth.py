@@ -13,7 +13,7 @@ from six.moves.urllib.parse import parse_qsl, urlparse
 from ..models import WeChatUser
 from ..oauth import wechat_auth, WeChatOAuthView, WeChatSNSScope
 from ..patches import WeChatOAuth
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 from .interceptors import common_interceptor
 
 

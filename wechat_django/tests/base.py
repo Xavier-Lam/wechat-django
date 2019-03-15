@@ -17,6 +17,7 @@ class WeChatTestCase(TestCase):
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("test")
+        self.another_app = WeChatApp.objects.get_by_name("test1")
 
     @property
     def base_url(self):

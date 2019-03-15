@@ -7,7 +7,7 @@ from django.urls.resolvers import get_ns_resolver
 
 from .. import urls
 from ..decorators import wechat_route
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 
 
 class UtilDecoratorTestCase(WeChatTestCase):

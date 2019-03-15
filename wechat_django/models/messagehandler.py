@@ -12,7 +12,7 @@ from wechatpy.exceptions import WeChatClientException
 from ..exceptions import MessageHandleError
 from ..utils.admin import enum2choices
 from ..utils.web import get_ip
-from . import MsgLogFlag, WeChatApp, WeChatModel
+from . import appmethod, MsgLogFlag, WeChatApp, WeChatModel
 
 
 class MessageHandlerManager(m.Manager):
@@ -150,6 +150,7 @@ class MessageHandler(WeChatModel):
         return reply and reply.reply(message_info)
 
     @classmethod
+    @appmethod("sync_message_handlers")
     def sync(cls, app):
         from . import Reply, Rule
         resp = app.client.message.get_autoreply_info()

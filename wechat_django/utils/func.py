@@ -8,6 +8,6 @@ def next_chunk(iterator, count=100):
         rv.append(item)
         if len(rv) >= count:
             yield rv
-            rv.clear()
+            rv = []
     if rv:
         yield rv

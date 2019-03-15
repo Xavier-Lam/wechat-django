@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from wechatpy import events, messages
 
 from ..models import MessageHandler, Rule
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 
 
 class HandlerTestCase(WeChatTestCase):

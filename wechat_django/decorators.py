@@ -17,9 +17,23 @@ from .utils.web import auto_response
 __all__ = ("message_handler", )
 
 
-def message_handler(names=None):
+def message_handler(names_or_func=None):
     """自定义回复业务需加装该装饰器
-    :params names: 允许使用该message_handler的appname 不填所有均允许
+    被装饰的自定义业务接收一个``wechat_django.models.WeChatMessageInfo``对象
+    并且返回一个``wechatpy.replies.BaseReply``对象
+
+    :param names_or_func: 允许使用该message_handler的appname 不填所有均允许
+    :type names_or_func: str or list or tuple or callable
+
+        @message_handler
+        def custom_business(message):
+            user = message.user
+            # ...
+            return TextReply("hello", message=message.message)
+
+        @message_handler(("app_a", "app_b"))
+        def app_ab_only_business(message):
+            # ...
     """
     def decorator(view_func):
         # 防止副作用
@@ -30,10 +44,12 @@ def message_handler(names=None):
 
         return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
-    if isinstance(names, text_type):
-        names = [names]
-    elif callable(names):
-        return decorator(names)
+    if isinstance(names_or_func, text_type):
+        names = [names_or_func]
+    elif callable(names_or_func):
+        names = None
+        return decorator(names_or_func)
+
     return decorator
 
 

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from . import Material, WeChatModel
+from . import appmethod, Material, WeChatModel
 
 
 class Article(WeChatModel):
@@ -64,12 +64,13 @@ class Article(WeChatModel):
         self._thumb_url = value
 
     @classmethod
+    @appmethod("sync_articles")
     def sync(cls, app, id=None):
         if id:
             return Material.sync(app, id, Material.Type.NEWS)
         else:
             with transaction.atomic():
-                return Material.sync_type(Material.Type.NEWS, app)
+                return Material.sync_type(app, Material.Type.NEWS)
 
     def to_json(self):
         return dict(

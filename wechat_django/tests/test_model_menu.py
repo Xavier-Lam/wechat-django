@@ -9,7 +9,7 @@ except ImportError:
 from wechatpy.client.api import WeChatMenu
 
 from ..models import Article, Material, Menu
-from .bases import WeChatTestCase
+from .base import WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken
 
 

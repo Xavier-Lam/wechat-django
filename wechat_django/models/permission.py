@@ -14,9 +14,12 @@ from collections import defaultdict
 import re
 
 from django.contrib.auth.models import Group, Permission, User
-from django.db import models as m
+from django.contrib.contenttypes.models import ContentType
+from django.db import models as m, transaction
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+
+from . import WeChatApp
 
 WECHATPERM_PREFIX = "app|"
 
@@ -85,6 +88,10 @@ def get_perm_name(app, permission=""):
     )
 
 
+def get_perm_names(app, permissions):
+    return tuple(get_perm_name(app, permission) for permission in permissions)
+
+
 def get_perm_desc(perm_name, app):
     appname, permission = match_permission(perm_name)
     desc = permissions[permission] if permission\
@@ -123,6 +130,30 @@ def get_perms_by_codenames(codenames):
         .filter(content_type__app_label="wechat_django")
         .filter(codename__in=codenames)
         .all())
+
+
+@receiver(m.signals.post_save, sender=WeChatApp)
+def create_app_perms(sender, instance, created, *args, **kwargs):
+    if created:
+        # 添加
+        content_type = ContentType.objects.get_for_model(WeChatApp)
+        Permission.objects.bulk_create(
+            Permission(
+                codename=perm_name,
+                name=get_perm_desc(perm_name, instance),
+                content_type=content_type
+            )
+            for perm_name in list_perm_names(instance)
+        )
+
+
+@receiver(m.signals.post_delete, sender=WeChatApp)
+def delete_app_perms(sender, instance, *args, **kwargs):
+    content_type = ContentType.objects.get_for_model(WeChatApp)
+    Permission.objects.filter(
+        content_type=content_type,
+        codename__in=list_perm_names(instance)
+    ).delete()
 
 
 @receiver(m.signals.m2m_changed, sender=Group.permissions.through)
@@ -177,5 +208,27 @@ def match_permission(perm_name):
         return None, None
 
 
-def migrate_permissions(permissions):
-    pass
+def upgrade_perms(permissions):
+    with transaction.atomic():
+        content_type = ContentType.objects.get_for_model(WeChatApp)
+        apps = WeChatApp.objects.all()
+        for app in apps:
+            Permission.objects.bulk_create(
+                Permission(
+                    codename=perm_name,
+                    name=get_perm_desc(perm_name, instance),
+                    content_type=content_type
+                )
+                for perm_name in get_perm_names(app, permissions)
+            )
+
+
+def downgrade_perms(permissions):
+    with transaction.atomic():
+        content_type = ContentType.objects.get_for_model(WeChatApp)
+        apps = WeChatApp.objects.all()
+        for app in apps:
+            Permission.objects.filter(
+                content_type=content_type,
+                codename__in=get_perm_names(app, permissions)
+            ).delete()

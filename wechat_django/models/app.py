@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from django.db import models as m
 from django.dispatch import receiver
 from django.utils.module_loading import import_string
@@ -14,7 +12,6 @@ from wechatpy.crypto import WeChatCrypto
 from .. import settings
 from ..utils.admin import enum2choices
 from . import MsgLogFlag
-from .permission import get_perm_desc, list_perm_names
 
 
 class Abilities(object):
@@ -42,6 +39,7 @@ class WeChatAppManager(m.Manager):
 
 
 class WeChatApp(m.Model):
+    @staticmethod
     def __new__(cls, *args, **kwargs):
         self = super(WeChatApp, cls).__new__(cls)
         self.abilities = Abilities(self)
@@ -150,27 +148,3 @@ class WeChatApp(m.Model):
 
     def __str__(self):
         return "{title} ({name})".format(title=self.title, name=self.name)
-
-
-@receiver(m.signals.post_save, sender=WeChatApp)
-def create_app_permissions(sender, instance, created, *args, **kwargs):
-    if created:
-        # 添加
-        content_type = ContentType.objects.get_for_model(WeChatApp)
-        Permission.objects.bulk_create(
-            Permission(
-                codename=perm_name,
-                name=get_perm_desc(perm_name, instance),
-                content_type=content_type
-            )
-            for perm_name in list_perm_names(instance)
-        )
-
-
-@receiver(m.signals.post_delete, sender=WeChatApp)
-def delete_app_permissions(sender, instance, *args, **kwargs):
-    content_type = ContentType.objects.get_for_model(WeChatApp)
-    Permission.objects.filter(
-        content_type=content_type,
-        codename__in=list_perm_names(instance)
-    ).delete()
