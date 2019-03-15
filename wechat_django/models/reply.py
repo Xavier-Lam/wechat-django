@@ -13,10 +13,11 @@ from wechatpy import replies
 
 from ..exceptions import MessageHandleError
 from ..utils.admin import enum2choices
-from . import Article, Material, MessageHandler, MsgType as BaseMsgType
+from . import (
+    Article, Material, MessageHandler, MsgType as BaseMsgType, WeChatModel)
 
 
-class Reply(m.Model):
+class Reply(WeChatModel):
     class MsgType(BaseMsgType):
         MUSIC = "music"
         NEWS = "news"

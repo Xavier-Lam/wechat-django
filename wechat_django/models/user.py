@@ -11,7 +11,8 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from ..utils.admin import enum2choices
-from . import WeChatApp
+from ..utils.func import next_chunk
+from . import appmethod, WeChatApp, WeChatModel
 
 
 class WeChatUserManager(m.Manager):
@@ -33,7 +34,7 @@ class WeChatUserManager(m.Manager):
         return self.create(app=app, openid=openid)
 
 
-class WeChatUser(m.Model):
+class WeChatUser(WeChatModel):
     class Gender(object):
         UNKNOWN = 0
         MALE = 1
@@ -104,8 +105,10 @@ class WeChatUser(m.Model):
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
 
     @classmethod
+    @appmethod
     def sync(cls, app, all=False, detail=True):
         """
+        :type app: wechat_django.models.WeChatApp
         :param all: 是否重新同步所有用户
         :param detail: 是否同步用户详情
         """
@@ -113,19 +116,18 @@ class WeChatUser(m.Model):
         all = all and detail
 
         users = []
-        first_openid = None
-        if not all:
-            first_openid = app.ext_info.get("last_openid", None)
+        next_openid = not all and app.ext_info.get("last_openid") or None
 
-        for openids in cls._iter_followers_list(app, first_openid):
-            users.extend(cls._upsert_by_openids(app, openids, detail))
+        iterator = app.client.user.iter_followers(next_openid)
+        for openids in next_chunk(iterator):
+            users.extend(cls.upsert_users(app, openids, detail))
             # 更新最后更新openid
             app.ext_info["last_openid"] = openids[-1]
             app.save()
         return users
 
     @classmethod
-    def _upsert_by_openids(cls, app, openids, detail=True):
+    def upsert_users(cls, app, openids, detail=True):
         if detail:
             return cls.fetch_users(app, openids)
         else:
@@ -195,22 +197,6 @@ class WeChatUser(m.Model):
         updates["synced_at"] = tz.datetime.now()
         return cls.objects.update_or_create(
             defaults=updates, app=app, openid=updates["openid"])[0]
-
-    @classmethod
-    def _iter_followers_list(cls, app, next_openid=None):
-        count = 100
-        while True:
-            follower_data = app.client.user.get_followers(next_openid)
-            next_openid = follower_data["next_openid"]
-            if "data" not in follower_data:
-                return
-            openids = follower_data["data"]["openid"]
-            # 每100个1个列表返回openid
-            pages = math.ceil(len(openids)/count)
-            for page in range(pages):
-                yield openids[page*count: page*count+count]
-            if not next_openid:
-                return
 
     def update(self):
         """重新同步用户数据"""

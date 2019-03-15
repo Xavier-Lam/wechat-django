@@ -10,7 +10,7 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from ..utils.admin import enum2choices
-from . import WeChatApp
+from . import WeChatApp, WeChatModel
 
 
 class MaterialManager(m.Manager):
@@ -68,7 +68,7 @@ class MaterialManager(m.Manager):
         return news
 
 
-class Material(m.Model):
+class Material(WeChatModel):
     class Type(object):
         IMAGE = "image"
         VIDEO = "video"

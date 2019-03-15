@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from . import Material
+from . import Material, WeChatModel
 
 
-class Article(m.Model):
+class Article(WeChatModel):
     material = m.ForeignKey(
         Material, related_name="articles", on_delete=m.CASCADE)
 

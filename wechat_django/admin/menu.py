@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Menu, WeChatApp
-from .bases import DynamicChoiceForm, register_admin, WeChatAdmin
+from .base import DynamicChoiceForm, register_admin, WeChatAdmin
 
 
 @register_admin(Menu)

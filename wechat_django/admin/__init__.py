@@ -5,7 +5,7 @@ from django.utils.module_loading import import_string
 
 from .. import settings
 from . import ( # NOQA
-    bases,
+    base,
     wechatapp,
     user,
     usertag,
@@ -21,5 +21,5 @@ if not isinstance(admin_site_paths, (list, tuple)):
     admin_site_paths = [admin_site_paths]
 for site in admin_site_paths:
     admin = import_string(site)
-    bases.patch_admin(admin)
-    bases.register_admins(admin)
+    base.patch_admin(admin)
+    base.register_admins(admin)

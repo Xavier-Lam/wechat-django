@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
-from .bases import has_wechat_permission
+from .base import has_wechat_permission
 
 
 class WeChatAppForm(forms.ModelForm):

@@ -8,10 +8,10 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
-from . import MessageHandler, MsgType
+from . import MessageHandler, MsgType, WeChatModel
 
 
-class Rule(m.Model):
+class Rule(WeChatModel):
     class Type(object):
         MSGTYPE = "msg_type"  # 类型匹配
         EVENT = "event"  # 事件

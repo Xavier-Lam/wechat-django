@@ -5,10 +5,11 @@ from django.db import models as m, transaction
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
-from . import WeChatApp, WeChatUser
+from ..utils.func import next_chunk
+from . import WeChatApp, WeChatModel, WeChatUser
 
 
-class UserTag(m.Model):
+class UserTag(WeChatModel):
     SYS_TAGS = (0, 1, 2)
 
     _id = m.AutoField(primary_key=True)
@@ -64,9 +65,16 @@ class UserTag(m.Model):
             # 这时这名用户会被认为是tag b的用户
             return rv
 
-    def sync_users(self):
-        """同步该标签下的所有用户"""
-        pass
+    def sync_users(self, detail=True):
+        """同步该标签下的所有用户
+        :param detail: 是否同步用户详情
+        """
+        rv = []
+        iterator = self.app.client.tag.iter_tag_users(self.id)
+        for openids in next_chunk(iterator):
+            users = WeChatUser.upsert_users(self.app, openids, detail)
+            rv.extend(users)
+        return users
 
     def save(self, *args, **kwargs):
         # 保存之前 先创建标签

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import UserTag, WeChatUser
-from .bases import register_admin, WeChatAdmin
+from .base import register_admin, WeChatAdmin
 
 
 class UserForm(forms.ModelForm):
@@ -75,7 +75,7 @@ class WeChatUserAdmin(WeChatAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync")
+    sync.short_description = _("incremental sync")
     sync_all = lambda self, request, queryset: self.sync(
         request, queryset, kwargs=dict(all=True))
     sync_all.short_description = _("sync all")

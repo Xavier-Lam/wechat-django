@@ -12,7 +12,7 @@ from wechatpy.exceptions import WeChatClientException
 from ..exceptions import MessageHandleError
 from ..utils.admin import enum2choices
 from ..utils.web import get_ip
-from . import MsgLogFlag, WeChatApp
+from . import MsgLogFlag, WeChatApp, WeChatModel
 
 
 class MessageHandlerManager(m.Manager):
@@ -30,7 +30,7 @@ class MessageHandlerManager(m.Manager):
         return handler
 
 
-class MessageHandler(m.Model):
+class MessageHandler(WeChatModel):
     class Source(object):
         SELF = 0  # 自己的后台
         MENU = 1  # 菜单

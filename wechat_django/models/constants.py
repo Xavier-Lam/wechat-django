@@ -8,6 +8,7 @@ class MsgType(object):
     VOICE = "voice"
     VIDEO = "video"
 
+
 class MsgLogFlag(object):
     LOG_MESSAGE = 0x01
     LOG_REPLY = 0x02

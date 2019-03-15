@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from ..models import MessageLog
 from ..utils.admin import linkify
-from .bases import register_admin, WeChatAdmin
+from .base import register_admin, WeChatAdmin
 
 
 @register_admin(MessageLog)

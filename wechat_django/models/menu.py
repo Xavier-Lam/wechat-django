@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.admin import enum2choices
-from . import MessageHandler, WeChatApp
+from . import MessageHandler, WeChatApp, WeChatModel
 
 
 class MenuManager(m.Manager):
@@ -18,7 +18,7 @@ class MenuManager(m.Manager):
             .prefetch_related("sub_button"))
 
 
-class Menu(m.Model):
+class Menu(WeChatModel):
     class Event(object):
         CLICK = "click"
         VIEW = "view"

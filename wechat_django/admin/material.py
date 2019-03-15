@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatException
 
 from ..models import Material
-from .bases import (
+from .base import (
     RecursiveDeleteActionMixin, DynamicChoiceForm, register_admin, WeChatAdmin
 )
 

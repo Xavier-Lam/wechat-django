@@ -6,6 +6,7 @@ from .constants import MsgLogFlag, MsgType
 from .permission import permissions
 
 from .app import WeChatApp
+from .base import WeChatModel, appmethod
 from .user import WeChatUser
 from .usertag import UserTag
 from .request import WeChatInfo, WeChatMessageInfo, WeChatOAuthInfo, WeChatSNSScope
