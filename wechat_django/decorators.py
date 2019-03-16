@@ -5,7 +5,6 @@ from functools import wraps
 
 from django.conf.urls import url
 from django.http import response
-from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from six import text_type
@@ -36,13 +35,12 @@ def message_handler(names_or_func=None):
             # ...
     """
     def decorator(view_func):
-        # 防止副作用
-        def wrapped_view(message):
+        @wraps(view_func)
+        def decorated_view(message):
             return view_func(message)
+        decorated_view.message_handler = names or True
 
-        wrapped_view.message_handler = names or True
-
-        return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
+        return decorated_view
 
     if isinstance(names_or_func, text_type):
         names = [names_or_func]

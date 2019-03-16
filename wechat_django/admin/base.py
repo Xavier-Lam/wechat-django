@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from functools import wraps
 import logging
 import types
 
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.admin.actions import delete_selected as _delete_selected
+from django.contrib.admin.actions import delete_selected
 from django.contrib.admin.templatetags import admin_list
 from django.contrib.admin.views.main import ChangeList as _ChangeList
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.shortcuts import redirect
+from django.template.response import SimpleTemplateResponse
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 import six
 from six.moves.urllib.parse import parse_qsl
+from wechatpy.exceptions import WeChatClientException
 
 from ..apps import WeChatConfig
 from ..models import WeChatApp
@@ -35,14 +39,6 @@ def search_form(cl):
     return admin_list.search_form(cl)
 
 
-def delete_selected(modeladmin, request, queryset):
-    """在删除确认页更新appid"""
-    rv = _delete_selected(modeladmin, request, queryset)
-    rv and modeladmin._update_context(request, rv.context_data)
-    return rv
-delete_selected.short_description = _delete_selected.short_description
-
-
 class RecursiveDeleteActionMixin(object):
     """逐一删除混合类"""
     def get_actions(self, request):
@@ -59,16 +55,20 @@ class RecursiveDeleteActionMixin(object):
         """逐一删除"""
         if not request.POST.get("post"):
             return delete_selected(self, request, queryset)
-        for o in queryset.all():
-            try:
-                o.delete()
-            except WeChatException:
-                msg = _("delete %(category) failed: %(obj)s") % dict(
-                    category=self.model.verbose_name_plural,
-                    obj=o
-                )
-                self.logger(request).warning(msg, exc_info=True)
-                raise
+        
+        with transaction.atomic():
+            for o in queryset.all():
+                try:
+                    if not self.has_delete_permission(request, o):
+                        raise PermissionDenied
+                    o.delete()
+                except WeChatClientException:
+                    msg = _("delete %(category) failed: %(obj)s") % dict(
+                        category=self.model.verbose_name_plural,
+                        obj=o
+                    )
+                    self.logger(request).warning(msg, exc_info=True)
+                    raise
     delete_selected.short_description = _("delete selected")
 
 
@@ -103,6 +103,44 @@ class ChangeList(_ChangeList):
         return prefix + query
 
 
+def admin_view(view):
+    """装饰WeChatAdmin中的view
+    在请求上附上WeChatApp
+    并在响应的模板上附上app,app_id等context
+    """
+    @wraps(view)
+    def decorated_func(request, *args, **kwargs):
+        # 将request附在self上,以便admin中的属性拿到request
+        self = getattr(view, "__self__", None)
+        self and setattr(self, "request", request)
+
+        # 从请求中获取app,附在request上
+        app = None
+        app_id = WeChatAdmin._get_request_params(request, "app_id")
+        if app_id:
+            try:
+                app = WeChatApp.objects.get_by_id(app_id)
+            except WeChatApp.DoesNotExist:
+                pass
+        request.app_id = app_id
+        request.app = app
+
+        rv = view(request, *args, **kwargs)
+
+        # 更新response的context
+        if isinstance(rv, SimpleTemplateResponse):
+            if rv.context_data is None:
+                rv.context_data = dict()
+            rv.context_data.update(
+                app=app,
+                app_id=app_id
+            )
+
+        return rv
+
+    return decorated_func
+
+
 class WeChatAdminMetaClass(forms.MediaDefiningClass):
     def __new__(cls, name, bases, attrs):
         self = super(WeChatAdminMetaClass, cls).__new__(
@@ -111,8 +149,27 @@ class WeChatAdminMetaClass(forms.MediaDefiningClass):
             registered_admins.append(self)
         return self
 
+    # def __init__(cls, name, bases, attrs):
+    #     # 对默认视图加装admin_view装饰器
+    #     if name == "WeChatAdmin":
+    #         views = (
+    #             "changelist_view", "add_view", "history_view", "delete_view",
+    #             "change_view")
+    #         for view in views:
+    #             view_func = getattr(cls, view)
+    #             setattr(cls, view, admin_view(view_func))
+
+    #     super(WeChatAdminMetaClass, cls).__init__(
+    #         name, bases, attrs)
+
 
 class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
+    """所有微信相关业务admin的基类
+    
+    可以通过self.request拿到request对象
+    并且通过request.app_id及request.app拿到app信息
+    """
+
     #region view
     def changelist_view(self, request, extra_context=None):
         # 允许没有选中的actions
@@ -120,78 +177,48 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
         if admin.helpers.ACTION_CHECKBOX_NAME not in post:
             post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
             request._set_post(post)
-        extra_context = self._update_context(request, extra_context)
         return super(WeChatAdmin, self).changelist_view(request, extra_context)
 
-    def history_view(self, request, object_id, extra_context=None):
-        extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).history_view(
-            request, object_id, extra_context)
-
-    def delete_view(self, request, object_id, extra_context=None):
-        extra_context = self._update_context(request, extra_context)
-        return super(WeChatAdmin, self).delete_view(
-            request, object_id, extra_context)
-
-    def changeform_view(
-        self, request, object_id=None, form_url="", extra_context=None):
-        if object_id and not self.get_app(request, True):
+    def changeform_view(self, request, object_id=None, form_url="", *args, **kwargs):
+        if object_id and not request.app_id:
             # 对于没有app_id的请求,重定向至有app_id的地址
-            obj = self.model.objects.get(id=object_id)
+            obj = self.model.objects.get(pk=object_id)
             app_id = getattr(obj, "app_id", obj.app.id)
             return redirect(request.path + "?" + urlencode(dict(
                 _changelist_filters="app_id=" + str(app_id)
             )), permanent=True)
         form_url = form_url or "?{0}".format(request.GET.urlencode())
         return super(WeChatAdmin, self).changeform_view(
-            request, object_id, form_url, extra_context)
-
-    def render_change_form(self, request, context, *args, **kwargs):
-        context = self._update_context(request, context)
-        return super(WeChatAdmin, self).render_change_form(
-            request, context, *args, **kwargs)
+            request, object_id, form_url, *args, **kwargs)
 
     def get_changelist(self, request, **kwargs):
         return ChangeList
 
     def get_preserved_filters(self, request):
         with mutable_GET(request) as GET:
-            GET["app_id"] = str(self.get_app(request).id)
+            GET["app_id"] = str(self.request.app_id)
             try:
                 return super(WeChatAdmin, self).get_preserved_filters(request)
             finally:
                 GET.pop("app_id", None)
     #endregion
 
-    #region actions
-    def get_actions(self, request):
-        actions = super(WeChatAdmin, self).get_actions(request)
-        if "delete_selected" in actions:
-            actions["delete_selected"] = (
-                delete_selected,
-                actions["delete_selected"][1],
-                actions["delete_selected"][2]
-            )
-        return actions
-    #endregion
-
     #region model
     def get_queryset(self, request):
-        self.request = request
         rv = super(WeChatAdmin, self).get_queryset(request)
-        app_id = self.get_app(request).id
+        app_id = request.app_id
         return self._filter_app_id(rv, app_id) if app_id else rv.none()
 
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.app_id = self.get_app(request).id
+            obj.app_id = request.app_id
         return super(WeChatAdmin, self).save_model(request, obj, form, change)
     #endregion
 
     #region permissions
     def get_model_perms(self, request):
         # 隐藏首页上的菜单
-        if self.get_app(request, True):
+        if getattr(request, "app_id", None):
             return super(WeChatAdmin, self).get_model_perms(request)
         return {}
 
@@ -200,7 +227,7 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
             raise PermissionDenied
 
     def has_wechat_permission(self, request, operate="", category="", obj=None):
-        app = self.get_app(request)
+        app = request.app
         category = category or self.__category__
         return has_wechat_permission(request, app, category, operate, obj)
 
@@ -215,28 +242,8 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
     #endregion
 
     #region utils
-    def _update_context(self, request, context):
-        app = self.get_app(request)
-        context = context or dict()
-        context.update(dict(
-            app_id=app.id,
-            app=app
-        ))
-        return context
-
     def _filter_app_id(self, queryset, app_id):
         return queryset.filter(app_id=app_id)
-
-    def get_app(self, request, nullable=False):
-        if not hasattr(request, "app"):
-            app_id = self._get_request_params(request, "app_id")
-            try:
-                request.app = WeChatApp.objects.get_by_id(app_id)
-            except WeChatApp.DoesNotExist:
-                if not nullable:
-                    raise
-                request.app = None
-        return request.app
 
     @staticmethod
     def _get_request_params(request, param):
@@ -253,8 +260,7 @@ class WeChatAdmin(six.with_metaclass(WeChatAdminMetaClass, admin.ModelAdmin)):
         return getattr(request, param)
 
     def logger(self, request):
-        app = self.get_app(request)
-        name = "wechat.admin.{0}".format(app.name)
+        name = "wechat.admin.{0}".format(request.app.name)
         return logging.getLogger(name)
     #endregion
 
@@ -307,15 +313,19 @@ def patch_admin(admin):
     app_label = WeChatConfig.name
     fake_app_label = app_label + "_apps"
 
-    origin_build_app_dict = admin.__class__._build_app_dict
-    origin_get_urls = admin.__class__.get_urls
+    base_admin_view = admin.__class__.admin_view
+    base_build_app_dict = admin.__class__._build_app_dict
+    base_get_urls = admin.__class__.get_urls
 
     def wechat_index(request, *args, **kwargs):
         kwargs.pop("app_id", None)
         return admin.app_index(request, *args, **kwargs)
 
+    def _admin_view(self, view, cacheable=False):
+        return base_admin_view(self, admin_view(view), cacheable)
+
     def _build_app_dict(self, request, label=None):
-        rv = origin_build_app_dict(self, request, label)
+        rv = base_build_app_dict(self, request, label)
 
         if not label:
             # 首页 追加app列表
@@ -380,16 +390,17 @@ def patch_admin(admin):
         }
 
     def get_urls(self):
-        rv = origin_get_urls(self)
+        rv = base_get_urls(self)
 
         rv += [url(
             r"^(?P<app_label>%s)/apps/(?P<app_id>\d+)/$"%app_label,
-            wechat_index,
+            self.admin_view(wechat_index),
             name="wechat_funcs_list"
         )]
 
         return rv
 
+    admin.admin_view = types.MethodType(_admin_view, admin)
     admin._build_app_dict = types.MethodType(_build_app_dict, admin)
     admin.get_urls = types.MethodType(get_urls, admin)
 

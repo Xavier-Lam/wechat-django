@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from functools import wraps
 
 from django.db import models as m
-from django.utils.decorators import available_attrs
 import six
 
 from . import WeChatApp
@@ -29,13 +28,12 @@ def appmethod(func_or_name):
         res = app.another_method(*args, **kwargs)
     """    
     def decorator(func):
-        # 防止副作用
-        def wrapped_func(*args, **kwargs):
+        @wraps(func)
+        def decorated_func(*args, **kwargs):
             return func(*args, **kwargs)
+        decorated_func._appmethod = name
 
-        wrapped_func._appmethod = name
-
-        return wraps(func, assigned=available_attrs(func))(wrapped_func)
+        return decorated_func
 
     if callable(func_or_name):
         name = func_or_name.__name__

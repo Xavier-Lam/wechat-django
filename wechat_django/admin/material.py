@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from wechatpy.exceptions import WeChatException
+from wechatpy.exceptions import WeChatClientException
 
 from ..models import Material
 from .base import (
@@ -46,14 +46,14 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
             url = "{0}?{1}".format(
                 reverse("admin:wechat_django_article_changelist"),
                 urlencode(dict(
-                    app_id=self.get_app(request).id,
+                    app_id=self.request.app_id,
                     material_id=obj.id
                 ))
             )
             blank = False
         elif obj.type == Material.Type.VOICE:
             # 代理下载
-            app = self.get_app(request)
+            app = self.request.app
             url = reverse("wechat_django:material_proxy", kwargs=dict(
                 appname=app.name,
                 media_id=obj.media_id
@@ -68,14 +68,14 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.get_app(request)
+        app = request.app
         try:
             materials = Material.sync(app)
             msg = _("%(count)d materials successfully synchronized")
             self.message_user(request, msg % dict(count=len(materials)))
         except Exception as e:
             msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)

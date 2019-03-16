@@ -6,7 +6,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from wechatpy.exceptions import WeChatException
+from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag, WeChatUser
 from .base import register_admin, WeChatAdmin
@@ -62,7 +62,7 @@ class WeChatUserAdmin(WeChatAdmin):
         self.check_wechat_permission(request, "sync")
         # 可能抛出48001 没有api权限
         kwargs = kwargs or dict()
-        app = self.get_app(request)
+        app = request.app
         try:
             users = getattr(WeChatUser, method)(app, **kwargs)
             msg = _("%(count)d users successfully synchronized")
@@ -70,7 +70,7 @@ class WeChatUserAdmin(WeChatAdmin):
         except Exception as e:
             tpl = _("%(method)s failed with %(exc)s")
             msg = tpl % dict(method=_(method), exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)
@@ -95,7 +95,7 @@ class WeChatUserAdmin(WeChatAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         # 过滤只显示自己app的标签 并过滤系统标签
-        app = self.get_app(request)
+        app = request.app
         form = super(WeChatUserAdmin, self).get_form(request, obj, **kwargs)
         tags_field = form.declared_fields["tags"]
 

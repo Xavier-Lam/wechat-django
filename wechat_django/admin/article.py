@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from wechatpy.exceptions import WeChatException
+from wechatpy.exceptions import WeChatClientException
 
 from ..models import Article
 from .base import register_admin, WeChatAdmin
@@ -58,7 +58,7 @@ class ArticleAdmin(WeChatAdmin):
                 link="{path}?{query}".format(
                     path=reverse("admin:wechat_django_material_change", args=(m.id,)),
                     query=urlencode(dict(
-                        app_id=self.get_app(self.request).id
+                        app_id=self.request.app_id
                     ))
                 ),
                 title="{comment} ({media_id})".format(
@@ -86,14 +86,14 @@ class ArticleAdmin(WeChatAdmin):
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.get_app(request)
+        app = self.request.app
         try:
             materials = Article.sync(app)
             msg = _("%(count)d articles successfully synchronized")
             self.message_user(request, msg % dict(count=len(materials)))
         except Exception as e:
             msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)

@@ -77,6 +77,8 @@ class PermissionTestCase(WeChatTestCase):
         def assertMenuCorrect(perm_name):
             request = rf.get("/admin/wechat_django/apps/" + str(self.app.id))
             request.user = self._create_user(perm_name)
+            request.app = self.app
+            request.app_id = self.app.id
             request.resolver_match = ResolverMatch(lambda: None,
                 tuple(), dict(app_id=self.app.id))
 
@@ -100,10 +102,6 @@ class PermissionTestCase(WeChatTestCase):
 
         for perm_name in pm.list_perm_names(self.app):
             assertMenuCorrect(perm_name)
-
-    def test_app_queryset(self):
-        """测试wechatapp admin的queryset"""
-        pass
 
     def assertHasPermission(self, user, permission):
         permission = pm.get_perm_model(permission)

@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from wechatpy.exceptions import WeChatException
+from wechatpy.exceptions import WeChatClientException
 
 from ..models import MessageHandler, MsgLogFlag, Reply, Rule, WeChatApp
 from ..utils.admin import enum2choices
@@ -154,14 +154,14 @@ class MessageHandlerAdmin(WeChatAdmin):
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.get_app(request)
+        app = request.app
         try:
             handlers = MessageHandler.sync(app)
             msg = _("%(count)d handlers successfully synchronized")
             self.message_user(request, msg % dict(count=len(handlers)))
         except Exception as e:
             msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)

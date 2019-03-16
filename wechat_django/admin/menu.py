@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from wechatpy.exceptions import WeChatException
+from wechatpy.exceptions import WeChatClientException
 
 from ..models import Menu, WeChatApp
 from .base import DynamicChoiceForm, register_admin, WeChatAdmin
@@ -69,13 +69,13 @@ class MenuAdmin(WeChatAdmin):
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.get_app(request)
+        app = request.app
         try:
             Menu.sync(app)
             self.message_user(request, _("menus successfully synchronized"))
         except Exception as e:
             msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)
@@ -84,13 +84,13 @@ class MenuAdmin(WeChatAdmin):
 
     def publish(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.get_app(request)
+        app = request.app
         try:
             Menu.publish(app)
             self.message_user(request, _("menus successfully published"))
         except Exception as e:
             msg = _("publish failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatException):
+            if isinstance(e, WeChatClientException):
                 self.logger(request).warning(msg, exc_info=True)
             else:
                 self.logger(request).error(msg, exc_info=True)

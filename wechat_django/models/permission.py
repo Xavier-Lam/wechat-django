@@ -209,21 +209,24 @@ def match_permission(perm_name):
 
 
 def upgrade_perms(permissions):
+    """迁移时新增权限"""
     with transaction.atomic():
         content_type = ContentType.objects.get_for_model(WeChatApp)
         apps = WeChatApp.objects.all()
         for app in apps:
-            Permission.objects.bulk_create(
-                Permission(
+            for perm_name in get_perm_names(app, permissions):
+                query = dict(
                     codename=perm_name,
-                    name=get_perm_desc(perm_name, instance),
                     content_type=content_type
                 )
-                for perm_name in get_perm_names(app, permissions)
-            )
+                defaults = query.copy()
+                defaults.update(dict(name=get_perm_desc(perm_name, app)))
+                Permission.objects.update_or_create(
+                    defaults=defaults, **query)
 
 
 def downgrade_perms(permissions):
+    """降级时移除新增的权限"""
     with transaction.atomic():
         content_type = ContentType.objects.get_for_model(WeChatApp)
         apps = WeChatApp.objects.all()
