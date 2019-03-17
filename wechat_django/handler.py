@@ -15,7 +15,6 @@ from wechatpy.utils import check_signature
 import xmltodict
 
 from . import settings
-from .decorators import wechat_route
 from .exceptions import BadMessageRequest, MessageHandleError
 from .models import MessageHandler, MessageLog, WeChatMessageInfo
 
@@ -124,4 +123,3 @@ class Handler(View):
 
 
 handler = Handler.as_view()
-wechat_route("$", methods=("GET", "POST"), name="handler")(handler)

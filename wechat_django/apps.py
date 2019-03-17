@@ -13,7 +13,6 @@ class WeChatConfig(AppConfig):
     verbose_name_plural = _("WeChat")
 
     def ready(self):
-        from . import handler, views # NOQA
         if settings.PATCHADMINSITE:
             from .sites.admin import patch_admin
             patch_admin()
