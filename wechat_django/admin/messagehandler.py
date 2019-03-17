@@ -9,7 +9,7 @@ from wechatpy.exceptions import WeChatClientException
 
 from ..models import MessageHandler, MsgLogFlag, Reply, Rule, WeChatApp
 from ..utils.admin import enum2choices
-from .base import DynamicChoiceForm, register_admin, WeChatAdmin
+from .base import DynamicChoiceForm, WeChatModelAdmin
 
 
 class MessageHandlerForm(forms.ModelForm):
@@ -122,9 +122,9 @@ class ReplyInline(admin.StackedInline):
     form = ReplyForm
 
 
-@register_admin(MessageHandler)
-class MessageHandlerAdmin(WeChatAdmin):
+class MessageHandlerAdmin(WeChatModelAdmin):
     __category__ = "messagehandler"
+    __model__ = MessageHandler
 
     class AvailableFilter(admin.SimpleListFilter):
         title = _("available")

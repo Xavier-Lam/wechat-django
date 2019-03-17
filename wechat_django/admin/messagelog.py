@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
 from ..models import MessageLog
 from ..utils.admin import linkify
-from .base import register_admin, WeChatAdmin
+from .base import WeChatModelAdmin
 
 
-@register_admin(MessageLog)
-class MessageLogAdmin(WeChatAdmin):
+class MessageLogAdmin(WeChatModelAdmin):
     __category__ = "messagelog"
+    __model__ = MessageLog
 
     list_display = (
         "msg_id", linkify("user"), "type", "content", "created_at")

@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -10,12 +10,13 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Menu, WeChatApp
-from .base import DynamicChoiceForm, register_admin, WeChatAdmin
+from ..utils.admin import get_request_params
+from .base import DynamicChoiceForm, WeChatModelAdmin
 
 
-@register_admin(Menu)
-class MenuAdmin(WeChatAdmin):
+class MenuAdmin(WeChatModelAdmin):
     __category__ = "menu"
+    __model__ = Menu
 
     actions = ("sync", "publish")
 
@@ -118,7 +119,7 @@ class MenuAdmin(WeChatAdmin):
 
     def get_queryset(self, request):
         rv = super(MenuAdmin, self).get_queryset(request)
-        if not self._get_request_params(request, "menuid"):
+        if not get_request_params(request, "menuid"):
             rv = rv.filter(menuid__isnull=True)
         if request.GET.get("parent_id"):
             rv = rv.filter(parent_id=request.GET["parent_id"])

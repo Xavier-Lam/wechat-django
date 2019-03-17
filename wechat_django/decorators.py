@@ -9,7 +9,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from six import text_type
 
-from . import url_patterns
 from .models import WeChatApp, WeChatInfo
 from .utils.web import auto_response
 
@@ -61,6 +60,8 @@ def wechat_route(route, methods=None, name=""):
         methods = ("GET",)
 
     def decorator(func):
+        from .sites.wechat import url_patterns
+
         func = csrf_exempt(func)
         func = require_http_methods(methods)(func)
         @wraps(func)

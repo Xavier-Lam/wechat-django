@@ -10,14 +10,12 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Material
-from .base import (
-    RecursiveDeleteActionMixin, DynamicChoiceForm, register_admin, WeChatAdmin
-)
+from .base import RecursiveDeleteActionMixin, DynamicChoiceForm, WeChatModelAdmin
 
 
-@register_admin(Material)
-class MaterialAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
+class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     __category__ = "material"
+    __model__ = Material
 
     actions = ("sync", )
     list_display = ("media_id", "type", "comment", "updatetime")

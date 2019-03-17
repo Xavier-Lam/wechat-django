@@ -29,13 +29,13 @@ class Abilities(object):
         return bool(rv)
 
 
-class WeChatAppManager(m.Manager):
+class WeChatAppQuerySet(m.QuerySet):
     def get_by_name(self, name):
-        # TODO: cache
         return self.get(name=name)
 
-    def get_by_id(self, id):
-        return self.get(id=id)
+
+class WeChatAppManager(m.Manager.from_queryset(WeChatAppQuerySet)):
+    pass
 
 
 class WeChatApp(m.Model):

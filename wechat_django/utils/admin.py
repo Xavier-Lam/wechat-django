@@ -6,6 +6,7 @@ import re
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from six.moves.urllib.parse import parse_qsl
 
 
 def linkify(field_name):
@@ -41,3 +42,17 @@ def enum2choices(enum):
         for key in dir(enum)
         if re.match(pattern, key)
     )
+
+def get_request_params(request, param):
+    """从请求信息中获取想要的信息"""
+    if not hasattr(request, param):
+        preserved_filters_str = request.GET.get('_changelist_filters')
+        if preserved_filters_str:
+            preserved_filters = dict(parse_qsl(preserved_filters_str))
+        else:
+            preserved_filters = dict()
+        value = (request.GET.get(param)
+            or preserved_filters.get(param)
+            or request.resolver_match.kwargs.get(param))
+        setattr(request, param, value)
+    return getattr(request, param)

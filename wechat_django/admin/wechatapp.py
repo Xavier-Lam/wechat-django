@@ -45,6 +45,7 @@ class WeChatAppForm(forms.ModelForm):
         return super(WeChatAppForm, self).save(commit)
 
 
+@admin.register(WeChatApp)
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
     list_display = (

@@ -22,7 +22,7 @@ import wechat_django
 import wechat.views
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^wechat/', wechat_django.urls), #!wechat_django 添加wechat_django
+    url(r'^admin/', admin.site.urls), #!wechat_django 在admin中添加wechat_django
+    url(r'^wechat/', wechat_django.sites.wechat.urls), #!wechat_django 添加wechat_django
     url(r'^debug/oauth', wechat.views.oauth)
 ]

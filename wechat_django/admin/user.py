@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag, WeChatUser
-from .base import register_admin, WeChatAdmin
+from .base import WeChatModelAdmin
 
 
 class UserForm(forms.ModelForm):
@@ -32,9 +32,9 @@ class UserForm(forms.ModelForm):
         return instance
 
 
-@register_admin(WeChatUser)
-class WeChatUserAdmin(WeChatAdmin):
+class WeChatUserAdmin(WeChatModelAdmin):
     __category__ = "user"
+    __model__ = WeChatUser
 
     actions = ("sync", "sync_all", "update")
     list_display = (

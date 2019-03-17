@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -10,12 +10,12 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag
-from .base import RecursiveDeleteActionMixin, register_admin, WeChatAdmin
+from .base import RecursiveDeleteActionMixin, WeChatModelAdmin
 
 
-@register_admin(UserTag)
-class UserTagAdmin(RecursiveDeleteActionMixin, WeChatAdmin):
+class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     __category__ = "usertag"
+    __model__ = UserTag
 
     actions = ("sync", "sync_users", "sync_openids")
     list_display = ("id",  "name", "sys_tag", "count", "created_at")

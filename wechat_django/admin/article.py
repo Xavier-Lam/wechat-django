@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
@@ -9,12 +9,12 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Article
-from .base import register_admin, WeChatAdmin
+from .base import WeChatModelAdmin
 
 
-@register_admin(Article)
-class ArticleAdmin(WeChatAdmin):
+class ArticleAdmin(WeChatModelAdmin):
     __category__ = "article"
+    __model__ = Article
 
     actions = ("sync",)
     list_display = ("title", "author", "material_link", "index", "digest",

@@ -53,7 +53,7 @@
 1. 运行**pip install wechat-django[cryptography]** 或 **pip install wechat-django[pycrypto]** 安装
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
-4. 在urls.py 中引入wechat_django.urls, 将其配置到urlpatterns中
+4. 在urls.py 中引入wechat_django.sites.wechat.urls, 将其配置到urlpatterns中
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
 
@@ -69,7 +69,7 @@
 
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
-| WECHAT_ADMINSITE | "django.contrib.admin.site" | 需要注册微信后台的AdminSite对象字符串 |
+| WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
 | WECHAT_WECHATCLIENTFACTORY | "wechat_django.utils.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
 | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
