@@ -138,7 +138,7 @@ class WeChatApp(m.Model):
     def crypto(self):
         if not hasattr(self, "_crypto"):
             self._crypto = (self.encoding_mode == self.EncodingMode.SAFE
-                and self.abilities.interactable 
+                and self.abilities.interactable
                 and WeChatCrypto(
                     self.token,
                     self.encoding_aes_key,

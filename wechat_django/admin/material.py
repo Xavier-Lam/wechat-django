@@ -39,19 +39,18 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     @mark_safe
     def open(self, obj):
         blank = True
-        request = self.request
         if obj.type == Material.Type.NEWS:
             url = "{0}?{1}".format(
                 reverse("admin:wechat_django_article_changelist"),
                 urlencode(dict(
-                    app_id=self.request.app_id,
+                    app_id=obj.app_id,
                     material_id=obj.id
                 ))
             )
             blank = False
         elif obj.type == Material.Type.VOICE:
             # 代理下载
-            app = self.request.app
+            app = obj.app
             url = reverse("wechat_django:material_proxy", kwargs=dict(
                 appname=app.name,
                 media_id=obj.media_id

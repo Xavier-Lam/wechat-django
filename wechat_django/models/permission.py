@@ -38,7 +38,7 @@ permissions = {
     "user": _("Can edit %(appname)s users"),
     "user_sync": _("Can sync %(appname)s users"),
     "usertag": _("Can edit %(appname)s user tags"),
-    "usertag_sync": _("Can sync %(appname)s user tags"),    
+    "usertag_sync": _("Can sync %(appname)s user tags"),
 }
 
 permission_required = {

@@ -11,7 +11,7 @@ from . import WeChatApp
 
 def appmethod(func_or_name):
     """可以把方法注册到WeChatApp上的语法糖
-    
+
         class SomeModel(WeChatModel):
             @classmethod
             @appmethod
@@ -22,11 +22,11 @@ def appmethod(func_or_name):
             @appmethod("another_method")
             def method(cls, app, *args, **kwargs):
                 # ...
-        
+
         res = SomeModel.awesome_method(app, *args, **kwargs)
         res = app.awesome_method(*args, **kwargs)
         res = app.another_method(*args, **kwargs)
-    """    
+    """
     def decorator(func):
         @wraps(func)
         def decorated_func(*args, **kwargs):
@@ -53,6 +53,7 @@ class WeChatModelMetaClass(m.base.ModelBase):
             value = getattr(self, attr)
             if getattr(value, "_appmethod", False):
                 method = value
+                
                 def wrapped_func(self, *args, **kwargs):
                     return method(self, *args, **kwargs)
 

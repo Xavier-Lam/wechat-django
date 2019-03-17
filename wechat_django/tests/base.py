@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from ..models import WeChatApp
 
@@ -22,6 +22,9 @@ class WeChatTestCase(TestCase):
     @property
     def base_url(self):
         return "http://localhost/"
+
+    def rf(self, **defaults):
+        return RequestFactory(**defaults)
 
     #region utils
     def _create_handler(self, rules=None, name="", replies=None, app=None,

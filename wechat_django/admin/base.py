@@ -121,7 +121,6 @@ class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
 class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, admin.ModelAdmin)):
     """所有微信相关业务admin的基类
 
-    可以通过self.request拿到request对象
     并且通过request.app_id及request.app拿到app信息
     """
     #region view
@@ -150,7 +149,7 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, admin.Model
 
     def get_preserved_filters(self, request):
         with mutable_GET(request) as GET:
-            GET["app_id"] = str(self.request.app_id)
+            GET["app_id"] = str(request.app_id)
             try:
                 return super(WeChatModelAdmin, self).get_preserved_filters(request)
             finally:

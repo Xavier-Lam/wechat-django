@@ -68,7 +68,7 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             link="{0}?{1}".format(
                 reverse("admin:wechat_django_wechatuser_changelist"),
                 urlencode(dict(
-                    app_id=self.request.app_id,
+                    app_id=obj.app_id,
                     tags__in=obj._id
                 ))
             ),

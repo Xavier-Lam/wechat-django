@@ -25,9 +25,6 @@ def wechat_admin_view(view, site):
     @wraps(view)
     def decorated_func(request, *args, **kwargs):
         model_admin = getattr(view, "__self__", None)
-        # 将request附在self上,以便ModelAdmin中的属性拿到request
-        model_admin and isinstance(model_admin, WeChatModelAdmin)\
-            and setattr(model_admin, "request", request)
 
         # 从请求中获取app,附在request上
         app = None

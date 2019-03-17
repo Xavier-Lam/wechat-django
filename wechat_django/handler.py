@@ -17,6 +17,7 @@ import xmltodict
 from . import settings
 from .exceptions import BadMessageRequest, MessageHandleError
 from .models import MessageHandler, MessageLog, WeChatMessageInfo
+from .sites.wechat import patch_request
 
 __all__ = ("handler", )
 
@@ -24,7 +25,7 @@ __all__ = ("handler", )
 class Handler(View):
     def dispatch(self, request):
         """
-        :type request: wechat_django.models.request.WeChatMessageRequest
+        :type request: wechat_django.requests.WeChatMessageRequest
         """
         if not request.wechat.app.abilities.interactable:
             return response.HttpResponseNotFound()
@@ -58,7 +59,7 @@ class Handler(View):
         return request.GET["echostr"]
 
     def post(self, request):
-        request = WeChatMessageInfo.patch_request(request)
+        request = patch_request(request, cls=WeChatMessageInfo)
         reply = self._handle(request.wechat)
         if reply:
             xml = reply.render()

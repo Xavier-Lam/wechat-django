@@ -205,7 +205,7 @@ class MessageHandler(WeChatModel):
                     ]
                 )
                 handlers.append(handler)
-                
+
             return handlers
 
     @classmethod

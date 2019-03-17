@@ -58,7 +58,7 @@ class ArticleAdmin(WeChatModelAdmin):
                 link="{path}?{query}".format(
                     path=reverse("admin:wechat_django_material_change", args=(m.id,)),
                     query=urlencode(dict(
-                        app_id=self.request.app_id
+                        app_id=obj.app_id
                     ))
                 ),
                 title="{comment} ({media_id})".format(
@@ -86,7 +86,7 @@ class ArticleAdmin(WeChatModelAdmin):
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = self.request.app
+        app = request.app
         try:
             materials = Article.sync(app)
             msg = _("%(count)d articles successfully synchronized")

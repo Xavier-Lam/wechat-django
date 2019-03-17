@@ -1,47 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.http.request import HttpRequest
 from wechatpy import parse_message
 from wechatpy.crypto import WeChatCrypto
 
 from . import WeChatApp, WeChatUser
 
 
-class WeChatHttpRequest(HttpRequest):
-    @property
-    def wehcat(self):
-        """wechat_django.models.WeChatInfo"""
-        pass
-
-
-class WeChatMessageRequest(HttpRequest):
-    @property
-    def wehcat(self):
-        """wechat_django.models.WeChatMessageInfo"""
-        pass
-
-
-class WeChatOAuthRequest(HttpRequest):
-    @property
-    def wehcat(self):
-        """wechat_django.models.WeChatOAuthInfo"""
-        pass
-
-
 class WeChatInfo(object):
-    @classmethod
-    def patch_request(cls, request, appname=None):
-        """
-        :type request: django.http.request.HttpRequest
-        :rtype: cls
-        """
-        request.wechat = cls(
-            _appname=appname or request.wechat.appname,
-            _request=request
-        )
-        return request
-
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -126,15 +92,6 @@ class WeChatSNSScope(object):
 class WeChatOAuthInfo(WeChatInfo):
     """附带在request上的微信对象
     """
-    @classmethod
-    def patch_request(cls, request, appname, redirect_uri, scope, state):
-        """rtype: wechat_django.models.WeChatOAuthRequest"""
-        rv = super(WeChatOAuthInfo, cls).patch_request(request, appname)
-        rv.wechat._redirect_uri = redirect_uri
-        rv.wechat._scope = scope
-        rv.wechat._state = state
-        return rv
-
     @property
     def scope(self):
         """授权的scope

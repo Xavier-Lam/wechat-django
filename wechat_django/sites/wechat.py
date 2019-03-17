@@ -12,9 +12,18 @@ import requests
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from ..handler import handler
 from ..models import WeChatApp, WeChatInfo
 from ..utils.web import auto_response
+
+
+def patch_request(request, appname=None, cls=None, **kwargs):
+    cls = cls or WeChatInfo
+    appname = appname or request.wechat.appname
+    wechat = cls(_appname=appname, _request=request)
+    for key, value in kwargs.items():
+        setattr(wechat, "_" + key, value)
+    request.wechat = wechat
+    return request
 
 
 class WeChatSite(object):
@@ -22,17 +31,22 @@ class WeChatSite(object):
 
     def wechat_view(self, view, methods=None):
         """通过wechat_view装饰的view
-        request变为``wechat_django.models.request.WeChatHttpRequest``实例
+        request变为``wechat_django.requests.WeChatHttpRequest``实例
         request中将带有``wechat_django.models.WeChatInfo``类型的wechat属性
         """
         methods = methods or ("GET",)
 
         @wraps(view)
         def decorated_view(request, appname, *args, **kwargs):
-            # TODO: patch request应该移到site里来
-            request = WeChatInfo.patch_request(request, appname)
-            response = view(request, *args, **kwargs)
-            return auto_response(response)
+            # 只允许queryset内的appname访问本站点
+            try:
+                app = self.app_queryset.get_by_name(appname)
+            except WeChatApp.DoesNotExist:
+                return response.HttpResponseNotFound()
+
+            request = patch_request(request, appname, _app=app)
+            resp = view(request, *args, **kwargs)
+            return auto_response(resp)
 
         rv = csrf_exempt(decorated_view)
         rv = require_http_methods(methods)(rv)
@@ -40,6 +54,8 @@ class WeChatSite(object):
         return rv
 
     def get_url(self):
+        from ..handler import handler
+
         route = lambda pattern: r"^(?P<appname>[-_a-zA-Z\d]+)/" + pattern
 
         return [
@@ -61,10 +77,12 @@ class WeChatSite(object):
 
     @property
     def app_queryset(self):
-        """本站点能查询到的所有app"""
+        """本站点能查询到的所有app
+        :rtype: wechat_django.models.app.WeChatAppQuerySet
+        """
         return WeChatApp.objects.get_queryset()
 
-    def material_proxy(request, media_id):
+    def material_proxy(self, request, media_id):
         """代理下载微信的素材"""
         app = request.wechat.app
         try:
@@ -72,8 +90,7 @@ class WeChatSite(object):
         except WeChatClientException as e:
             if e.errcode == WeChatErrorCode.INVALID_MEDIA_ID:
                 return response.HttpResponseNotFound()
-            # TODO: 改成方法 views改site
-            logging.getLogger("wechat.views.{0}".format(app.name)).warning(
+            self.get_logger(request.wechat.appname).warning(
                 "an exception occurred when download material",
                 exc_info=True)
             return response.HttpResponseServerError()
@@ -86,6 +103,9 @@ class WeChatSite(object):
             if k.lower().startswith("content-"):
                 rv[k] = v
         return rv
+
+    def get_logger(self, appname):
+        return logging.getLogger("wechat.site.{0}".format(appname))
 
 
 default_site = WeChatSite()

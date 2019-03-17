@@ -10,6 +10,7 @@ import six
 from wechatpy import WeChatOAuthException
 
 from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
+from .sites.wechat import patch_request
 from .utils.web import auto_response, get_params
 
 __all__ = ("wechat_auth", "WeChatOAuthView", "WeChatSNSScope")
@@ -237,9 +238,10 @@ class WeChatOAuthView(View):
         info = self.oauth_info
         state = info.state(request, *args, **kwargs) if callable(info.state)\
             else info.state
-        self.request = WeChatOAuthInfo.patch_request(
+        self.request = patch_request(
             request=request,
             appname=info.appname,
+            cls=WeChatOAuthInfo,
             redirect_uri=info.redirect_uri(request),
             scope=info.scope,
             state=state

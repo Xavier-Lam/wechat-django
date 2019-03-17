@@ -14,6 +14,7 @@ from wechatpy.utils import check_signature, WeChatSigner
 
 from ..exceptions import MessageHandleError
 from ..models import MessageHandler, Reply, WeChatMessageInfo
+from ..sites.wechat import patch_request
 from .base import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
@@ -212,7 +213,7 @@ class ReplyTestCase(WeChatTestCase):
         req_url = url + "?" + urlencode(query_data)
         request = RequestFactory().post(req_url, xml, content_type="text/xml")
 
-        WeChatMessageInfo.patch_request(request, appname=self.app.name)
+        patch_request(request, self.app.name, WeChatMessageInfo)
         message = request.wechat
 
         reply_text = "abc"

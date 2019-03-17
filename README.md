@@ -34,6 +34,7 @@
   - [计划的功能](#计划的功能)
   - [已知bug](#已知bug)
 - [ChangeLog](#changelog)
+  - [0.2.0](#020)
   - [0.1.0](#010)
 
 ## 功能
@@ -82,7 +83,7 @@
 | wechat.api.{appname} | api日志 最低级别debug |
 | wechat.handler.{appname} | 消息处理日志 最低级别debug |
 | wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
-| wechat.views.{appname} | view异常日志(如素材代理) 最低级别warning |
+| wechat.site.{appname} | view异常日志(如素材代理) 最低级别warning |
 
 ### 注意事项
 * 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
@@ -96,7 +97,7 @@
 
     @wechat_auth("your_app_name")
     def your_view(request, *args, **kwargs):
-        """:type request: wechat_django.models.request.WeChatOAuthRequest"""
+        """:type request: wechat_django.requests.WeChatOAuthRequest"""
         user = request.wechat.user
 
 对于默认重定向行为不满意的,可以自定义response,具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
@@ -152,6 +153,10 @@
 ### 已知bug
 
 ## ChangeLog
+### 0.2.0
+* 重构代码,修改站点url注册方式,修改部分低级api
+* 用户标签管理功能
+
 ### 0.1.0
 * 公众号管理及基本用法封装
 * 用户,自动回复,菜单,永久素材,图文的基本管理
