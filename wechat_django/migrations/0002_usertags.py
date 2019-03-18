@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 
+from ..models.permission import upgrade_perms, downgrade_perms
+
 
 class Migration(migrations.Migration):
 
@@ -43,4 +45,8 @@ class Migration(migrations.Migration):
         ),
     ]
 
-    # TODO: 追加两个权限
+    # 追加两个权限
+    migrations.RunPython(
+        lambda *args, **kwargs: upgrade_perms("usertag", "usertag_sync"),
+        lambda *args, **kwargs: downgrade_perms("usertag", "usertag_sync"),
+    )

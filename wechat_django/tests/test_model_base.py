@@ -31,9 +31,11 @@ class ModelBaseTestCase(WeChatTestCase):
             self.assertEqual(args_, args)
             self.assertEqual(kwargs_, kwargs)
             self.assertEqual(func.__name__, funcname)
+            self.assertEqual(
+                func.__qualname__, "{0}.{1}".format("WeChatApp", funcname))
 
         assertAppMethodEqual(self.app.test, self.app, "test")
-        assertAppMethodEqual(self.app.another, self.app, "test1")
+        assertAppMethodEqual(self.app.another, self.app, "another")
         assertAppMethodEqual(self.another_app.test, self.another_app, "test")
         assertAppMethodEqual(
-            self.another_app.another, self.another_app, "test1")
+            self.another_app.another, self.another_app, "another")

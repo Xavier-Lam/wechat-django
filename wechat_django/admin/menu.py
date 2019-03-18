@@ -2,14 +2,14 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import Menu, WeChatApp
+from ..models import Menu
 from ..utils.admin import get_request_params
 from .base import DynamicChoiceForm, WeChatModelAdmin
 

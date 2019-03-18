@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from wechatpy import parse_message
-from wechatpy.crypto import WeChatCrypto
 
 from . import WeChatApp, WeChatUser
 

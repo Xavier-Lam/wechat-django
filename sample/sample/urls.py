@@ -21,6 +21,9 @@ import wechat_django
 
 import wechat.views
 
+admin.site.site_title = "WeChat-Django Admin"
+admin.site.site_header = "WeChat-Django示例后台"
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls), #!wechat_django 在admin中添加wechat_django
     url(r'^wechat/', wechat_django.sites.wechat.urls), #!wechat_django 添加wechat_django

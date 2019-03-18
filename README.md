@@ -11,7 +11,7 @@
 
 目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,并进行了一部分简单的徒手测试.
 
-0.1.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
+0.2.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
 
 目录
 ======
@@ -40,6 +40,7 @@
 ## 功能
 * 公众号管理
 * 同步用户及用户查看,备注
+* 用户标签管理
 * 菜单同步,查看及发布
 * 同步公众号自动回复,管理自动回复,转发和自定义自动回复业务,接收消息日志
 * 永久素材同步及查看
@@ -83,7 +84,7 @@
 | wechat.api.{appname} | api日志 最低级别debug |
 | wechat.handler.{appname} | 消息处理日志 最低级别debug |
 | wechat.oauth.{appname} | 网页授权异常日志 最低级别warning |
-| wechat.site.{appname} | view异常日志(如素材代理) 最低级别warning |
+| wechat.site.{appname} | 站点view异常日志(如素材代理) 最低级别warning |
 
 ### 注意事项
 * 框架默认采用django的cache管理accesstoken,如果有多个进程,或是多台机器部署,请确保所有worker使用公用cache以免造成token争用,如果希望不使用django的cache管理accesstoken,可以在配置项中定义SessionStorage
@@ -135,20 +136,20 @@
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
-* 完善单元测试
 * app层面的message log和reply log
+* 完善单元测试
 * 后台表单验证
 * 后台确认页
+* 自定义消息处理规则
 
 ### 计划的功能
 * accesstoken开放给第三方并对接第三方accesstoken
-* 用户分组管理
-* 消息响应日志/对话
-* 客服消息
+* 客服消息/对话
 * 清理及保护永久素材
 * 将部分actions改为object-tool
 * 回复及一些查询缓存
-* 菜单导入导出
+* 菜单及消息处理程序的导入导出
+* 素材Storage
 
 ### 已知bug
 
@@ -156,6 +157,7 @@
 ### 0.2.0
 * 重构代码,修改站点url注册方式,修改部分低级api
 * 用户标签管理功能
+* 要求wechatpy最低版本1.8.0
 
 ### 0.1.0
 * 公众号管理及基本用法封装

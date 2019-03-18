@@ -43,6 +43,7 @@ def enum2choices(enum):
         if re.match(pattern, key)
     )
 
+
 def get_request_params(request, param):
     """从请求信息中获取想要的信息"""
     if not hasattr(request, param):

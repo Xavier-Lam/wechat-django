@@ -28,7 +28,7 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     @mark_safe
     def preview(self, obj):
         if obj.type == Material.Type.IMAGE:
-            return u'<img src="%s" />'%obj.url
+            return '<img src="%s" />'%obj.url
     preview.short_description = _("preview")
     preview.allow_tags = True
 

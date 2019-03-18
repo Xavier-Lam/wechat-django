@@ -60,7 +60,7 @@ class WeChatSite(object):
 
         return [
             url(
-                route(r"materials/(?P<media_id>[_a-zA-Z\d]+)$"),
+                route(r"materials/(?P<media_id>[-_a-zA-Z\d]+)$"),
                 self.wechat_view(self.material_proxy),
                 name="material_proxy"
             ),

@@ -44,24 +44,23 @@ def appmethod(func_or_name):
 
 
 class WeChatModelMetaClass(m.base.ModelBase):
-    def __new__(cls, name, bases, attrs):
-        self = super(WeChatModelMetaClass, cls).__new__(
-            cls, name, bases, attrs)
-
+    def __init__(cls, name, bases, attrs):
+        super(WeChatModelMetaClass, cls).__init__(name, bases, attrs)
         for attr in attrs:
             # 将modelmethod转换为appmethod
-            value = getattr(self, attr)
+            value = getattr(cls, attr)
             if getattr(value, "_appmethod", False):
                 method = value
-                
+
                 def wrapped_func(self, *args, **kwargs):
                     return method(self, *args, **kwargs)
 
-                setattr(
-                    WeChatApp, method._appmethod,
-                    wraps(method)(wrapped_func))
-
-        return self
+                method_name = method._appmethod
+                appmethod = wraps(method)(wrapped_func)
+                appmethod.__name__ = str(method_name)
+                appmethod.__qualname__ = "{0}.{1}".format(
+                    "WeChatApp", method_name)
+                setattr(WeChatApp, method_name, appmethod)
 
 
 class WeChatModel(six.with_metaclass(WeChatModelMetaClass, m.Model)):

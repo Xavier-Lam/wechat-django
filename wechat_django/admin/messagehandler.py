@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import MessageHandler, MsgLogFlag, Reply, Rule, WeChatApp
+from ..models import MessageHandler, MsgLogFlag, Reply, Rule
 from ..utils.admin import enum2choices
 from .base import DynamicChoiceForm, WeChatModelAdmin
 

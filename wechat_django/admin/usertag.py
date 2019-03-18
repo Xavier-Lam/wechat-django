@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -42,7 +41,6 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
 
     def sync_users(self, request, queryset, detail=True):
         self.check_wechat_permission(request, "sync", "user")
-        app = request.app
         tags = queryset.all()
         try:
             for tag in tags:

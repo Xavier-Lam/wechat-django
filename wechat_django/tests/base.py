@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from django.test import RequestFactory, TestCase
 
 from ..models import WeChatApp

@@ -55,7 +55,7 @@ class RecursiveDeleteActionMixin(object):
                         raise PermissionDenied
                     o.delete()
                 except WeChatClientException:
-                    msg = _("delete %(category) failed: %(obj)s") % dict(
+                    msg = _("delete %(category)s failed: %(obj)s") % dict(
                         category=self.model.verbose_name_plural,
                         obj=o
                     )
@@ -103,19 +103,6 @@ class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
         if name != "WeChatModelAdmin" and model:
             registered_admins.append((model, self))
         return self
-
-    # def __init__(cls, name, bases, attrs):
-    #     # 对默认视图加装admin_view装饰器
-    #     if name == "WeChatModelAdmin":
-    #         views = (
-    #             "changelist_view", "add_view", "history_view", "delete_view",
-    #             "change_view")
-    #         for view in views:
-    #             view_func = getattr(cls, view)
-    #             setattr(cls, view, admin_view(view_func))
-
-    #     super(WeChatModelAdminMetaClass, cls).__init__(
-    #         name, bases, attrs)
 
 
 class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, admin.ModelAdmin)):

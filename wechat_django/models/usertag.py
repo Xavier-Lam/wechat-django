@@ -24,6 +24,9 @@ class UserTag(WeChatModel):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta(object):
+        verbose_name = _("user tag")
+        verbose_name_plural = _("user tags")
+
         unique_together = (("app", "id"), )
         index_together = (("app", "name"), )
         ordering = ("app", "id")
@@ -111,7 +114,7 @@ class UserTag(WeChatModel):
 
 @receiver(m.signals.m2m_changed, sender=UserTag.users.through)
 def tag_user_changed(sender, instance, action, *args, **kwargs):
-    """给某个标签添加多个用户 TODO: 同步及整个删除tag时应避免"""
+    """给某个标签添加多个用户"""
     if not kwargs["reverse"] and not getattr(instance, "_tag_local", False):
         users = WeChatUser.objects.filter(id__in=kwargs["pk_set"]).all()
         openids = [user.openid for user in users]

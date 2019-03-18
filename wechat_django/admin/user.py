@@ -119,4 +119,3 @@ class WeChatUserAdmin(WeChatModelAdmin):
 
     def has_add_permission(self, request):
         return False
-

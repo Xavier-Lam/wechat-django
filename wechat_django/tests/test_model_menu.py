@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
 from wechatpy.client.api import WeChatMenu
 
 from ..models import Article, Material, Menu
-from .base import WeChatTestCase
+from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken
 
 
