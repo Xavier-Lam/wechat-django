@@ -6,6 +6,7 @@ import re
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from six.moves import reduce
 from six.moves.urllib.parse import parse_qsl
 
 
@@ -33,6 +34,28 @@ def linkify(field_name):
     _linkify.allow_tags = True
     _linkify.admin_order_field = field_name
     return _linkify
+
+
+def list_property(field_name, **kwargs):
+    def _from_property(obj):
+        rv = reduce(getattr, field_name.split("."), obj)
+        return rv() if callable(rv) else rv
+
+    for key, value in kwargs.items():
+        setattr(_from_property, key, value)
+    return _from_property
+
+
+def field_property(field_name, **kwargs):
+    def _from_property(admin, obj=None):
+        if not obj:
+            return None
+        rv = reduce(getattr, field_name.split("."), obj)
+        return rv() if callable(rv) else rv
+
+    for key, value in kwargs.items():
+        setattr(_from_property, key, value)
+    return _from_property
 
 
 def enum2choices(enum):

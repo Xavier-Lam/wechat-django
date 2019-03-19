@@ -1,0 +1,36 @@
+{
+    "is_menu_open": 1,
+    "selfmenu_info": {
+        "button": [
+            {
+                "name": "测试菜单",
+                "sub_button": {
+                    "list": [
+                        {
+                            "type": "view",
+                            "name": "abc",
+                            "url": "http://baidu.com/"
+                        },
+                        {
+                            "type": "click",
+                            "name": "第二个",
+                            "key": "abc"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "测试2",
+                "sub_button": {
+                    "list": [
+                        {
+                            "type": "click",
+                            "name": "aaaa",
+                            "key": "6666"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

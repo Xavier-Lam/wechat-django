@@ -7,7 +7,7 @@ import time
 from django.utils import timezone
 from wechatpy import events, messages, replies
 
-from ..decorators import message_handler
+from ..handler import message_handler
 from ..models import MessageHandler, Reply, Rule, WeChatMessageInfo
 from .base import WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,

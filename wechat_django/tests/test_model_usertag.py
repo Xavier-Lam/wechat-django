@@ -46,7 +46,9 @@ class UserTestCase(WeChatTestCase):
 
             WeChatTag.iter_tag_users.return_value = ["openid1", "openid2"]
             WeChatUser.upsert_users.return_value = ["openid1", "openid2"]
-            tag = UserTag.objects.create(app=self.app, name="tag", id=101)
+            tag = UserTag.objects.create(
+                app=self.app, name="tag", id=101, _tag_local=True)
+            del tag._tag_local
             self.assertEqual(tag.sync_users(False), ["openid1", "openid2"])
 
     def test_change_user_tags(self):
@@ -55,8 +57,12 @@ class UserTestCase(WeChatTestCase):
         untag_user_err = "untag_user_err"
 
         user = WeChatUser.objects.create(app=self.app, openid="openid1")
-        tag1 = UserTag.objects.create(app=self.app, id=101, name="tag1")
-        tag2 = UserTag.objects.create(app=self.app, id=102, name="tag2")
+        tag1 = UserTag.objects.create(
+            app=self.app, id=101, name="tag1", _tag_local=True)
+        del tag1._tag_local
+        tag2 = UserTag.objects.create(
+            app=self.app, id=102, name="tag2", _tag_local=True)
+        del tag2._tag_local
 
         with mock.patch.object(WeChatTag, "tag_user"),\
             mock.patch.object(WeChatTag, "untag_user"):
@@ -102,7 +108,9 @@ class UserTestCase(WeChatTestCase):
 
         user1 = WeChatUser.objects.create(app=self.app, openid="openid1")
         user2 = WeChatUser.objects.create(app=self.app, openid="openid2")
-        tag = UserTag.objects.create(app=self.app, id=101, name="tag1")
+        tag = UserTag.objects.create(
+            app=self.app, id=101, name="tag1", _tag_local=True)
+        del tag._tag_local
 
         with mock.patch.object(WeChatTag, "tag_user"),\
             mock.patch.object(WeChatTag, "untag_user"):

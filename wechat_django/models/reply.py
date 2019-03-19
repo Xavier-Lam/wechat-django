@@ -107,7 +107,7 @@ class Reply(WeChatModel):
             appname = message_info.app.name
             message = message_info.message
             if not hasattr(func, "message_handler"):
-                e = "handler must be decorated by wechat_django.decorators.message_handler"
+                e = "handler must be decorated by wechat_django.handler.message_handler"
                 raise MessageHandleError(e)
             elif (hasattr(func.message_handler, "__contains__")
                 and appname not in func.message_handler):

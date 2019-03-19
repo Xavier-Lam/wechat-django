@@ -31,10 +31,14 @@ class UserTag(WeChatModel):
         index_together = (("app", "name"), )
         ordering = ("app", "id")
 
+    @property
     def sys_tag(self):
         return self.id in self.SYS_TAGS
-    sys_tag.short_description = _("sys tag")
-    sys_tag.boolean = True
+
+    def __init__(self, *args, **kwargs):
+        tag_local = kwargs.pop("_tag_local", None)
+        super(UserTag, self).__init__(*args, **kwargs)
+        self._tag_local = tag_local
 
     @classmethod
     @appmethod("sync_usertags")
@@ -57,7 +61,7 @@ class UserTag(WeChatModel):
                     name=tag["name"]
                 )
                 if tag["id"] not in db_tag_ids:
-                    db_tag = cls.objects.create(**data)
+                    db_tag = cls.objects.create(_tag_local=True, **data)
                 else:
                     db_tag = (cls.objects.filter(id=tag["id"], app=app)
                         .update(name=tag["name"]))
@@ -82,8 +86,8 @@ class UserTag(WeChatModel):
 
     def save(self, *args, **kwargs):
         # 保存之前 先创建标签
-        if not kwargs.get("force_insert"):
-            if self.sys_tag():
+        if not getattr(self, "_tag_local", False):
+            if self.sys_tag:
                 raise ValueError(_("can not edit a system tag"))
 
             if self.id:

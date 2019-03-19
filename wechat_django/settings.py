@@ -11,7 +11,11 @@ SESSIONSTORAGE = getattr(
 
 WECHATCLIENTFACTORY = getattr(
     settings, "WECHAT_WECHATCLIENTFACTORY",
-    "wechat_django.utils.wechat.get_wechat_client")
+    "wechat_django.client.get_client")
+
+OAUTHCLIENTFACTORY = getattr(
+    settings, "WECHAT_OAUTHCLIENTFACTORY",
+    "wechat_django.oauth.get_client")
 
 MESSAGETIMEOFFSET = getattr(settings, "WECHAT_MESSAGETIMEOFFSET", 180)
 

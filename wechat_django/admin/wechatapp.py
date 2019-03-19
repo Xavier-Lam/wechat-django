@@ -9,26 +9,37 @@ from django.utils.translation import ugettext_lazy as _
 
 from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
+from ..utils.admin import list_property
 from .base import has_wechat_permission
 
 
 class WeChatAppForm(forms.ModelForm):
+    log_message = forms.BooleanField(
+        label=_("log messages"), initial=False, required=False)
+
+    accesstoken_url = forms.URLField(
+        label=_("accesstoken url"), required=False,
+        help_text=_("获取accesstoken的url,不填直接从微信取"))
+    oauth_url = forms.URLField(
+        label=_("oauth url"), required=False,
+        help_text=_("授权重定向的url,用于第三方网页授权换取code,默认直接微信授权"))
+
     class Meta(object):
         model = WeChatApp
         fields = "__all__"
         widgets = dict(
             appsecret=forms.PasswordInput(render_value=True),
+            token=forms.PasswordInput(render_value=True),
             encoding_aes_key=forms.PasswordInput(render_value=True)
         )
-
-    log_message = forms.BooleanField(
-        label=_("log messages"), initial=False, required=False)
 
     def __init__(self, *args, **kwargs):
         inst = kwargs.get("instance")
         if inst:
             initial = kwargs.get("initial", {})
             initial["log_message"] = inst.log_message
+            initial["accesstoken_url"] = inst.configurations.get("ACCESSTOKEN_URL", "")
+            initial["oauth_url"] = inst.configurations.get("OAUTH_URL", "")
             kwargs["initial"] = initial
         return super(WeChatAppForm, self).__init__(*args, **kwargs)
 
@@ -42,6 +53,10 @@ class WeChatAppForm(forms.ModelForm):
 
     def save(self, commit=True):
         self.instance.flags = self.cleaned_data["flags"]
+        self.instance.configurations["ACCESSTOKEN_URL"] =\
+            self.cleaned_data.get("accesstoken_url", "")
+        self.instance.configurations["OAUTH_URL"] =\
+            self.cleaned_data.get("oauth_url", "")
         return super(WeChatAppForm, self).save(commit)
 
 
@@ -49,15 +64,18 @@ class WeChatAppForm(forms.ModelForm):
 class WeChatAppAdmin(admin.ModelAdmin):
     actions = None
     list_display = (
-        "title", "name", "type", "appid", "short_desc", "interactable",
-        "created_at", "updated_at"
-    )
+        "title", "name", "type", "appid", "short_desc", 
+        list_property(
+            "abilities.interactable",
+            boolean=True, short_description=_("interactable")),
+        "created_at", "updated_at")
     search_fields = ("title", "name", "appid", "short_desc")
 
     fields = (
         "title", "name", "appid", "appsecret", "type", "token",
         "encoding_aes_key", "encoding_mode", "desc", "log_message",
-        "callback", "created_at", "updated_at"
+        "callback", "accesstoken_url", "oauth_url",
+        "created_at", "updated_at"
     )
 
     def short_desc(self, obj):
@@ -69,18 +87,14 @@ class WeChatAppAdmin(admin.ModelAdmin):
             "wechat_django:handler", kwargs=dict(appname=obj.name)))
     callback.short_description = _("message callback url")
 
-    def interactable(self, obj):
-        """可与微信服务器交互的"""
-        return obj.abilities.interactable
-    interactable.boolean = True
-    interactable.short_description = _("interactable")
-
     def get_fields(self, request, obj=None):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
         if not obj:
             fields.remove("callback")
             fields.remove("created_at")
             fields.remove("updated_at")
+        if obj and obj.type == WeChatApp.Type.SUBSCRIBEAPP:
+            fields.remove("oauth_url")
         return fields
 
     def get_readonly_fields(self, request, obj=None):

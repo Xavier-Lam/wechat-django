@@ -11,9 +11,9 @@ from django.utils.http import urlencode
 from six.moves.urllib.parse import parse_qsl, urlparse
 
 from ..models import WeChatUser
-from ..oauth import wechat_auth, WeChatOAuthView, WeChatSNSScope
-from ..patches import WeChatOAuth
-from .base import WeChatTestCase
+from ..oauth import (
+    wechat_auth, WeChatOAuthClient, WeChatOAuthView, WeChatSNSScope)
+from .base import mock, WeChatTestCase
 from .interceptors import common_interceptor
 
 
@@ -132,7 +132,7 @@ class OAuthTestCase(WeChatTestCase):
             scope=WeChatSNSScope.USERINFO, state=state)
         resp = handler.unauthorization_response(request)
         self.assertIsInstance(resp, response.HttpResponseRedirect)
-        client = WeChatOAuth(self.app.appid, self.app.appsecret)
+        client = WeChatOAuthClient(self.app.appid, self.app.appsecret)
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, state))
 
@@ -144,7 +144,7 @@ class OAuthTestCase(WeChatTestCase):
             scope=WeChatSNSScope.USERINFO, state=state)
         resp = handler.unauthorization_response(request)
         self.assertIsInstance(resp, response.HttpResponseRedirect)
-        client = WeChatOAuth(self.app.appid, self.app.appsecret)
+        client = WeChatOAuthClient(self.app.appid, self.app.appsecret)
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, path))
 
@@ -164,26 +164,6 @@ class OAuthTestCase(WeChatTestCase):
         resp = handler.unauthorization_response(request)
         self.assertIsInstance(resp, response.HttpResponseForbidden)
         self.assertEqual(resp.content, path.encode())
-
-    # def test_get_params(self):
-    #     """测试url参数获取"""
-    #     host = "example.com"
-    #     path = "/test"
-    #     code = "123456"
-    #     state = ""
-
-    #     decorator = wechat_auth(self.app.name)
-    #     view = lambda request, *args, **kwargs: ""
-    #     handler = WeChatOAuthView(decorator, view)
-    #     rf = RequestFactory(HTTP_HOST=host)
-    #     request = rf.get(path + "?" + urlencode(dict(
-    #         code=code,
-    #         state=state
-    #     )))
-    #     resp = handler.dispatch(request)
-    #     self.assertEqual(resp, "")
-    #     self.assertEqual(handler.get_params("code"), code)
-    #     self.assertEqual(handler.get_params("state"), state)
 
     def test_auth(self):
         """测试授权"""
@@ -338,6 +318,17 @@ class OAuthTestCase(WeChatTestCase):
         id = data["id"]
         user = WeChatUser.objects.get(id=id)
         self.assertEqual(user.openid, openid)
+
+    def test_custom_oauth_url(self):
+        """测试设置了OAUTH_URL url后 不再向微信请求授权,转向第三方请求授权"""
+        with mock.patch.object(WeChatOAuthClient, "authorize_url"):
+            new_url = "new_url"
+            self.app.configurations["OAUTH_URL"] = new_url
+            hasattr(self.app, "_oauth") and delattr(self.app, "_oauth")
+            url = self.app.oauth.authorize_url("redirect_url")
+            self.assertTrue(url.startswith(new_url))
+            delattr(self.app, "_oauth")
+            del self.app.configurations["OAUTH_URL"]
 
     def _make_handler(self, request, appname="", **kwargs):
         view = kwargs.pop("view", lambda request, *args, **kwargs: "")

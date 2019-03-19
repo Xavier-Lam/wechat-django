@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import MessageHandler, MsgLogFlag, Reply, Rule
-from ..utils.admin import enum2choices
+from ..utils.admin import enum2choices, list_property
 from .base import DynamicChoiceForm, WeChatModelAdmin
 
 
@@ -142,8 +142,10 @@ class MessageHandlerAdmin(WeChatModelAdmin):
 
     actions = ("sync", )
     list_display = (
-        "name", "is_sync", "available", "enabled", "weight", "starts", "ends",
-        "updated_at", "created_at")
+        "name", "is_sync", 
+        list_property(
+            "available", boolean=True, short_description=_("available")),
+        "enabled", "weight", "starts", "ends", "updated_at", "created_at")
     list_editable = ("weight",)
     list_filter = (AvailableFilter, )
     search_fields = ("name", "rules__content", "replies__content")

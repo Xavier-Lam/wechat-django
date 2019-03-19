@@ -33,7 +33,8 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     preview.allow_tags = True
 
     def updatetime(self, obj):
-        return timezone.datetime.fromtimestamp(obj.update_time)
+        return (obj.update_time
+            and timezone.datetime.fromtimestamp(obj.update_time))
     updatetime.short_description = _("update time")
 
     @mark_safe

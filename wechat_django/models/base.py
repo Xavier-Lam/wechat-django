@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from functools import wraps
+from functools import update_wrapper, wraps
 
 from django.db import models as m
+from django.utils.encoding import force_bytes
 import six
 
 from . import WeChatApp
@@ -44,6 +45,17 @@ def appmethod(func_or_name):
 
 
 class WeChatModelMetaClass(m.base.ModelBase):
+    def __new__(meta, name, bases, attrs):
+        # python2.7 __str__必须返回bytestring
+        if six.PY2 and "__str__" in attrs:
+            __str__ = attrs.pop("__str__")
+            attrs["__str__"] = update_wrapper(
+                lambda self: force_bytes(__str__(self)), __str__)
+
+        cls = super(WeChatModelMetaClass, meta).__new__(
+            meta, name, bases, attrs)
+        return cls
+
     def __init__(cls, name, bases, attrs):
         super(WeChatModelMetaClass, cls).__init__(name, bases, attrs)
         for attr in attrs:

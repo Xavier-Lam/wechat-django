@@ -5,15 +5,43 @@ import logging
 
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
+from django.utils.http import urlencode
 from django.views import View
 import six
-from wechatpy import WeChatOAuthException
+from wechatpy import WeChatOAuth as _WeChatOAuthClient, WeChatOAuthException
 
 from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
 from .sites.wechat import patch_request
 from .utils.web import auto_response, get_params
 
-__all__ = ("wechat_auth", "WeChatOAuthView", "WeChatSNSScope")
+__all__ = (
+    "wechat_auth", "WeChatOAuthClient", "WeChatOAuthView", "WeChatSNSScope")
+
+
+class WeChatOAuthClient(_WeChatOAuthClient):
+    OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
+    QRCONNECT_URL = "https://open.weixin.qq.com/connect/qrconnect"
+
+    def __init__(self, app_id, secret):
+        super(WeChatOAuthClient, self).__init__(app_id, secret, "")
+
+    def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
+        return self.OAUTH_URL + "?" + urlencode(dict(
+            appid=self.app_id,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope=scope,
+            state=state
+        )) + "#wechat_redirect"
+
+    def qrconnect_url(self, redirect_uri, state=""):
+        return self.QRCONNECT_URL + "?" + urlencode(dict(
+            appid=self.app_id,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope="snsapi_login",
+            state=state
+        )) + "#wechat_redirect"
 
 
 class wechat_auth(object):
@@ -49,6 +77,13 @@ class wechat_auth(object):
                             ],
                             django.http.response.HttpResponse
                         ]
+
+        使用示例:
+
+            @wechat_auth("your_app_name")
+            def your_view(request, *args, **kwargs):
+                # request是一个``wechat_django.requests.WeChatOAuthRequest对象``
+                user = request.wechat.user
         """
         scope = scope or (WeChatSNSScope.BASE,)
         if isinstance(scope, six.text_type):
@@ -250,3 +285,8 @@ class WeChatOAuthView(View):
         self.kwargs = kwargs
 
     __call__ = dispatch
+
+
+def get_client(wechat_app):
+    """:type wechat_app: wechat_django.models.WeChatApp"""
+    return WeChatOAuthClient

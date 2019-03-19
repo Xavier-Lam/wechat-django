@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from .base import WeChatTestCase
+from wechatpy.client import WeChatClient as _Client
 
+from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
 
@@ -22,3 +23,15 @@ class AppTestCase(WeChatTestCase):
         with wechatapi_error(api), wechatapi("/cgi-bin/message/custom/send", success):
             resp = self.app.client.message.send_text("openid", "abc")
             self.assertEqual(resp["errcode"], 0)
+
+    def test_custom_accesstoken_url(self):
+        """测试设置了ACCESSTOKEN url后 不再向原地址发送请求,转为向新地址发送请求"""
+        with mock.patch.object(_Client, "_fetch_access_token"):
+            new_url = "new_url"
+            self.app.configurations["ACCESSTOKEN_URL"] = new_url
+            hasattr(self.app, "_client") and delattr(self.app, "_client")
+            self.app.client.access_token
+            self.assertEqual(
+                _Client._fetch_access_token.call_args[0][0], new_url)
+            delattr(self.app, "_client")
+            del self.app.configurations["ACCESSTOKEN_URL"]

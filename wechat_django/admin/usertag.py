@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag
+from ..utils.admin import field_property
 from .base import RecursiveDeleteActionMixin, WeChatModelAdmin
 
 
@@ -22,6 +23,8 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
 
     fields = list_display
     readonly_fields = ("id", "count", "sys_tag")
+
+    sys_tag = field_property("sys_tag", boolean=True, short_description=_("sys tag"))
 
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
@@ -90,7 +93,7 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     def has_delete_permission(self, request, obj=None):
         rv = super(UserTagAdmin, self).has_delete_permission(request, obj)
         if rv and obj:
-            return not obj.sys_tag()
+            return not obj.sys_tag
         return rv
 
     def has_add_permission(self, request):

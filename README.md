@@ -73,7 +73,8 @@
 | --- | --- | --- |
 | WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
-| WECHAT_WECHATCLIENTFACTORY | "wechat_django.utils.wechat.get_wechat_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.wechat.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改WeChatClient生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
+| WECHAT_WECHATCLIENTFACTORY | "wechat_django.client.get_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.client.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
+| WECHAT_OAUTHCLIENTFACTORY | "wechat_django.oauth.get_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.oauth.WeChatOAuthClient`](https://wechatpy.readthedocs.io/zh_CN/master/oauth.html) 子类的字符串,当默认的WeChatOAuthClient不能满足需求时,可通过修改生成工厂来定制自己的WWeChatOAuthClient类 | 
 | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放检查 默认检查 |
 
@@ -116,7 +117,7 @@
 ### 自定义微信回复
 在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
 
-    from wechat_django.decorators import message_handler
+    from wechat_django.handler import message_handler
 
     @message_handler
     def custom_business(message):
@@ -150,6 +151,7 @@
 * 回复及一些查询缓存
 * 菜单及消息处理程序的导入导出
 * 素材Storage
+* 模板消息
 
 ### 已知bug
 

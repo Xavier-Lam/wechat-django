@@ -3,7 +3,7 @@ from django.conf import settings
 from django.conf.urls import url
 from django.http.response import HttpResponse
 
-from wechat_django.decorators import message_handler
+from wechat_django.handler import message_handler
 from wechat_django.models import WeChatUser
 from wechat_django.oauth import wechat_auth, WeChatSNSScope
 from wechatpy.replies import TextReply

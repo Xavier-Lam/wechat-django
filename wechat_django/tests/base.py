@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
+import os
 try:
     from unittest import mock
 except ImportError:
@@ -30,6 +32,12 @@ class WeChatTestCase(TestCase):
 
     def rf(self, **defaults):
         return RequestFactory(**defaults)
+
+    def load_data(self, path):
+        res_file = os.path.join(
+            os.path.dirname(__file__), "data", '%s.json' % path)
+        with open(res_file, "rb") as f:
+            return json.loads(f.read().decode("utf-8"))
 
     #region utils
     def _create_handler(self, rules=None, name="", replies=None, app=None,

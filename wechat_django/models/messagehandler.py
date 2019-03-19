@@ -89,6 +89,7 @@ class MessageHandler(WeChatModel):
     def log_message(self):
         return bool(self.flags & MsgLogFlag.LOG_MESSAGE)
 
+    @property
     def available(self):
         if not self.enabled:
             return False
@@ -98,8 +99,6 @@ class MessageHandler(WeChatModel):
         if self.ends and self.ends < now:
             return False
         return True
-    available.short_description = _("available")
-    available.boolean = True
 
     @staticmethod
     def matches(message_info):
@@ -113,7 +112,7 @@ class MessageHandler(WeChatModel):
                 return (handler, )
 
     def is_match(self, message_info):
-        if self.available():
+        if self.available:
             for rule in self.rules.all():
                 if rule.match(message_info):
                     return self
