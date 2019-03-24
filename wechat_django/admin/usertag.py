@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag
@@ -17,7 +18,8 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     __category__ = "usertag"
     __model__ = UserTag
 
-    actions = ("sync", "sync_users", "sync_openids")
+    actions = ("sync_users", "sync_openids")
+    changelist_object_tools = ("sync",)
     list_display = ("id",  "name", "sys_tag", "count", "created_at")
     search_fields = ("name", )
 
@@ -26,7 +28,8 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
 
     sys_tag = field_property("sys_tag", boolean=True, short_description=_("sys tag"))
 
-    def sync(self, request, queryset):
+    @object_tool.confirm(short_description=_("Sync user tags"))
+    def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         app = request.app
         try:
@@ -40,7 +43,6 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync tags")
 
     def sync_users(self, request, queryset, detail=True):
         self.check_wechat_permission(request, "sync", "user")

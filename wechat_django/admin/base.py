@@ -18,6 +18,7 @@ from django.utils.http import urlencode
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.urls import NoReverseMatch, resolve, reverse
+from object_tool import CustomObjectToolModelAdminMixin
 import six
 from wechatpy.exceptions import WeChatClientException
 
@@ -104,11 +105,15 @@ class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
         return self
 
 
-class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, admin.ModelAdmin)):
+class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjectToolModelAdminMixin, admin.ModelAdmin)):
     """所有微信相关业务admin的基类
 
     并且通过request.app_id及request.app拿到app信息
     """
+    change_form_template = "admin/wechat_django/change_form.html"
+    change_list_template = "admin/wechat_django/change_list.html"
+    objecttool_form_template = "admin/wechat_django/objecttool_form.html"
+
     #region view
     def get_changelist(self, request):
         return WeChatChangeList
@@ -121,15 +126,6 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, admin.Model
                 pattern._regex = pattern._regex.replace(
                     "(.+)", "(?P<object_id>.+)")
         return urlpatterns
-
-    def changelist_view(self, request, extra_context=None):
-        # 允许没有选中的actions
-        post = request.POST.copy()
-        if admin.helpers.ACTION_CHECKBOX_NAME not in post:
-            post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
-            request._set_post(post)
-        return super(WeChatModelAdmin, self).changelist_view(
-            request, extra_context)
 
     def response_post_save_add(self, request, obj):
         return self.response_post_save_change(request, obj)

@@ -10,6 +10,21 @@ from six.moves import reduce
 from six.moves.urllib.parse import parse_qsl
 
 
+def anchor(text, href, **kwargs):
+    """转化为a标签"""
+    @mark_safe
+    def wrapper(modeladmin, obj):
+        kwargs.update(
+            href=href,
+            text=text
+        )
+        for key, value in kwargs:
+            if callable(value):
+                kwargs[key] = value(modeladmin, obj)
+        return kwargs["text"] and '<a href="{href}">{text}</a>'.format(**kwargs)
+    return wrapper
+
+
 def linkify(field_name):
     """
     Converts a foreign key value into clickable links.

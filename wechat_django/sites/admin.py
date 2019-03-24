@@ -8,9 +8,11 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.http import response
 from django.template.response import SimpleTemplateResponse
-from django.urls import NoReverseMatch, resolve, reverse
+from django.urls import NoReverseMatch, resolve, Resolver404, reverse
 from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
+from object_tool import CustomObjectToolAdminSiteMixin
+from six.moves.urllib.parse import urlparse
 
 from ..admin.base import registered_admins, WeChatModelAdmin
 from ..models import WeChatApp
@@ -26,26 +28,39 @@ def wechat_admin_view(view, site):
     """
     @wraps(view)
     def decorated_func(request, *args, **kwargs):
-        if "wechat_app_id" not in kwargs:
-            return response.HttpResponseNotFound()
-
-        # 对于只有object_id没有app_id的 重定向到有app_id的url
         app_id = kwargs.pop("wechat_app_id", None)
         object_id = kwargs.get("object_id", None)
-        if object_id and not app_id:
-            modeladmin = view.__self__
-            try:
-                obj = modeladmin.model.objects.get(pk=object_id)
-            except modeladmin.model.DoesNotExist:
-                return response.HttpResponseBadRequest()
-
+        if not app_id:
             url_name = resolve(request.path_info).url_name
-            return response.HttpResponseRedirect(
-                reverse("admin:" + url_name, kwargs=dict(
-                    wechat_app_id=obj.app_id,
-                    object_id=object_id
-                ))
-            )
+            if object_id:
+                # 对于只有object_id没有app_id的 重定向到有app_id的url
+                modeladmin = view.__self__
+                try:
+                    obj = modeladmin.model.objects.get(pk=object_id)
+                except modeladmin.model.DoesNotExist:
+                    return response.HttpResponseBadRequest()
+
+                return response.HttpResponseRedirect(
+                    reverse("admin:" + url_name, kwargs=dict(
+                        wechat_app_id=obj.app_id,
+                        object_id=object_id
+                    ))
+                )
+            else:
+                # 对于没有app_id的listview请求 优先取referrer的app_id
+                referrer = request.META.get("HTTP_REFERER", "")
+                path_info = urlparse(referrer).path
+                try:
+                    app_id = resolve(path_info).kwargs["wechat_app_id"]
+                except (KeyError, Resolver404):
+                    return response.HttpResponseNotFound()
+                resp = response.HttpResponseRedirect(
+                    reverse("admin:" + url_name, kwargs=dict(
+                        wechat_app_id=app_id
+                    ))
+                )
+                resp.status_code = 307
+                return resp
 
         extra_context = kwargs.pop("extra_context", None) or {}
         try:
@@ -67,7 +82,7 @@ def wechat_admin_view(view, site):
     return decorated_func
 
 
-class WeChatAdminSiteMixin(object):
+class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
     """AdminSiteMixin 自定义后台需要包含微信相关功能时 需要将本Mixin混入"""
     _default_wechat_site = default_wechat_site
 

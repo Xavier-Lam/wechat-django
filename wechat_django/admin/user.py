@@ -6,6 +6,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import UserTag, WeChatUser
@@ -36,7 +37,8 @@ class WeChatUserAdmin(WeChatModelAdmin):
     __category__ = "user"
     __model__ = WeChatUser
 
-    actions = ("sync", "sync_all", "update")
+    actions = ("update",)
+    changelist_object_tools = ("incremental_sync", "sync_all")
     list_display = (
         "openid", "nickname", "avatar", "subscribe", "remark",  # "groupid",
         "created_at")
@@ -58,7 +60,7 @@ class WeChatUserAdmin(WeChatModelAdmin):
         return obj.subscribe_time and timezone.datetime.fromtimestamp(obj.subscribe_time)
     subscribetime.short_description = _("subscribe time")
 
-    def sync(self, request, queryset, method="sync", kwargs=None):
+    def sync(self, request, obj=None, method="sync", kwargs=None):
         self.check_wechat_permission(request, "sync")
         # 可能抛出48001 没有api权限
         kwargs = kwargs or dict()
@@ -75,12 +77,17 @@ class WeChatUserAdmin(WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("incremental sync")
-    sync_all = lambda self, request, queryset: self.sync(
-        request, queryset, kwargs=dict(all=True))
-    sync_all.short_description = _("sync all")
+
+    @object_tool.confirm(short_description=_("Incremental sync users"))
+    def incremental_sync(self, request, obj=None):
+        return self.sync(request, obj)
+
+    @object_tool.confirm(short_description=_("Sync all users"))
+    def sync_all(self, request, obj=None):
+        return self.sync(request, obj, kwargs=dict(all=True))
+
     update = lambda self, request, queryset: self.sync(
-        request, queryset, "fetch_users", dict(
+        request, None, "fetch_users", dict(
             openids=[o.openid for o in queryset.all()]
         ))
     update.short_description = _("update selected")

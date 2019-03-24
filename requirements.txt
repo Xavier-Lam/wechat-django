@@ -1,4 +1,5 @@
 Django>=1.11
 jsonfield>=2.0.2
+django-object-tool>=0.0.3
 requests>=2.4.3
 wechatpy>=1.8.0

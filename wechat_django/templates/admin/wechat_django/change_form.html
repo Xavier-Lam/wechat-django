@@ -1,4 +1,4 @@
-{% extends 'admin/change_form.html' %}
+{% extends 'admin/object_tool/baseview.html' %}
 {% load i18n admin_urls admin_modify %}
 
 {% block breadcrumbs %}
@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block object-tools-items %}
+{% include 'admin/object_tool/object-tools-items.html' %}
 <li>
     {% url opts|admin_urlname:'history' wechat_app_id=wechat_app_id object_id=original.pk|admin_urlquote as history_url %}
     <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>

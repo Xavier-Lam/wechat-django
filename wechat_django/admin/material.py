@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Material
@@ -17,7 +18,7 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     __category__ = "material"
     __model__ = Material
 
-    actions = ("sync", )
+    changelist_object_tools = ("sync", )
     list_display = ("media_id", "type", "comment", "updatetime")
     list_filter = ("type", )
     search_fields = ("name", "media_id", "comment")
@@ -64,7 +65,8 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     open.short_description = _("open")
     open.allow_tags = True
 
-    def sync(self, request, queryset):
+    @object_tool.confirm(short_description=_("Sync materials"))
+    def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         app = request.app
         try:
@@ -78,7 +80,6 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync")
 
     def has_add_permission(self, request):
         return False

@@ -1,0 +1,6 @@
+{% extends 'admin/object_tool/form.html' %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+{% include 'admin/wechat_django/breadcrumbs.html' with view_short_description=object_tool.1.short_description %}
+{% endblock %}

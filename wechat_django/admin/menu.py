@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Menu
@@ -18,7 +19,7 @@ class MenuAdmin(WeChatModelAdmin):
     __category__ = "menu"
     __model__ = Menu
 
-    actions = ("sync", "publish")
+    changelist_object_tools = ("sync", "publish")
 
     list_display = (
         "operates", "id", "parent_id", "title", "type", "detail", "weight",
@@ -68,7 +69,8 @@ class MenuAdmin(WeChatModelAdmin):
     operates.short_description = _("actions")
     operates.allow_tags = True
 
-    def sync(self, request, queryset):
+    @object_tool.confirm(short_description=_("Sync menus"))
+    def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         app = request.app
         try:
@@ -81,9 +83,9 @@ class MenuAdmin(WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync")
 
-    def publish(self, request, queryset):
+    @object_tool.confirm(short_description=_("Publish menus"))
+    def publish(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         app = request.app
         try:
@@ -96,7 +98,6 @@ class MenuAdmin(WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    publish.short_description = _("publish")
 
     def get_actions(self, request):
         actions = super(MenuAdmin, self).get_actions(request)

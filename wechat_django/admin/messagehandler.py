@@ -5,6 +5,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import MessageHandler, MsgLogFlag, Reply, Rule
@@ -140,7 +141,7 @@ class MessageHandlerAdmin(WeChatModelAdmin):
                     .exclude(starts__gt=now).exclude(ends__lte=now))
             return queryset
 
-    actions = ("sync", )
+    changelist_object_tools = ("sync", )
     list_display = (
         "name", "is_sync", 
         list_property(
@@ -154,6 +155,7 @@ class MessageHandlerAdmin(WeChatModelAdmin):
     fields = ("name", "strategy", "starts", "ends", "enabled", "log_message",
         "weight", "created_at", "updated_at")
 
+    @object_tool.confirm(short_description=_("Sync message handlers"))
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
         app = request.app
@@ -168,7 +170,6 @@ class MessageHandlerAdmin(WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync")
 
     def is_sync(self, obj):
         return obj.src in (MessageHandler.Source.MP, MessageHandler.Source.MENU)

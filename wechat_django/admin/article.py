@@ -6,9 +6,11 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 from wechatpy.exceptions import WeChatClientException
 
 from ..models import Article
+from ..utils.admin import anchor
 from .base import WeChatModelAdmin
 
 
@@ -16,7 +18,7 @@ class ArticleAdmin(WeChatModelAdmin):
     __category__ = "article"
     __model__ = Article
 
-    actions = ("sync",)
+    changelist_object_tools = ("sync",)
     list_display = ("title", "author", "material_link", "index", "digest",
         "link", "source_url", "synced_at")
     list_editable = ("index",)
@@ -26,29 +28,17 @@ class ArticleAdmin(WeChatModelAdmin):
         "link", "show_cover_pic", "_content", "content_source_url", "source_url")
     readonly_fields = fields
 
-    @mark_safe
-    def link(self, obj):
-        return '<a href="{link}">{title}</a>'.format(
-            link=obj.url,
-            title=_("link")
-        )
+    link = anchor(_("link"), lambda self, obj: obj.url)
     link.short_description = _("link")
-    link.allow_tags = True
 
-    @mark_safe
-    def source_url(self, obj):
-        return obj.content_source_url and '<a href="{link}">{title}</a>'.format(
-            link=obj.content_source_url,
-            title=_("source_url")
-        )
+    source_url = anchor(_("source_url"),
+        lambda self, obj: obj.content_source_url)
     source_url.short_description = _("source_url")
-    source_url.allow_tags = True
 
     @mark_safe
     def thumb_image(self, obj):
         return obj.thumb_url and '<a href="{0}"><img width="200" src="{0}" /></a>'.format(obj.thumb_url)
     thumb_image.short_description = _("thumb_url")
-    thumb_image.allow_tags = True
 
     @mark_safe
     def material_link(self, obj):
@@ -67,13 +57,11 @@ class ArticleAdmin(WeChatModelAdmin):
                 )
             ) if m.comment else m.media_id
     material_link.short_description = _("material")
-    material_link.allow_tags = True
 
     @mark_safe
     def _content(self, obj):
         return obj.content
     _content.short_description = _("content")
-    _content.allow_tags = True
 
     def get_queryset(self, request):
         base_q = super(WeChatModelAdmin, self).get_queryset(request)
@@ -85,7 +73,8 @@ class ArticleAdmin(WeChatModelAdmin):
             del actions['delete_selected']
         return actions
 
-    def sync(self, request, queryset):
+    @object_tool.confirm(short_descrition=_("Sync articles"))
+    def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         app = request.app
         try:
@@ -99,7 +88,6 @@ class ArticleAdmin(WeChatModelAdmin):
             else:
                 self.logger(request).error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
-    sync.short_description = _("sync")
 
     def has_add_permission(self, request):
         return False
