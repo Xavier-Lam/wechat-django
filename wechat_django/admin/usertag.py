@@ -67,9 +67,11 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     def count(self, obj):
         return '<a href="{link}">{count}</a>'.format(
             link="{0}?{1}".format(
-                reverse("admin:wechat_django_wechatuser_changelist"),
+                reverse(
+                    "admin:wechat_django_wechatuser_changelist",
+                    kwargs=dict(wechat_app_id=obj.app_id)
+                ),
                 urlencode(dict(
-                    app_id=obj.app_id,
                     tags__in=obj._id
                 ))
             ),
@@ -81,7 +83,8 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     def get_fields(self, request, obj=None):
         fields = list(super(UserTagAdmin, self).get_fields(request, obj))
         if not obj:
-            fields.remove("created_at",)
+            fields.remove("count")
+            fields.remove("created_at")
         return fields
 
     def get_readonly_fields(self, request, obj=None):

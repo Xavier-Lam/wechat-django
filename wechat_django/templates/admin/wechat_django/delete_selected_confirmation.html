@@ -2,10 +2,5 @@
 {% load i18n admin_urls %}
 
 {% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label app_id=app_id %}">{{ app.title }}</a>
-&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}?app_id={{ app_id }}">{{ opts.verbose_name_plural|capfirst|escape }}</a>
-&rsaquo; {% trans 'Delete multiple objects' %}
-</div>
+{% include 'admin/wechat_django/breadcrumbs.html' with view_short_description="Delete multiple objects" %}
 {% endblock %}

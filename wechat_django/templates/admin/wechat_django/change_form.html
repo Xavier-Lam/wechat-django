@@ -2,14 +2,13 @@
 {% load i18n admin_urls admin_modify %}
 
 {% block breadcrumbs %}
-{% if app_id %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label app_id=app_id %}">{{ app.title }}</a>
-&rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}?app_id={{ app_id }}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
-&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
-</div>
-{% else %}
-{{ block.super }}
-{% endif %}
+{% include 'admin/wechat_django/breadcrumbs.html' with view="change_form" %}
+{% endblock %}
+
+{% block object-tools-items %}
+<li>
+    {% url opts|admin_urlname:'history' wechat_app_id=wechat_app_id object_id=original.pk|admin_urlquote as history_url %}
+    <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
+</li>
+{% if has_absolute_url %}<li><a href="{{ absolute_url }}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif %}
 {% endblock %}

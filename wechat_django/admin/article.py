@@ -75,8 +75,9 @@ class ArticleAdmin(WeChatModelAdmin):
     _content.short_description = _("content")
     _content.allow_tags = True
 
-    def _filter_app_id(self, queryset, app_id):
-        return queryset.filter(material__app_id=app_id)
+    def get_queryset(self, request):
+        base_q = super(WeChatModelAdmin, self).get_queryset(request)
+        return base_q.filter(material__app_id=request.app_id)
 
     def get_actions(self, request):
         actions = super(ArticleAdmin, self).get_actions(request)

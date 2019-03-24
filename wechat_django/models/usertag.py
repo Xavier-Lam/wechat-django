@@ -91,6 +91,7 @@ class UserTag(WeChatModel):
                 raise ValueError(_("can not edit a system tag"))
 
             if self.id:
+                # TODO: 未修改标签不要更新
                 self.app.client.tag.update(self.id, self.name)
             else:
                 data = self.app.client.tag.create(self.name)

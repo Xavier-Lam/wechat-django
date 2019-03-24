@@ -2,15 +2,18 @@
 {% load i18n admin_urls static admin_list admin_modify %}
 
 {% block breadcrumbs %}
-{% if app_id %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label app_id=app_id %}">{{ app.title }}</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
-</div>
-{% else %}
-{{ block.super }}
-{% endif %}
+{% include 'admin/wechat_django/breadcrumbs.html' with view="list_view" %}
+{% endblock %}
+
+{% block object-tools-items %}
+  {% if has_add_permission %}
+  <li>
+    {% url cl.opts|admin_urlname:'add' wechat_app_id=wechat_app_id as add_url %}
+    <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+      {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+    </a>
+  </li>
+  {% endif %}
 {% endblock %}
 
 {% block result_list %}

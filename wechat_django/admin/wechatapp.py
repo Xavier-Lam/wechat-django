@@ -62,6 +62,11 @@ class WeChatAppForm(forms.ModelForm):
 
 @admin.register(WeChatApp)
 class WeChatAppAdmin(admin.ModelAdmin):
+    change_form_template = "admin/change_form.html"
+    change_list_template = "admin/change_list.html"
+    delete_confirmation_template = "admin/delete_confirmation.html"
+    object_history_template = "admin/object_history.html"
+
     actions = None
     list_display = (
         "title", "name", "type", "appid", "short_desc", 

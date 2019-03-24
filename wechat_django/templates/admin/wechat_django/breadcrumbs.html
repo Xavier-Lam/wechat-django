@@ -1,0 +1,19 @@
+{% load i18n admin_urls %}
+
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label wechat_app_id=wechat_app_id %}">{{ wechat_app.title }}</a>
+{% if view == "list_view" %}
+&rsaquo; {{ opts.verbose_name_plural|capfirst }}
+{% else %}
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' wechat_app_id=wechat_app_id %}">{{ opts.verbose_name_plural|capfirst }}</a>
+{% endif %}
+{% if view == "change_form" %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+{% elif object %}
+&rsaquo; <a href="{% url opts|admin_urlname:'change' wechat_app_id=wechat_app_id object_id=object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+{% endif %}
+{% if view_short_description %}
+&rsaquo; {% trans view_short_description %}
+{% endif %}
+</div>
