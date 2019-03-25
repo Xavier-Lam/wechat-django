@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import re
-
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -18,14 +16,14 @@ def anchor(text, href, **kwargs):
             href=href,
             text=text
         )
-        for key, value in kwargs:
+        for key, value in kwargs.items():
             if callable(value):
                 kwargs[key] = value(modeladmin, obj)
         return kwargs["text"] and '<a href="{href}">{text}</a>'.format(**kwargs)
     return wrapper
 
 
-def linkify(field_name):
+def foreignkey(field_name):
     """
     Converts a foreign key value into clickable links.
 
@@ -41,12 +39,13 @@ def linkify(field_name):
             app_label=app_label,
             model_name=model_name
         )
-        link_url = reverse(view_name, args=[linked_obj.id])
-        link_url += "?app_id={0}".format(obj.app.id)
+        link_url = reverse(view_name, kwargs=dict(
+            object_id=linked_obj.id,
+            wechat_app_id=obj.app_id
+        ))
         return '<a href="{0}">{1}</a>'.format(link_url, linked_obj)
 
     _linkify.short_description = _(field_name)
-    _linkify.allow_tags = True
     _linkify.admin_order_field = field_name
     return _linkify
 
@@ -71,15 +70,6 @@ def field_property(field_name, **kwargs):
     for key, value in kwargs.items():
         setattr(_from_property, key, value)
     return _from_property
-
-
-def enum2choices(enum):
-    pattern = re.compile(r"^[A-Z][A-Z_\d]+$")
-    return tuple(
-        (getattr(enum, key), _(key))
-        for key in dir(enum)
-        if re.match(pattern, key)
-    )
 
 
 def get_request_params(request, param):

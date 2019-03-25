@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from ..exceptions import MessageHandleError
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from ..utils.web import get_ip
 from . import appmethod, MsgLogFlag, WeChatApp, WeChatModel
 

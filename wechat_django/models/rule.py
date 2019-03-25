@@ -7,7 +7,7 @@ from django.db import models as m
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from . import MessageHandler, MsgType, WeChatModel
 
 

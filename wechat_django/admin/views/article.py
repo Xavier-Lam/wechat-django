@@ -9,9 +9,9 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import Article
-from ..utils.admin import anchor
-from .base import WeChatModelAdmin
+from ...models import Article
+from ..utils import anchor
+from ..base import WeChatModelAdmin
 
 
 class ArticleAdmin(WeChatModelAdmin):
@@ -45,17 +45,18 @@ class ArticleAdmin(WeChatModelAdmin):
         m = obj.material
         if m:
             return '<a href="{link}" title="{title}">{title}</a>'.format(
-                link="{path}?{query}".format(
-                    path=reverse("admin:wechat_django_material_change", args=(m.id,)),
-                    query=urlencode(dict(
-                        app_id=obj.app_id
-                    ))
+                link=reverse(
+                    "admin:wechat_django_material_change",
+                    kwargs=dict(
+                        object_id=m.id,
+                        wechat_app_id=m.app_id
+                    )
                 ),
                 title="{comment} ({media_id})".format(
                     comment=m.comment,
                     media_id=m.media_id
-                )
-            ) if m.comment else m.media_id
+                ) if m.comment else m.media_id
+            )
     material_link.short_description = _("material")
 
     @mark_safe
@@ -76,18 +77,13 @@ class ArticleAdmin(WeChatModelAdmin):
     @object_tool.confirm(short_descrition=_("Sync articles"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            materials = Article.sync(app)
+        def action():
+            materials = Article.sync(request.app)
             msg = _("%(count)d articles successfully synchronized")
-            self.message_user(request, msg % dict(count=len(materials)))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+            return msg % dict(count=len(materials))
+        
+        return self._clientaction(
+            request, action, _("Sync articles failed with %(exc)s"))
 
     def has_add_permission(self, request):
         return False

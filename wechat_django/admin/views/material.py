@@ -10,8 +10,9 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import Material
-from .base import RecursiveDeleteActionMixin, DynamicChoiceForm, WeChatModelAdmin
+from ...models import Material
+from ..base import (
+    RecursiveDeleteActionMixin, DynamicChoiceForm, WeChatModelAdmin)
 
 
 class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
@@ -31,7 +32,6 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
         if obj.type == Material.Type.IMAGE:
             return '<img src="%s" />'%obj.url
     preview.short_description = _("preview")
-    preview.allow_tags = True
 
     def updatetime(self, obj):
         return (obj.update_time
@@ -43,9 +43,11 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
         blank = True
         if obj.type == Material.Type.NEWS:
             url = "{0}?{1}".format(
-                reverse("admin:wechat_django_article_changelist"),
+                reverse(
+                    "admin:wechat_django_article_changelist",
+                    kwargs=dict(wechat_app_id=obj.app_id)
+                ),
                 urlencode(dict(
-                    app_id=obj.app_id,
                     material_id=obj.id
                 ))
             )
@@ -63,23 +65,17 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             url, 'target="_blank"' if blank else "", _("open")
         )
     open.short_description = _("open")
-    open.allow_tags = True
 
     @object_tool.confirm(short_description=_("Sync materials"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            materials = Material.sync(app)
+        def action():
+            materials = Material.sync(request.app)
             msg = _("%(count)d materials successfully synchronized")
-            self.message_user(request, msg % dict(count=len(materials)))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+            return msg % dict(count=len(materials))
+
+        return self._clientaction(
+            request, action, _("Sync materials failed with %(exc)s"))
 
     def has_add_permission(self, request):
         return False

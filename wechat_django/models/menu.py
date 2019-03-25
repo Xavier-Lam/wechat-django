@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 import six
 
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from . import appmethod, MessageHandler, WeChatApp, WeChatModel
 
 

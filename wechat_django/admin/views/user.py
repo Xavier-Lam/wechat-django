@@ -9,8 +9,8 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import UserTag, WeChatUser
-from .base import WeChatModelAdmin
+from ...models import UserTag, WeChatUser
+from ..base import WeChatModelAdmin
 
 
 class UserForm(forms.ModelForm):
@@ -62,21 +62,16 @@ class WeChatUserAdmin(WeChatModelAdmin):
 
     def sync(self, request, obj=None, method="sync", kwargs=None):
         self.check_wechat_permission(request, "sync")
-        # 可能抛出48001 没有api权限
         kwargs = kwargs or dict()
-        app = request.app
-        try:
-            users = getattr(WeChatUser, method)(app, **kwargs)
+        # 可能抛出48001 没有api权限
+        def action():
+            users = getattr(WeChatUser, method)(request.app, **kwargs)
             msg = _("%(count)d users successfully synchronized")
-            self.message_user(request, msg % dict(count=len(users)))
-        except Exception as e:
-            tpl = _("%(method)s failed with %(exc)s")
-            msg = tpl % dict(method=_(method), exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+            return msg % dict(count=len(users))
+
+        tpl = _("%(method)s failed with %(exc)s")
+        return self._clientaction(
+            request, action, tpl, dict(method=_(method)))
 
     @object_tool.confirm(short_description=_("Incremental sync users"))
     def incremental_sync(self, request, obj=None):

@@ -127,38 +127,19 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
                     "(.+)", "(?P<object_id>.+)")
         return urlpatterns
 
-    def response_post_save_add(self, request, obj):
-        return self.response_post_save_change(request, obj)
-
-    def response_post_save_change(self, request, obj):
-        # 修正重定向url
-        opts = self.model._meta
-
-        if self.has_change_permission(request, None):
-            post_url = reverse(
-                "admin:%s_%s_changelist" % (opts.app_label, opts.model_name),
-                kwargs=dict(wechat_app_id=request.app_id),
-                current_app=self.admin_site.name
-            )
-            preserved_filters = self.get_preserved_filters(request)
-            post_url = admin_urls.add_preserved_filters(dict(
-                preserved_filters=preserved_filters,
-                opts=opts
-            ), post_url)
-        else:
-            post_url = reverse(
-                "admin:index",
-                kwargs=dict(wechat_app_id=request.app_id),
-                current_app=self.admin_site.name
-            )
-        return response.HttpResponseRedirect(post_url)
-
-    def response_delete(self, request, obj_display, obj_id):
-        resp = super(WeChatModelAdmin, self).response_delete(
-            request, obj_display, obj_id)
-        if not resolve(resp.url).kwargs.get("wechat_app_id"):
-            return self.response_post_save_change(request, None)
-        return resp
+    def _clientaction(self, request, action, failed_msg, kwargs=None):
+        kwargs = kwargs or dict()
+        try:
+            msg = action()
+            self.message_user(request, msg)
+        except Exception as e:
+            kwargs.update(exc=e)
+            msg = failed_msg % kwargs
+            if isinstance(e, WeChatClientException):
+                self.logger(request).warning(msg, exc_info=True)
+            else:
+                self.logger(request).error(msg, exc_info=True)
+            self.message_user(request, msg, level=messages.ERROR)
     #endregion
 
     #region model
@@ -181,12 +162,6 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
         app = request.app
         category = category or self.__category__
         return has_wechat_permission(request, app, category, operate, obj)
-
-    def get_model_perms(self, request):
-        # 隐藏首页上的菜单
-        if getattr(request, "app_id", None):
-            return super(WeChatModelAdmin, self).get_model_perms(request)
-        return {}
 
     def has_add_permission(self, request):
         return self.has_wechat_permission(request, "add")

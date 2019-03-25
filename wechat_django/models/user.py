@@ -9,7 +9,7 @@ from django.utils import timezone as tz
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from ..utils.func import next_chunk
 from . import appmethod, WeChatApp, WeChatModel
 

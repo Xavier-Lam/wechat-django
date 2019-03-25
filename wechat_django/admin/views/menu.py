@@ -10,9 +10,9 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import Menu
-from ..utils.admin import get_request_params
-from .base import DynamicChoiceForm, WeChatModelAdmin
+from ...models import Menu
+from ..utils import get_request_params
+from ..base import DynamicChoiceForm, WeChatModelAdmin
 
 
 class MenuAdmin(WeChatModelAdmin):
@@ -20,6 +20,8 @@ class MenuAdmin(WeChatModelAdmin):
     __model__ = Menu
 
     changelist_object_tools = ("sync", "publish")
+    change_form_template = "admin/wechat_django/menu/change_form.html"
+    change_list_template = "admin/wechat_django/menu/change_list.html"
 
     list_display = (
         "operates", "id", "parent_id", "title", "type", "detail", "weight",
@@ -48,56 +50,43 @@ class MenuAdmin(WeChatModelAdmin):
             rv = obj.content.get("appid")
         return rv or ""
     detail.short_description = _("detail")
-    detail.allow_tags = True
 
     @mark_safe
     def operates(self, obj):
-        query = dict(
-            _changelist_filters=urlencode(dict(
-                app_id=obj.app_id
-            ))
-        )
-        del_link = reverse("admin:wechat_django_menu_delete", args=(obj.id,))
-        del_url = "{0}?{1}".format(del_link, urlencode(query))
+        del_url = reverse("admin:wechat_django_menu_delete", kwargs=dict(
+            object_id=obj.id,
+            wechat_app_id=obj.app_id
+        ))
         rv = '<a class="deletelink" href="{0}"></a>'.format(del_url)
         if not obj.parent and not obj.type and obj.sub_button.count() < 5:
-            query["parent_id"] = obj.id
-            add_link = reverse("admin:wechat_django_menu_add")
+            query = dict(parent_id=obj.id)
+            add_link = reverse("admin:wechat_django_menu_add", kwargs=dict(
+                wechat_app_id=obj.app_id
+            ))
             add_url = "{0}?{1}".format(add_link, urlencode(query))
             rv += '<a class="addlink" href="{0}"></a>'.format(add_url)
         return rv
     operates.short_description = _("actions")
-    operates.allow_tags = True
 
     @object_tool.confirm(short_description=_("Sync menus"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            Menu.sync(app)
-            self.message_user(request, _("menus successfully synchronized"))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+        def action():
+            Menu.sync(request.app)
+            return _("Menus successful synchronized")
+            
+        return self._clientaction(
+            request, action, _("Sync menus failed with %(exc)s"))
 
     @object_tool.confirm(short_description=_("Publish menus"))
     def publish(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            Menu.publish(app)
-            self.message_user(request, _("menus successfully published"))
-        except Exception as e:
-            msg = _("publish failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+        def action():
+            Menu.publish(request.app)
+            return _("Menus successful published")
+            
+        return self._clientaction(
+            request, action, _("Publish menus failed with %(exc)s"))
 
     def get_actions(self, request):
         actions = super(MenuAdmin, self).get_actions(request)

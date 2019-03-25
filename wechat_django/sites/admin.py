@@ -15,9 +15,9 @@ from object_tool import CustomObjectToolAdminSiteMixin
 from six.moves.urllib.parse import urlparse
 
 from ..admin.base import registered_admins, WeChatModelAdmin
+from ..admin.utils import get_request_params
 from ..models import WeChatApp
 from ..models.permission import get_user_permissions
-from ..utils.admin import get_request_params
 from .wechat import default_site as default_wechat_site
 
 
@@ -64,18 +64,18 @@ def wechat_admin_view(view, site):
 
         extra_context = kwargs.pop("extra_context", None) or {}
         try:
-            # 附上app
             app = site.wechat_site.app_queryset.get(id=app_id)
-            request.app = app
-            request.app_id = app_id
-            # 增加模板context
-            extra_context = dict(
-                wechat_app=app,
-                wechat_app_id=app_id
-            )
         except WeChatApp.DoesNotExist:
             return response.HttpResponseNotFound()
 
+        # 附上app
+        request.app = app
+        request.app_id = app_id
+        # 增加模板context
+        extra_context.update(
+            wechat_app=app,
+            wechat_app_id=app_id
+        )
         kwargs["extra_context"] = extra_context
         return view(request, *args, **kwargs)
 
@@ -161,7 +161,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
                         app_label=app_label
                     )
                 ),
-                has_module_perms=True, # TODO: 修正
+                has_module_perms=bool(get_user_permissions(request.user)),
                 models=[]
             )
 
@@ -198,7 +198,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         else:
             with self._unregister_wechatadmins():
                 rv = super(WeChatAdminSiteMixin, self)._build_app_dict(request, label)
-            
+
             # 首页, 增加app列表
             if not label:
                 app_dict = self._build_wechat_app_dict(request)

@@ -9,7 +9,7 @@ import six
 from wechatpy.crypto import WeChatCrypto
 
 from .. import settings
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from . import MsgLogFlag
 
 

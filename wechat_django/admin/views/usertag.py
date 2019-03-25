@@ -9,9 +9,9 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import UserTag
-from ..utils.admin import field_property
-from .base import RecursiveDeleteActionMixin, WeChatModelAdmin
+from ...models import UserTag
+from ..utils import field_property
+from ..base import RecursiveDeleteActionMixin, WeChatModelAdmin
 
 
 class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
@@ -31,34 +31,25 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     @object_tool.confirm(short_description=_("Sync user tags"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            tags = UserTag.sync(app)
+        def action():
+            tags = UserTag.sync(request.app)
             msg = _("%(count)d tags successfully synchronized")
-            self.message_user(request, msg % dict(count=len(tags)))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+            return msg % dict(count=len(tags))
+
+        return self._clientaction(
+            request, action, _("Sync user tags failed with %(exc)s"))
 
     def sync_users(self, request, queryset, detail=True):
         self.check_wechat_permission(request, "sync", "user")
-        tags = queryset.all()
-        try:
+        def action():
+            tags = queryset.all()
             for tag in tags:
                 users = tag.sync_users(detail)
                 msg = _("%(count)d users of %(tag)s successfully synchronized")
-                self.message_user(request, msg % dict(count=len(users), tag=tag.name))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+                return msg % dict(count=len(users), tag=tag.name)
+        
+        return self._clientaction(
+            request, action, _("Sync users failed with %(exc)s"))
     sync_users.short_description = _("sync tag users")
 
     sync_openids = lambda self, request, queryset: self.sync_users(
@@ -80,7 +71,6 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             count=obj.users.count()
         )
     count.short_description = _("users count")
-    count.allow_tags = True
 
     def get_fields(self, request, obj=None):
         fields = list(super(UserTagAdmin, self).get_fields(request, obj))

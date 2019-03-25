@@ -12,7 +12,7 @@ from six import text_type
 from wechatpy import replies
 
 from ..exceptions import MessageHandleError
-from ..utils.admin import enum2choices
+from ..utils.model import enum2choices
 from . import (
     Article, Material, MessageHandler, MsgType as BaseMsgType, WeChatModel)
 

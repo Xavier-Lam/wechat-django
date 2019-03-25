@@ -8,9 +8,10 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ..models import MessageHandler, MsgLogFlag, Reply, Rule
-from ..utils.admin import enum2choices, list_property
-from .base import DynamicChoiceForm, WeChatModelAdmin
+from ...models import MessageHandler, MsgLogFlag, Reply, Rule
+from ...utils.model import enum2choices
+from ..utils import list_property
+from ..base import DynamicChoiceForm, WeChatModelAdmin
 
 
 class MessageHandlerForm(forms.ModelForm):
@@ -141,6 +142,8 @@ class MessageHandlerAdmin(WeChatModelAdmin):
                     .exclude(starts__gt=now).exclude(ends__lte=now))
             return queryset
 
+    change_form_template = "admin/wechat_django/messagehandler/change_form.html"
+
     changelist_object_tools = ("sync", )
     list_display = (
         "name", "is_sync", 
@@ -158,31 +161,18 @@ class MessageHandlerAdmin(WeChatModelAdmin):
     @object_tool.confirm(short_description=_("Sync message handlers"))
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
-        app = request.app
-        try:
-            handlers = MessageHandler.sync(app)
+        def action():
+            handlers = MessageHandler.sync(request.app)
             msg = _("%(count)d handlers successfully synchronized")
-            self.message_user(request, msg % dict(count=len(handlers)))
-        except Exception as e:
-            msg = _("sync failed with %(exc)s") % dict(exc=e)
-            if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
-            else:
-                self.logger(request).error(msg, exc_info=True)
-            self.message_user(request, msg, level=messages.ERROR)
+            return msg % dict(count=len(handlers))
+
+        return self._clientaction(
+            request, action, _("Sync handlers failed with %(exc)s"))
 
     def is_sync(self, obj):
         return obj.src in (MessageHandler.Source.MP, MessageHandler.Source.MENU)
     is_sync.boolean = True
     is_sync.short_description = _("synchronized from wechat")
-
-    def changelist_view(self, request, extra_context=None):
-        post = request.POST.copy()
-        if admin.helpers.ACTION_CHECKBOX_NAME not in post:
-            post.update({admin.helpers.ACTION_CHECKBOX_NAME: None})
-            request._set_post(post)
-        return super(MessageHandlerAdmin, self).changelist_view(
-            request, extra_context)
 
     def get_fields(self, request, obj=None):
         fields = list(super(MessageHandlerAdmin, self).get_fields(request, obj))
