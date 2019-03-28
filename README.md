@@ -53,7 +53,7 @@
 ## 安装及配置
 ### 初次安装
 1. 运行**pip install wechat-django[cryptography]** 或 **pip install wechat-django[pycrypto]** 安装
-2. 在settings.py的**INSTALLED_APPS中依次添加object_tool与wechat_django**
+2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
 4. 在urls.py 中引入wechat_django.sites.wechat.urls, 将其配置到urlpatterns中
 

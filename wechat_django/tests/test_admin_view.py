@@ -29,7 +29,7 @@ class AdminViewTestCase(WeChatTestCase):
         )))
         self.assertRequestSuccess(reverse("admin:wechat_funcs_list", kwargs=dict(
             app_label="wechat_django",
-            app_id=self.app.id
+            wechat_app_id=self.app.id
         )))
 
     def test_article_view(self):
@@ -162,19 +162,9 @@ class AdminViewTestCase(WeChatTestCase):
         model_name = model._meta.model_name
 
         def make_url(view, **kwargs):
+            wechat and kwargs.update(wechat_app_id=self.app.id)
             pattern = "admin:%s_%s_%s" % ("wechat_django", model_name, view)
-            baseurl = (reverse(pattern, kwargs=kwargs)
-                if django.VERSION[0] > 1
-                else reverse(pattern, args=kwargs.values()))
-            if not wechat:
-                return baseurl
-
-            # wechat model view
-            if view in ("add", "change", "history", "delete"):
-                baseurl += "?_changelist_filters=app_id%3D" + str(self.app.id)
-            else:
-                baseurl += "?app_id=" + str(self.app.id)
-            return baseurl
+            return reverse(pattern, kwargs=kwargs)
 
         "changelist" not in excludes\
             and self.assertRequestSuccess(

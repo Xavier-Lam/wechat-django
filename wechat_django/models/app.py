@@ -36,8 +36,28 @@ class Abilities(object):
     @property
     def oauth(self):
         """是否可进行网页授权"""
-        return bool(self._app.type == WeChatApp.Type.SERVICEAPP
+        return bool(
+            self.authed
+            and self._app.type == WeChatApp.Type.SERVICEAPP
             and self._app.appsecret)
+
+    @property
+    def menus(self):
+        """是否可配置菜单"""
+        return self._app.type == WeChatApp.Type.SERVICEAPP\
+            or self._app.type == WeChatApp.Type.SUBSCRIBEAPP and self.authed
+    
+    @property
+    def template(self):
+        """发送模板消息"""
+        return self.authed and bool(self._app.type in (
+            WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM))
+
+    @property
+    def authed(self):
+        """已认证"""
+        return bool(WeChatApp.Flag.UNAUTH ^ (
+            self._app.flags & WeChatApp.Flag.UNAUTH))
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -60,6 +80,9 @@ class WeChatApp(m.Model):
         PLAIN = 0
         # BOTH = 1
         SAFE = 2
+
+    class Flag(object):
+        UNAUTH = 0x01 # 未认证
 
     class Type(object):
         SERVICEAPP = 1

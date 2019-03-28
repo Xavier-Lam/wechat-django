@@ -35,7 +35,6 @@ class PermissionTestCase(WeChatTestCase):
         def assertMenuCorrect(perm_name, manage=False, apps=None):
             request = rf.get("/admin/")
             request.user = self._create_user(perm_name)
-            request.resolver_match = ResolverMatch(lambda: None, tuple(), dict())
 
             app_dict = site._build_app_dict(request)
 
@@ -79,22 +78,16 @@ class PermissionTestCase(WeChatTestCase):
             request.user = self._create_user(perm_name)
             request.app = self.app
             request.app_id = self.app.id
-            request.resolver_match = ResolverMatch(lambda: None,
-                tuple(), dict(app_id=self.app.id))
 
             app_dict = site._build_app_dict(request, "wechat_django")
-            permissions = pm.get_user_permissions(request.user, self.app)
+            permissions = pm.get_user_permissions(
+                request.user, self.app, exclude_manage=True, exclude_sub=True)
             # 只有子权限是不会拥有菜单权限的 遂去掉子权限
-            permissions = {
-                permission
-                for permission in permissions
-                if permission.find("_") == -1 and
-                permission != "manage"
-            }
             if permissions:
                 all_permissions = {
                     model["object_name"].lower().replace("wechat", "")
                     for model in app_dict["models"]
+                    if list(filter(None, model["perms"].values()))
                 }
                 self.assertEqual(permissions, all_permissions)
             else:

@@ -81,7 +81,6 @@ def get_request_params(request, param):
         else:
             preserved_filters = dict()
         value = (request.GET.get(param)
-            or preserved_filters.get(param)
-            or request.resolver_match.kwargs.get(param))
+            or preserved_filters.get(param))
         setattr(request, param, value)
     return getattr(request, param)

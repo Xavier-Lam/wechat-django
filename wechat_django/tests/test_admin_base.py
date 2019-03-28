@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.urls import reverse
+
 from ..admin.base import WeChatModelAdmin
 from ..models import appmethod, WeChatModel, WeChatUser
 from ..sites.admin import wechat_admin_view, WeChatAdminSite
@@ -20,8 +22,9 @@ class AdminBaseTestCase(WeChatTestCase):
 
         site = WeChatAdminSite()
         model_admin = WeChatModelAdmin(WeChatUser, site)
-        make_request = wechat_admin_view(lambda o: o, site)
-        request = make_request(self.rf().get("/?app_id=" + str(self.app.id)))
+        request = self.rf().get("/")
+        request.app_id = self.app.id
+        request.app = self.app
         queryset = model_admin.get_queryset(request)
         self.assertEqual(
             queryset.filter(openid=openid).count(),
@@ -35,3 +38,7 @@ class AdminBaseTestCase(WeChatTestCase):
             queryset.exclude(app=self.app).count(),
             0
         )
+
+    def test_add_model(self):
+        """测试新增数据时,会把appid附上"""
+        pass

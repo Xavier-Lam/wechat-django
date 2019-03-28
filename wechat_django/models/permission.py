@@ -177,10 +177,20 @@ def add_required_perms(sender, instance, action, *args, **kwargs):
             perms_set.add(*get_perms_by_codenames(codenames))
 
 
-def get_user_permissions(user, app=None):
+def get_user_permissions(user, app=None, exclude_sub=False, exclude_manage=False):
     """列举用户所有的微信权限
     :type user: django.contrib.auth.models.User
     """
+    excludes = set()
+    if exclude_manage:
+        excludes.add("manage")
+    if exclude_sub:
+        excludes.update(
+            permission
+            for permission in permissions
+            if permission.find("_") != -1
+        )
+
     perm_names = user.get_all_permissions()
     rv = defaultdict(set)
     for perm_name in perm_names:
@@ -191,6 +201,10 @@ def get_user_permissions(user, app=None):
             else:
                 # 所有权限
                 rv[appname] = set(permissions.keys())
+
+    for appname in rv:
+        rv[appname].difference_update(excludes)
+
     return rv[app.name] if app else dict(rv.items())
 
 

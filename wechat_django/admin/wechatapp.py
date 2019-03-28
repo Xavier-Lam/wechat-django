@@ -138,7 +138,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
         )
 
     def get_model_perms(self, request):
-        return ({} if request.resolver_match.kwargs.get("app_id")
+        return ({} if getattr(request, "app_id", None)
             else super(WeChatAppAdmin, self).get_model_perms(request))
 
     form = WeChatAppForm
