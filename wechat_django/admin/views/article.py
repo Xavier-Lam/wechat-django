@@ -74,7 +74,7 @@ class ArticleAdmin(WeChatModelAdmin):
             del actions['delete_selected']
         return actions
 
-    @object_tool.confirm(short_descrition=_("Sync articles"))
+    @object_tool.confirm(short_description=_("Sync articles"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
         def action():

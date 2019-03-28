@@ -32,8 +32,9 @@
 - [示例项目](#示例项目)
 - [TODOS:](#todos)
   - [计划的功能](#计划的功能)
-  - [已知bug](#已知bug)
+  - [已知bugs](#已知bugs)
 - [ChangeLog](#changelog)
+  - [0.2.2](#022)
   - [0.2.0](#020)
   - [0.1.0](#010)
 
@@ -140,7 +141,6 @@
 * app层面的message log和reply log
 * 完善单元测试
 * 后台表单验证
-* 后台确认页
 * 自定义消息处理规则
 
 ### 计划的功能
@@ -152,10 +152,16 @@
 * 菜单及消息处理程序的导入导出
 * 素材Storage
 * 模板消息
+* 微信支付
 
-### 已知bug
+### 已知bugs
+* 多次同步消息处理器会重复生成永久素材
 
 ## ChangeLog
+### 0.2.2
+* 重构控制台路由及相关代码,引入[django-object-tool](https://github.com/Xavier-Lam/django-object-tool)
+* 可在控制台配置应用的accesstoken及oauth_url,以便接入第三方服务
+
 ### 0.2.0
 * 重构代码,修改站点url注册方式,修改部分低级api
 * 用户标签管理功能

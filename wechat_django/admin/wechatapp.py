@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
 from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
@@ -91,6 +92,15 @@ class WeChatAppAdmin(admin.ModelAdmin):
         return obj and self.request.build_absolute_uri(reverse(
             "wechat_django:handler", kwargs=dict(appname=obj.name)))
     callback.short_description = _("message callback url")
+
+    def get_urls(self):
+        urlpatterns = super(WeChatAppAdmin, self).get_urls()
+        # django 1.11 替换urlpattern为命名式的
+        if django.VERSION[0] < 2:
+            for pattern in urlpatterns:
+                pattern._regex = pattern._regex.replace(
+                    "(.+)", "(?P<object_id>.+)")
+        return urlpatterns
 
     def get_fields(self, request, obj=None):
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
