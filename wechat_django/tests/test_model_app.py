@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.test import override_settings
 from wechatpy.client import WeChatClient as _Client
 
 from .base import mock, WeChatTestCase
@@ -24,13 +25,18 @@ class AppTestCase(WeChatTestCase):
             resp = self.app.client.message.send_text("openid", "abc")
             self.assertEqual(resp["errcode"], 0)
 
+    @override_settings(CACHES={
+        "default": {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    })
     def test_custom_accesstoken_url(self):
         """测试设置了ACCESSTOKEN url后 不再向原地址发送请求,转为向新地址发送请求"""
         with mock.patch.object(_Client, "_fetch_access_token"):
             new_url = "new_url"
             self.app.configurations["ACCESSTOKEN_URL"] = new_url
             hasattr(self.app, "_client") and delattr(self.app, "_client")
-            t = self.app.client.access_token
+            self.app.client.access_token
             self.assertEqual(
                 _Client._fetch_access_token.call_args[0][0], new_url)
             delattr(self.app, "_client")
