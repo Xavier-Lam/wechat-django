@@ -30,7 +30,7 @@ class AppTestCase(WeChatTestCase):
             new_url = "new_url"
             self.app.configurations["ACCESSTOKEN_URL"] = new_url
             hasattr(self.app, "_client") and delattr(self.app, "_client")
-            self.app.client.access_token
+            t = self.app.client.access_token
             self.assertEqual(
                 _Client._fetch_access_token.call_args[0][0], new_url)
             delattr(self.app, "_client")
