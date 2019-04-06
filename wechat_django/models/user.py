@@ -32,6 +32,17 @@ class WeChatUserManager(m.Manager):
                     raise
         return self.create(app=app, openid=openid)
 
+    def upsert_by_dict(self, app, user_dict):
+        """根据oauth的结果更新"""
+        assert "openid" in user_dict, "openid not found"
+        updates = {
+            k: v for k, v in user_dict.items()
+            if k in map(lambda o: o.name, self.model._meta.fields)
+        }
+        updates["synced_at"] = tz.datetime.now()
+        return self.update_or_create(
+            defaults=updates, app=app, openid=updates["openid"])[0]
+
 
 class WeChatUser(WeChatModel):
     class Gender(object):

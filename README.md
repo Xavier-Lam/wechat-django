@@ -26,6 +26,7 @@
   - [注意事项](#注意事项)
 - [部分功能使用说明](#部分功能使用说明)
   - [网页授权](#网页授权)
+  - [小程序授权](#小程序授权)
   - [主动调用微信api](#主动调用微信api)
   - [自定义微信回复](#自定义微信回复)
 - [后台使用简介](#后台使用简介)
@@ -106,6 +107,15 @@
 对于默认重定向行为不满意的,可以自定义response,具体的参数说明参见`wechat_django.oauth.wechat_auth`装饰器的docstring
 
 对于class based view,可继承`wechat_django.oauth.WeChatOAuthView`类,具体参见代码
+
+
+### 小程序授权
+通过`wechat_django.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid,如需获取其他用户信息,在auth后需手动update. 该方法同样适用于网页授权,第二个参数填写网页授权的scope,默认base.
+
+    from wechat_django.models import WeChatApp
+    app = WeChatApp.get_by_name("your app name")
+    user, data = app.auth(code)
+    user.update()
 
 
 ### 主动调用微信api

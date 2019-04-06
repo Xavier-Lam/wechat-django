@@ -167,23 +167,24 @@ class OAuthTestCase(WeChatTestCase):
 
     def test_auth(self):
         """测试授权"""
-        rf = RequestFactory()
         openid = "abc"
         code = "def"
 
         # base授权
-        request = rf.get("/test?code=" + code)
+        request = self.rf().get("/test?code=" + code)
         handler = self._make_handler(request)
         with oauth_api(openid):
-            resp = handler.auth()
-            self.assertEqual(resp["openid"], openid)
+            user = handler.auth(self.app, code)
+            self.assertTrue(user.id)
+            self.assertEqual(user.openid, openid)
 
         # snsinfo授权
         handler = self._make_handler(request, scope=WeChatSNSScope.USERINFO)
         with oauth_api(openid), snsinfo_api(openid, nickname=code):
-            resp = handler.auth()
-            self.assertEqual(resp["openid"], openid)
-            self.assertEqual(resp["nickname"], code)
+            user = handler.auth(self.app, code)
+            self.assertTrue(user.id)
+            self.assertEqual(user.openid, openid)
+            self.assertEqual(user.nickname, code)
 
     def test_session(self):
         """测试授权后session状态保持"""

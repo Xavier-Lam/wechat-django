@@ -206,10 +206,9 @@ class WeChatOAuthView(View):
         if not wechat.openid and code:
             # 有code 先授权
             try:
-                user_dict = self.auth()
-                # 更新user_dict
-                WeChatUser.upsert_by_oauth(wechat.app, user_dict)
-                wechat._openid = user_dict["openid"]
+                user = self.auth(wechat.app, code)
+                wechat._openid = user.openid
+                wechat._user = user
                 # 用当前url的state替换传入的state
                 wechat._state = get_params(request, "state", "")
             except WeChatOAuthException:
@@ -234,26 +233,6 @@ class WeChatOAuthView(View):
             wechat.session_key, wechat.openid)
         return response
 
-    def auth(self):
-        """执行微信授权 返回微信接口响应的json数据
-        :rtype: dict
-        """
-        # 检查code有效性
-        app = self.request.wechat.app
-        code = get_params(self.request, "code")
-        data = app.oauth.fetch_access_token(code)
-
-        if WeChatSNSScope.USERINFO in self.oauth_info.scope:
-            # TODO: 优化授权流程 记录accesstoken及refreshtoken 延迟取userinfo
-            # 同步数据
-            try:
-                user_info = app.oauth.get_user_info()
-                data.update(user_info)
-            except WeChatOAuthException:
-                self.logger.warning("get userinfo failed", exc_info=True)
-
-        return data
-
     def unauthorization_response(self, request, *args, **kwargs):
         """未授权的响应"""
         response = self.oauth_info.response
@@ -263,6 +242,9 @@ class WeChatOAuthView(View):
             oauth_uri = request.wechat.oauth_uri
             response = redirect(oauth_uri, permanent=False)
         return response
+
+    def auth(self, app, code):
+        return app.auth(code, self.oauth_info.scope)[0]
 
     @property
     def logger(self):
