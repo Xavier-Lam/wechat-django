@@ -110,12 +110,11 @@
 
 
 ### 小程序授权
-通过`wechat_django.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid,如需获取其他用户信息,在auth后需手动update. 该方法同样适用于网页授权,第二个参数填写网页授权的scope,默认base.
+通过`wechat_django.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid.该方法同样适用于网页授权,第二个参数填写网页授权的scope,默认base.
 
     from wechat_django.models import WeChatApp
     app = WeChatApp.get_by_name("your app name")
     user, data = app.auth(code)
-    user.update()
 
 
 ### 主动调用微信api

@@ -58,6 +58,12 @@ class Abilities(object):
             WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM))
 
     @property
+    def user_manager(self):
+        """管理用户能力"""
+        return bool(self.authed and self.api and self._app.type in (
+            WeChatApp.Type.SUBSCRIBEAPP, WeChatApp.Type.SERVICEAPP))
+
+    @property
     def authed(self):
         """已认证"""
         return bool(WeChatApp.Flag.UNAUTH ^ (
@@ -227,7 +233,8 @@ class WeChatApp(m.Model):
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatClientException
         """
-        data = app.client.wxa.code_to_session(code)
+        from . import WeChatUser
+        data = self.client.wxa.code_to_session(code)
         return WeChatUser.objects.upsert_by_dict(self, data), data
 
     def __str__(self):

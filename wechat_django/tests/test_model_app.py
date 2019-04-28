@@ -41,3 +41,11 @@ class AppTestCase(WeChatTestCase):
                 _Client._fetch_access_token.call_args[0][0], new_url)
             delattr(self.app, "_client")
             del self.app.configurations["ACCESSTOKEN_URL"]
+
+    def test_miniprogram_auth(self):
+        """测试小程序授权"""
+        pass
+
+    def test_miniprogram_decrypt(self):
+        """小程序数据解密"""
+        pass

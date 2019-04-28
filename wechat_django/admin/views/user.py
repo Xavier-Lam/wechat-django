@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ...models import UserTag, WeChatUser
+from ...models import UserTag, WeChatApp, WeChatUser
 from ..base import WeChatModelAdmin
 
 
@@ -91,7 +91,16 @@ class WeChatUserAdmin(WeChatModelAdmin):
         actions = super(WeChatUserAdmin, self).get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
+        if not request.app.abilities.user_manager:
+            del actions["update"]
         return actions
+
+    def get_object_tools(self, request):
+        rv = super(WeChatUserAdmin, self).get_object_tools(request)
+        if not request.app.abilities.user_manager:
+            rv.pop("incremental_sync", None)
+            rv.pop("sync_all", None)
+        return rv
 
     form = UserForm
 
