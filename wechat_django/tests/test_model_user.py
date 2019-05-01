@@ -55,14 +55,17 @@ class UserTestCase(WeChatTestCase):
         self.assertEqual(self.app.appid, decrypted["watermark"]["appid"])
         fake_encrypted_data = "abc"
         self.assertRaises(
-            ValueError, session.decrypt_message, fake_encrypted_data, iv)
+            (TypeError, ValueError), session.decrypt_message,
+            fake_encrypted_data, iv)
         fake_iv = "abc"
         self.assertRaises(
-            ValueError, session.decrypt_message, encrypted_data, fake_iv)
+            (TypeError, ValueError), session.decrypt_message, encrypted_data,
+            fake_iv)
         exipred_session_key = "abc"
         session.auth["session_key"] = exipred_session_key
         self.assertRaises(
-            ValueError, session.decrypt_message, encrypted_data, iv)
+            (TypeError, ValueError), session.decrypt_message, encrypted_data,
+            iv)
 
     def update_by_user_dict(self):
         """小程序用户数据更新"""
