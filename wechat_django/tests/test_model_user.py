@@ -64,11 +64,11 @@ class UserTestCase(WeChatTestCase):
         self.assertRaises(
             ValueError, session.decrypt_message, encrypted_data, iv)
 
-    def update_by_user_dict(self):
+    def test_update_by_user_dict(self):
         """小程序用户数据更新"""
         openid = "openid"
         user = WeChatUser.objects.create(app=self.app, openid=openid)
-        user_dict = {
+        origin_dict = {
             "nickName": "Band",
             "gender": 1,
             "language": "zh_CN",
@@ -77,11 +77,12 @@ class UserTestCase(WeChatTestCase):
             "country": "CN",
             "avatarUrl": "http://wx.qlogo.cn/mmopen/vi_32/1vZvI39NWFQ9XM4LtQpFrQJ1xlgZxx3w7bQxKARol6503Iuswjjn6nIGBiaycAjAtpujxyzYsrztuuICqIM5ibXQ/0"
         }
+        user_dict = origin_dict.copy()
         user.update(user_dict)
-        self.assertEqual(user.nickname, user_dict["nickName"])
-        self.assertEqual(user.sex, user_dict["gender"])
-        self.assertEqual(user.language, user_dict["language"])
-        self.assertEqual(user.city, user_dict["city"])
-        self.assertEqual(user.province, user_dict["province"])
-        self.assertEqual(user.country, user_dict["country"])
-        self.assertEqual(user.headimgurl, user_dict["avatarUrl"])
+        self.assertEqual(user.nickname, origin_dict["nickName"])
+        self.assertEqual(user.sex, origin_dict["gender"])
+        self.assertEqual(user.language, origin_dict["language"])
+        self.assertEqual(user.city, origin_dict["city"])
+        self.assertEqual(user.province, origin_dict["province"])
+        self.assertEqual(user.country, origin_dict["country"])
+        self.assertEqual(user.headimgurl, origin_dict["avatarUrl"])

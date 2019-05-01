@@ -225,7 +225,7 @@ class WeChatUser(WeChatModel):
             if "gender" in user_dict:
                 user_dict["sex"] = user_dict.pop("gender")
 
-            field_names = list(map(lambda o: o.name, self.model._meta.fields))
+            field_names = list(map(lambda o: o.name, self._meta.fields))
             for key in user_dict:
                 if key.lower() in field_names:
                     setattr(self, key.lower(), user_dict[key])
