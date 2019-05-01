@@ -17,3 +17,4 @@ from .reply import Reply
 from .rule import Rule
 from .messagelog import MessageLog
 from .menu import Menu
+from .session import Session

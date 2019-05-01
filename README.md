@@ -27,6 +27,7 @@
 - [部分功能使用说明](#部分功能使用说明)
   - [网页授权](#网页授权)
   - [小程序授权](#小程序授权)
+  - [小程序信息加解密及用户数据更新](#小程序信息加解密及用户数据更新)
   - [主动调用微信api](#主动调用微信api)
   - [自定义微信回复](#自定义微信回复)
 - [后台使用简介](#后台使用简介)
@@ -35,6 +36,7 @@
   - [计划的功能](#计划的功能)
   - [已知bugs](#已知bugs)
 - [ChangeLog](#changelog)
+  - [0.2.3](#023)
   - [0.2.2](#022)
   - [0.2.0](#020)
   - [0.1.0](#010)
@@ -110,12 +112,55 @@
 
 
 ### 小程序授权
-通过`wechat_django.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid.该方法同样适用于网页授权,第二个参数填写网页授权的scope,默认base.
+通过`wechat_django.models.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid.
 
     from wechat_django.models import WeChatApp
     app = WeChatApp.get_by_name("your app name")
     user, data = app.auth(code)
 
+对于授权后得到的session_key,框架会持久化至数据库,此后可以通过调用`wechat_django.models.WeChatUser.session`来执行相关操作.
+
+auth方法同样适用于网页授权,第二个参数填写网页授权的scope,默认base.
+
+### 小程序信息加解密及用户数据更新
+对于已经进行过小程序授权并且session_key尚未过期的用户,可以使用`wechat_django.models.Session.decrypt_message`来解密客户端传来的敏感数据
+
+    encryptedData = ""
+    iv = ""
+    try:
+        data = user.session.decrypt_message(
+            encryptedData, iv)
+    except ValueError:
+        pass # 无法正确解密数据 session_key可能过期了
+
+
+亦可使用`wechat_django.models.Session.validate_message`来校验客户端传来的数据
+
+    from wechatpy.exceptions import InvalidSignatureException
+
+    signature = ""
+    rawData = ""
+    try:
+        data = user.session.validate_message(
+            rawData, signature)
+    except InvalidSignatureException:
+        pass # 签名错误 session_key可能过期了
+
+客户端调用`wx.getUserInfo`,可将rawData与signature传递至后端,后端通过调用`wechat_django.models.Session.validate_message`与`wechat_django.models.User.update`来更新用户信息
+
+    from django.http.response import HttpResponse
+    from wechatpy.exceptions import InvalidSignatureException
+
+    signature = request.POST["signature"]
+    rawData = request.POST["rawData"]
+    
+    try:
+        data = user.session.validate_message(
+            rawData, signature)
+    except InvalidSignatureException:
+        return HttpResponse(status=401)
+    
+    user.update(data)
 
 ### 主动调用微信api
     from wechat_django.models import WeChatApp
@@ -153,20 +198,23 @@
 * 自定义消息处理规则
 
 ### 计划的功能
+* 模板消息
+* 微信支付
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
 * 清理及保护永久素材
-* 将部分actions改为object-tool
 * 回复及一些查询缓存
 * 菜单及消息处理程序的导入导出
 * 素材Storage
-* 模板消息
-* 微信支付
 
 ### 已知bugs
 * 多次同步消息处理器会重复生成永久素材
 
 ## ChangeLog
+### 0.2.3
+* 小程序授权及验证/解密信息
+* 要求wechatpy最低版本1.8.2
+
 ### 0.2.2
 * 重构控制台路由及相关代码,引入[django-object-tool](https://github.com/Xavier-Lam/django-object-tool)
 * 可在控制台配置应用的accesstoken及oauth_url,以便接入第三方服务

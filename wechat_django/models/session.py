@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
+from django.utils.translation import ugettext_lazy as _
 import hashlib
 import json
 from jsonfield import JSONField
@@ -17,7 +18,7 @@ class Session(WeChatModel):
         MINIPROGRAM = 1
 
     user = m.ForeignKey(
-        WeChatUser, on_delete=m.CASCADE, related_name="sessions")
+        WeChatUser, on_delete=m.CASCADE, related_name="sessions", null=False)
     type = m.PositiveSmallIntegerField()
     auth = JSONField(default={})
 
@@ -56,3 +57,6 @@ class Session(WeChatModel):
         if server_sign != sign:
             raise InvalidSignatureException()
         return json.loads(msg)
+
+    def __str__(self):
+        return "session_key: {0}".format(self.session_key)

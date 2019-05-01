@@ -4,8 +4,9 @@ from __future__ import unicode_literals
 import re
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone as tz
+from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
@@ -211,11 +212,28 @@ class WeChatUser(WeChatModel):
         return cls.objects.update_or_create(
             defaults=updates, app=app, openid=updates["openid"])[0]
 
-    def update(self):
+    @cached_property
+    def session(self):
+        return self.sessions.first()
+
+    def update(self, user_dict=None):
         """重新同步用户数据"""
-        self.fetch_user(self.app, self.openid)
+        if user_dict and isinstance(user_dict, dict):
+            # 小程序用户有些字段和公众号不同
+            if "avatarUrl" in user_dict:
+                user_dict["headimgurl"] = user_dict.pop("avatarUrl")
+            if "gender" in user_dict:
+                user_dict["sex"] = user_dict.pop("gender")
+
+            field_names = list(map(lambda o: o.name, self.model._meta.fields))
+            for key in user_dict:
+                if key.lower() in field_names:
+                    setattr(self, key.lower(), user_dict[key])
+            self.save()
+        else:
+            self.fetch_user(self.app, self.openid)
         self.refresh_from_db()
 
     def __str__(self):
-        return "{nickname}({openid})".format(nickname=self.nickname or "",
-            openid=self.openid)
+        return "{nickname}({openid})".format(
+            nickname=self.nickname or "", openid=self.openid)

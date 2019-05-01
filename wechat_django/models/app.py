@@ -233,9 +233,21 @@ class WeChatApp(m.Model):
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatClientException
         """
-        from . import WeChatUser
+        from . import Session, WeChatUser
         data = self.client.wxa.code_to_session(code)
-        return WeChatUser.objects.upsert_by_dict(self, data), data
+        user = WeChatUser.objects.upsert_by_dict(self, data)
+        # 持久化session_key
+        user.sessions.all().delete()
+        user.sessions.add(Session(
+            type=Session.Type.MINIPROGRAM,
+            auth=dict(session_key=data["session_key"])
+        ), bulk=False)
+        # 移除session缓存
+        try:
+            del user.session
+        except AttributeError:
+            pass
+        return user, data
 
     def __str__(self):
         rv = "{title} ({name})".format(title=self.title, name=self.name)

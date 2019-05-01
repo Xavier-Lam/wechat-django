@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 
 from django.test import override_settings
 from wechatpy.client import WeChatClient as _Client
+from wechatpy.client.api import WeChatWxa
 
+from ..models import WeChatApp
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
@@ -44,8 +46,45 @@ class AppTestCase(WeChatTestCase):
 
     def test_miniprogram_auth(self):
         """测试小程序授权"""
-        pass
+        openid = "mini_openid"
+        session_key = "session_key"
+        unionid = "unionid"
+        app = WeChatApp.objects.create(
+            title="miniprogram", name="miniprogram", appid="miniprogram",
+            appsecret="secret", type=WeChatApp.Type.MINIPROGRAM)
+        with mock.patch.object(WeChatWxa, "code_to_session"):
+            return_value = dict(
+                openid=openid,
+                session_key=session_key,
+                unionid=unionid
+            )
+            WeChatWxa.code_to_session.return_value = return_value
+            code = "abcabc"
+            user, data = app.auth(code)
+            user_id = user.id
+            WeChatWxa.code_to_session.assert_called_with(code)
+            self.assertEqual(data, return_value)
+            self.assertEqual(user.openid, openid)
+            self.assertEqual(user.unionid, unionid)
+            self.assertEqual(user.sessions.count(), 1)
+            self.assertEqual(user.session.session_key, session_key)
 
-    def test_miniprogram_decrypt(self):
-        """小程序数据解密"""
-        pass
+        # 再一次授权
+        session_key = "another_key"
+        with mock.patch.object(WeChatWxa, "code_to_session"):
+            return_value = dict(
+                openid=openid,
+                session_key=session_key,
+                unionid=unionid
+            )
+            WeChatWxa.code_to_session.return_value = return_value
+            code = "dddddd"
+            user, data = app.auth(code)
+            user_id = user.id
+            WeChatWxa.code_to_session.assert_called_with(code)
+            self.assertEqual(data, return_value)
+            self.assertEqual(user.id, user_id)
+            self.assertEqual(user.openid, openid)
+            self.assertEqual(user.unionid, unionid)
+            self.assertEqual(user.sessions.count(), 1)
+            self.assertEqual(user.session.session_key, session_key)
