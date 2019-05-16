@@ -7,7 +7,7 @@ from django.db import models as m
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
-from ..utils.model import enum2choices
+from ..utils.model import enum2choices, model_fields
 from . import MessageHandler, MsgType, WeChatModel
 
 
@@ -49,8 +49,7 @@ class Rule(WeChatModel):
         ordering = ("-weight", "id")
 
     def __init__(self, *args, **kwargs):
-        field_names = set(map(lambda f: f.name, self._meta.fields))
-        content_keys = set(kwargs.keys()) - field_names
+        content_keys = set(kwargs.keys()) - model_fields(self)
         content = dict()
         for key in content_keys:
             content[key] = kwargs.pop(key)

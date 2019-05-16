@@ -136,6 +136,17 @@ class WeChatApp(m.Model):
         verbose_name_plural = _("WeChat apps")
 
     @property
+    def type_name(self):
+        if self.type == WeChatApp.Type.MINIPROGRAM:
+            return _("MINIPROGRAM")
+        elif self.type == WeChatApp.Type.SERVICEAPP:
+            return _("SERVICEAPP")
+        elif self.type == WeChatApp.Type.SUBSCRIBEAPP:
+            return _("SUBSCRIBEAPP")
+        else:
+            return _("unknown")
+
+    @property
     def log_message(self):
         return bool(self.flags & MsgLogFlag.LOG_MESSAGE)
 
@@ -250,7 +261,8 @@ class WeChatApp(m.Model):
         return user, data
 
     def __str__(self):
-        rv = "{title} ({name})".format(title=self.title, name=self.name)
+        rv = "{title} ({name}) - {type}".format(
+            title=self.title, name=self.name, type=self.type_name)
         if six.PY2:
             rv = rv.encode("utf-8")
         return rv

@@ -12,7 +12,7 @@ from six import text_type
 from wechatpy import replies
 
 from ..exceptions import MessageHandleError
-from ..utils.model import enum2choices
+from ..utils.model import enum2choices, model_fields
 from . import (
     Article, Material, MessageHandler, MsgType as BaseMsgType, WeChatModel)
 
@@ -52,7 +52,7 @@ class Reply(WeChatModel):
         return self._content
 
     def __init__(self, *args, **kwargs):
-        field_names = set(map(lambda f: f.name, self._meta.fields))
+        field_names = model_fields(self)
         content_keys = set(kwargs.keys()) - field_names
         content = dict()
         for key in content_keys:

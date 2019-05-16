@@ -10,7 +10,7 @@ from django.utils.functional import cached_property
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from ..utils.model import enum2choices
+from ..utils.model import enum2choices, model_fields
 from ..utils.func import next_chunk
 from . import appmethod, WeChatApp, WeChatModel
 
@@ -38,7 +38,7 @@ class WeChatUserManager(m.Manager):
         assert "openid" in user_dict, "openid not found"
         updates = {
             k: v for k, v in user_dict.items()
-            if k in map(lambda o: o.name, self.model._meta.fields)
+            if k in model_fields(self.model)
         }
         updates["synced_at"] = tz.datetime.now()
         return self.update_or_create(
@@ -160,7 +160,7 @@ class WeChatUser(WeChatModel):
     @classmethod
     @appmethod
     def fetch_users(cls, app, openids):
-        fields = set(map(lambda o: o.name, cls._meta.fields))
+        fields = model_fields(cls)
         # TODO: 根据当前语言拉取用户数据
         user_dicts = app.client.user.get_batch(openids)
         update_dicts = map(
@@ -206,7 +206,7 @@ class WeChatUser(WeChatModel):
         assert "openid" in user_dict, "openid not found"
         updates = {
             k: v for k, v in user_dict.items()
-            if k in map(lambda o: o.name, cls._meta.fields)
+            if k in model_fields(cls)
         }
         updates["synced_at"] = tz.datetime.now()
         return cls.objects.update_or_create(
@@ -225,7 +225,7 @@ class WeChatUser(WeChatModel):
             if "gender" in user_dict:
                 user_dict["sex"] = user_dict.pop("gender")
 
-            field_names = list(map(lambda o: o.name, self._meta.fields))
+            field_names = model_fields(self)
             for key in user_dict:
                 if key.lower() in field_names:
                     setattr(self, key.lower(), user_dict[key])

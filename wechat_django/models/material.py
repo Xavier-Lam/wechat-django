@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from ..utils.model import enum2choices
+from ..utils.model import enum2choices, model_fields
 from . import appmethod, WeChatApp, WeChatModel
 
 
@@ -25,14 +25,13 @@ class MaterialManager(m.Manager):
             return self.create_news(app, **kwargs)
         else:
             media_id = kwargs["media_id"]
-            allowed_keys = set(map(lambda o: o.name, self.model._meta.fields))
             if type == Material.Type.VIDEO and "url" not in kwargs:
                 data = app.client.material.get(media_id)
                 kwargs["url"] = data.get("down_url")
 
             kwargs = {
                 key: kwargs[key]
-                for key in allowed_keys
+                for key in model_fields(self.model)
                 if key in kwargs
             }
             query = dict(app=app, type=type, media_id=media_id)
@@ -55,7 +54,7 @@ class MaterialManager(m.Manager):
             news.articles.all().delete()
 
         articles = (kwargs.get("content") or kwargs)["news_item"]
-        fields = set(map(lambda o: o.name, Article._meta.fields))
+        fields = model_fields(Article)
         Article.objects.bulk_create([
             Article(
                 index=idx,

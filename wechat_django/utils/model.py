@@ -13,3 +13,7 @@ def enum2choices(enum):
         for key in dir(enum)
         if re.match(pattern, key)
     )
+
+
+def model_fields(model):
+    return set(map(lambda o: o.name, model._meta.fields))

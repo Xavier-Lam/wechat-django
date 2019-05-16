@@ -80,8 +80,8 @@ class WeChatClient(_Client):
 
     def _log(self, level):
         msg = "{method}\t{url}".format(
-            method=self._log_kwargs["method"],
-            url=self._log_kwargs["url"]
+            method=self._log_kwargs.get("method", ""),
+            url=self._log_kwargs.get("url", "")
         )
         for k, v in self._log_kwargs.items():
             msg += "\t{k}: {v}".format(k=k, v=v)
