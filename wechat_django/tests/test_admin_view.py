@@ -154,7 +154,14 @@ class AdminViewTestCase(WeChatTestCase):
 
     def test_template(self):
         """测试模板消息后台"""
-        pass
+        self.assertModelViewSuccess(
+            models.Template, excludes=("history", "delete", "change"),
+            status={"add": 403})
+
+        template = models.Template.objects.create(
+            app=self.app, template_id="t", title="title")
+        self.assertModelViewSuccess(
+            models.Template, template.id, status={"add": 403, "delete": 403})
 
     def test_app(self):
         """测试公众号"""

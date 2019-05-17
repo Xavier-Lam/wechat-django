@@ -45,3 +45,8 @@ class TemplateAdmin(WeChatModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def get_model_perms(self, request):
+        if not request.app.abilities.template:
+            return {}
+        return super(TemplateAdmin, self).get_model_perms(request)

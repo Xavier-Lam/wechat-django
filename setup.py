@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from setuptools import find_packages, setup
+import sys
 
 import wechat_django
 
@@ -11,6 +12,10 @@ with open("README.md", "rb") as f:
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 
+keywords = ["WeChat", "weixin", "wx", "micromessenger", "django", "微信"]
+if sys.version_info.major == 2:
+    keywords.remove("微信")
+
 setup(
     name=wechat_django.__title__,
     version=wechat_django.__version__,
@@ -18,7 +23,7 @@ setup(
     author_email=wechat_django.__author_email__,
     url=wechat_django.__url__,
     packages=find_packages(),
-    keywords="WeChat, weixin, wx, micromessenger, 微信, django",
+    keywords=",".join(keywords),
     description=wechat_django.__description__,
     long_description=long_description,
     long_description_content_type="text/markdown",

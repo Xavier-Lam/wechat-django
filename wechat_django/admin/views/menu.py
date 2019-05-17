@@ -157,5 +157,6 @@ class MenuAdmin(WeChatModelAdmin):
             return q.filter(parent_id__isnull=True).count() < 3
 
     def get_model_perms(self, request):
-        return (super(MenuAdmin, self).get_model_perms(request) 
-            if request.app.abilities.menus else {})
+        if not request.app.abilities.menus:
+            return {}
+        return super(MenuAdmin, self).get_model_perms(request)
