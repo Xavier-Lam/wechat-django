@@ -21,10 +21,14 @@ class WeChatTestCase(TestCase):
             appid="appid", appsecret="secret", token="token")
         WeChatApp.objects.create(title="test1", name="test1",
             appid="appid1", appsecret="secret", token="token")
+        WeChatApp.objects.create(title="miniprogram", name="miniprogram",
+            appid="miniprogram", appsecret="secret",
+            type=WeChatApp.Type.MINIPROGRAM)
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("test")
         self.another_app = WeChatApp.objects.get_by_name("test1")
+        self.miniprogram = WeChatApp.objects.get_by_name("miniprogram")
 
     @property
     def base_url(self):

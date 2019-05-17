@@ -49,9 +49,7 @@ class AppTestCase(WeChatTestCase):
         openid = "mini_openid"
         session_key = "session_key"
         unionid = "unionid"
-        app = WeChatApp.objects.create(
-            title="miniprogram", name="miniprogram", appid="miniprogram",
-            appsecret="secret", type=WeChatApp.Type.MINIPROGRAM)
+        app = self.miniprogram
         with mock.patch.object(WeChatWxa, "code_to_session"):
             return_value = dict(
                 openid=openid,

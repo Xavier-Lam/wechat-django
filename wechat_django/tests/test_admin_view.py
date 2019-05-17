@@ -152,6 +152,10 @@ class AdminViewTestCase(WeChatTestCase):
             app=self.app, id=101, name="tag", _tag_local=True)
         self.assertModelViewSuccess(models.UserTag, tag.id)
 
+    def test_template(self):
+        """测试模板消息后台"""
+        pass
+
     def test_app(self):
         """测试公众号"""
         self.assertModelViewSuccess(models.WeChatApp, self.app.id, wechat=False)

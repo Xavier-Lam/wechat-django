@@ -159,6 +159,8 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
             raise PermissionDenied
 
     def has_wechat_permission(self, request, operate="", category="", obj=None):
+        if not hasattr(request, "app"):
+            return False
         app = request.app
         category = category or self.__category__
         return has_wechat_permission(request, app, category, operate, obj)
@@ -174,6 +176,8 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
 
     def has_module_permission(self, request):
         """是否拥有任意本公众号管理权限"""
+        if not hasattr(request, "app"):
+            return False
         return bool(get_user_permissions(request.user, request.app))
     #endregion
 
