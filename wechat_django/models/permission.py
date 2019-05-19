@@ -107,7 +107,7 @@ def get_require_perm_names(appname, permission=None):
     perms = (permission_required.get(permission, []) if permission
         else permission_required.keys())
     for perm in perms:
-        if perm.startswith("wechat_django."):
+        if perm.find(".") >= 0:
             rv.add(perm)
         else:
             rv.update(get_require_perm_names(appname, perm))
@@ -129,7 +129,7 @@ def get_perm_model(perm_name):
 
 def get_perms_by_codenames(codenames):
     return (Permission.objects
-        .filter(content_type__app_label="wechat_django")
+        .filter(content_type__app_label__startswith="wechat_django")
         .filter(codename__in=codenames)
         .all())
 

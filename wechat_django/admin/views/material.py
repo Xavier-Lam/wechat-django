@@ -54,11 +54,8 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
             blank = False
         elif obj.type == Material.Type.VOICE:
             # 代理下载
-            app = obj.app
-            url = reverse("wechat_django:material_proxy", kwargs=dict(
-                appname=app.name,
-                media_id=obj.media_id
-            ))
+            url = obj.app.build_url(
+                "material_proxy", kwargs=dict(media_id=obj.media_id))
         else:
             url = obj.url
         return '<a href="{0}" {1}>{2}</a>'.format(

@@ -119,10 +119,11 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             yield model, self._registry[model]
 
     def admin_view(self, view, cacheable=False):
+        model_admin = getattr(view, "__self__", None)
         # 对于wechat-django相关的admin view 做一下装饰
-        admin = getattr(view, "__self__", None)
-        if isinstance(admin, WeChatModelAdmin):
+        if isinstance(model_admin, WeChatModelAdmin):
             view = wechat_admin_view(view, self)
+            model_admin.wechat_site = self.wechat_site
 
         return super(WeChatAdminSiteMixin, self).admin_view(view, cacheable)
 
@@ -269,12 +270,15 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
 
 
 class WeChatAdminSite(WeChatAdminSiteMixin, admin.AdminSite):
-    pass
+    def from_site(self, site):
+        self._registry.update(site._registry)
+        for model, model_admin in self._registry.items():
+            model_admin.admin_site = self
 
 
 def patch_admin():
     """用当前wechat-django默认的adminsite替代django自带的默认adminsite"""
-    default_site._registry.update(admin.sites.site._registry)
+    default_site.from_site(admin.site)
     setattr(admin.sites, "site", default_site)
     setattr(admin, "site", default_site)
 

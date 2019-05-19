@@ -30,6 +30,14 @@ class WeChatTestCase(TestCase):
         self.another_app = WeChatApp.objects.get_by_name("test1")
         self.miniprogram = WeChatApp.objects.get_by_name("miniprogram")
 
+    def assertCallArgsEqual(self, func, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        call_args = func.call_args[0]
+        call_kwargs = func.call_args[1]
+        self.assertEqual(call_args, args)
+        self.assertEqual(
+            {k: v for k, v in call_kwargs.items() if k in kwargs}, kwargs)
+
     @property
     def base_url(self):
         return "http://localhost/"

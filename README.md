@@ -11,7 +11,7 @@
 
 目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,并进行了一部分简单的徒手测试.
 
-0.2.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
+0.3.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
 
 目录
 ======
@@ -30,16 +30,12 @@
   - [小程序信息加解密及用户数据更新](#小程序信息加解密及用户数据更新)
   - [主动调用微信api](#主动调用微信api)
   - [自定义微信回复](#自定义微信回复)
+  - [微信支付](#微信支付)
 - [后台使用简介](#后台使用简介)
 - [示例项目](#示例项目)
 - [TODOS:](#todos)
   - [计划的功能](#计划的功能)
   - [已知bugs](#已知bugs)
-- [ChangeLog](#changelog)
-  - [0.2.4](#024)
-  - [0.2.2](#022)
-  - [0.2.0](#020)
-  - [0.1.0](#010)
 
 ## 功能
 * 公众号管理
@@ -50,6 +46,8 @@
 * 永久素材,图文的同步及查看
 * 微信网页授权
 * 主动调用微信api封装
+* 微信支付api封装
+* 微信支付订单管理及信号
 * 后台权限管理
 
 ## 安装及配置
@@ -73,6 +71,8 @@
 
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
+| WECHAT_SITE_HOST | None | 用于接收微信回调的域名 |
+| WECHAT_SITE_HTTPS | True | 接收微信回调域名是否是https |
 | WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
 | WECHAT_WECHATCLIENTFACTORY | "wechat_django.client.get_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.client.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
@@ -183,6 +183,9 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
             user, msg.type)
         return TextReply(content=text.encode())
 
+### 微信支付
+使用微信支付,需要在INSTALLED_APP的`wechat_django`后添加`wechat_django.pay`.
+
 ## 后台使用简介
 参见[管理后台使用简介](docs/admin.md) 文档
 
@@ -190,13 +193,13 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
+* 修正model的related manager
 * app层面的message log和reply log
 * 完善单元测试
 * 后台表单验证
 * 自定义消息处理规则
 
 ### 计划的功能
-* 微信支付统一下单
 * 完善模板消息
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
@@ -207,29 +210,6 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ### 已知bugs
 * 多次同步消息处理器会重复生成永久素材
-
-## ChangeLog
-### 0.2.5
-* 模板消息
-
-### 0.2.4
-* 小程序授权及验证/解密信息
-* 要求wechatpy最低版本1.8.2
-
-### 0.2.2
-* 重构控制台路由及相关代码,引入[django-object-tool](https://github.com/Xavier-Lam/django-object-tool)
-* 可在控制台配置应用的accesstoken及oauth_url,以便接入第三方服务
-
-### 0.2.0
-* 重构代码,修改站点url注册方式,修改部分低级api
-* 用户标签管理功能
-* 要求wechatpy最低版本1.8.0
-
-### 0.1.0
-* 公众号管理及基本用法封装
-* 用户,自动回复,菜单,永久素材,图文的基本管理
-* 微信网页授权
-* 后台权限
 
 
 Xavier-Lam@NetDragon

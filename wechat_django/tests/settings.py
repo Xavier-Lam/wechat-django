@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "wechat_django",
+    "wechat_django.pay"
 ]
 
 
