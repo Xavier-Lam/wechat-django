@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
+from django.urls import reverse
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
@@ -46,28 +47,38 @@ class Abilities(object):
     @property
     def menus(self):
         """是否可配置菜单"""
-        return bool(self.authed and self.api and (
-            self._app.type == WeChatApp.Type.SERVICEAPP
-            or self._app.type == WeChatApp.Type.SUBSCRIBEAPP
-        ))
+        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.SUBSCRIBEAPP)
+        return bool(self.authed and self.api and self._app.type in types)
     
     @property
     def template(self):
         """发送模板消息"""
-        return bool(self.authed and self.api and self._app.type in (
-            WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM))
+        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM)
+        return bool(self.authed and self.api and self._app.type in types)
 
     @property
     def user_manager(self):
         """管理用户能力"""
-        return bool(self.authed and self.api and self._app.type in (
-            WeChatApp.Type.SUBSCRIBEAPP, WeChatApp.Type.SERVICEAPP))
+        types = (WeChatApp.Type.SUBSCRIBEAPP, WeChatApp.Type.SERVICEAPP)
+        return bool(self.authed and self.api and self._app.type in types)
 
     @property
     def authed(self):
         """已认证"""
         return bool(WeChatApp.Flag.UNAUTH ^ (
             self._app.flags & WeChatApp.Flag.UNAUTH))
+
+    @property
+    def pay(self):
+        """微信支付能力"""
+        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM)
+        rv = bool(self.authed and self._app.type in types)
+        if rv:
+            try:
+                self._app.pay
+            except AttributeError:
+                return False
+        return rv
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -134,6 +145,34 @@ class WeChatApp(m.Model):
     class Meta(object):
         verbose_name = _("WeChat app")
         verbose_name_plural = _("WeChat apps")
+
+    @property
+    def site_https(self):
+        return self.configurations.get("SITE_HTTPS", settings.SITE_HTTPS)
+
+    @property
+    def site_host(self):
+        config = settings.settings
+        return self.configurations.get("SITE_HOST", settings.SITE_HOST)\
+            or (config.ALLOWED_HOSTS and config.ALLOWED_HOSTS[0] or "")
+
+    def build_url(self, urlname, kwargs=None, request=None, absolute=False):
+        """构建url"""
+        kwargs = kwargs or dict()
+        kwargs["appname"] = self.name
+        location = reverse("wechat_django:{0}".format(urlname), kwargs=kwargs)
+        if not absolute:
+            return location
+
+        if request and not self.site_host:
+            baseurl = request._current_scheme_host
+        elif self.site_host:
+            protocol = "https://" if self.site_https else "http://"
+            baseurl = protocol + self.site_host
+        else:
+            raise RuntimeError(
+                "You need setup a WECHAT_SITE_HOST when build absolute url.")
+        return baseurl + location
 
     @property
     def type_name(self):

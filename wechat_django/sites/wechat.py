@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from functools import wraps
 import logging
 
+from django.conf import settings
 from django.conf.urls import url
 from django.http import response
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +13,7 @@ import requests
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
+from .. import settings as wechat_settings
 from ..models import WeChatApp, WeChatInfo
 from ..utils.web import auto_response
 

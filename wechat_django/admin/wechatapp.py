@@ -5,9 +5,9 @@ import django
 from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
-from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
+from .. import settings
 from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
 from .base import has_wechat_permission
@@ -17,6 +17,14 @@ from .utils import list_property
 class WeChatAppForm(forms.ModelForm):
     log_message = forms.BooleanField(
         label=_("log messages"), initial=False, required=False)
+
+    wechat_host = forms.CharField(
+        label=_("WeChat host"), required=False,
+        help_text=_("接收微信回调的域名"))
+    wechat_https = forms.ChoiceField(
+        label=_("WeChat https"), required=False,
+        choices=[(True, _("Yes")), (False, _("No"))],
+        help_text=_("回调地址是否为https"))
 
     accesstoken_url = forms.URLField(
         label=_("accesstoken url"), required=False,
@@ -39,6 +47,8 @@ class WeChatAppForm(forms.ModelForm):
         if inst:
             initial = kwargs.get("initial", {})
             initial["log_message"] = inst.log_message
+            initial["wechat_host"] = inst.site_host
+            initial["wechat_https"] = inst.site_https
             initial["accesstoken_url"] = inst.configurations.get("ACCESSTOKEN_URL", "")
             initial["oauth_url"] = inst.configurations.get("OAUTH_URL", "")
             kwargs["initial"] = initial
@@ -54,6 +64,10 @@ class WeChatAppForm(forms.ModelForm):
 
     def save(self, commit=True):
         self.instance.flags = self.cleaned_data["flags"]
+        self.instance.configurations["SITE_HOST"] =\
+            self.cleaned_data.get("wechat_host", "")
+        self.instance.configurations["SITE_HTTPS"] =\
+            self.cleaned_data.get("wechat_https", None)
         self.instance.configurations["ACCESSTOKEN_URL"] =\
             self.cleaned_data.get("accesstoken_url", "")
         self.instance.configurations["OAUTH_URL"] =\
@@ -80,8 +94,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
     fields = (
         "title", "name", "appid", "appsecret", "type", "token",
         "encoding_aes_key", "encoding_mode", "desc", "log_message",
-        "callback", "accesstoken_url", "oauth_url",
-        "created_at", "updated_at"
+        "callback", "wechat_host", "wechat_https", "accesstoken_url",
+        "oauth_url", "created_at", "updated_at"
     )
 
     def short_desc(self, obj):
@@ -89,8 +103,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
     short_desc.short_description = _("description")
 
     def callback(self, obj):
-        return obj and self.request.build_absolute_uri(reverse(
-            "wechat_django:handler", kwargs=dict(appname=obj.name)))
+        return obj and obj.build_url(
+            "handler", request=self.request, absolute=True)
     callback.short_description = _("message callback url")
 
     def get_urls(self):
@@ -110,6 +124,8 @@ class WeChatAppAdmin(admin.ModelAdmin):
             fields.remove("updated_at")
         if obj and obj.type == WeChatApp.Type.SUBSCRIBEAPP:
             fields.remove("oauth_url")
+        if obj and not obj.abilities.interactable:
+            fields.remove("callback")
         return fields
 
     def get_readonly_fields(self, request, obj=None):

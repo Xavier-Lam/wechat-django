@@ -12,9 +12,10 @@ with open("README.md", "rb") as f:
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 
-keywords = ["WeChat", "weixin", "wx", "micromessenger", "django", "微信"]
+keywords = ["WeChat", "weixin", "wx", "WeChatPay", "micromessenger", "django", "微信", "微信支付"]
 if sys.version_info.major == 2:
     keywords.remove("微信")
+    keywords.remove("微信支付")
 
 setup(
     name=wechat_django.__title__,

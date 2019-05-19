@@ -166,11 +166,3 @@ class TemplateTestCase(WeChatTestCase):
                 template_id=item["template_id"])
             for key, value in item.items():
                 self.assertEqual(getattr(template, key), value)
-
-    def assertCallArgsEqual(self, func, args, kwargs=None):
-        kwargs = kwargs or {}
-        call_args = func.call_args[0]
-        call_kwargs = func.call_args[1]
-        self.assertEqual(call_args, args)
-        self.assertEqual(
-            {k: v for k, v in call_kwargs.items() if k in kwargs}, kwargs)

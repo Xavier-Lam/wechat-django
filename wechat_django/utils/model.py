@@ -15,5 +15,6 @@ def enum2choices(enum):
     )
 
 
-def model_fields(model):
-    return set(map(lambda o: o.name, model._meta.fields))
+def model_fields(model, excludes=None):
+    excludes = excludes or set()
+    return set(map(lambda o: o.name, model._meta.fields)).difference(excludes)
