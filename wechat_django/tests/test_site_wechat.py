@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.http import response
 
-from ..sites import WeChatSite
+from ..sites.wechat import WeChatSite, WeChatViewSet
 from .base import WeChatTestCase
 
 
@@ -28,12 +28,15 @@ class WeChatSiteTestCase(WeChatTestCase):
                 return super(TestSite, self).app_queryset.filter(
                     name=that.app.name)
 
+        class TestViewSet(WeChatViewSet):
             def test_view(self, request):
                 return response.HttpResponse(status=204)
         
         # 在app_queryset中的公众号可访问,否则404
         site = TestSite()
-        view = site.wechat_view(site.test_view)
+        site.register(TestViewSet)
+        viewset = site.get_registered(TestViewSet)
+        view = viewset.wechat_view(viewset.test_view)
         resp = view(self.rf().get("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)
         resp = view(self.rf().get("/"), self.another_app.name)
@@ -42,7 +45,7 @@ class WeChatSiteTestCase(WeChatTestCase):
     def test_wechat_view(self):
         """测试wechat_view"""
         that = self
-        class TestSite(WeChatSite):
+        class ViewSet(WeChatViewSet):
             def test_view(self, request):
                 return response.HttpResponse(status=204)
 
@@ -52,14 +55,14 @@ class WeChatSiteTestCase(WeChatTestCase):
                 return response.HttpResponse(status=204)
 
         # 测试http method正确
-        site = TestSite()
-        view = site.wechat_view(site.test_view, methods=("POST",))
+        viewset = ViewSet(WeChatSite())
+        view = viewset.wechat_view(viewset.test_view, methods=("POST",))
         resp = view(self.rf().get("/"), self.app.name)
         self.assertEqual(resp.status_code, 405)
         resp = view(self.rf().post("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)
 
         # 测试原view经过wechat_view后request能拿到WeChatInfo对象
-        view = site.wechat_view(site.test_request_view)
+        view = viewset.wechat_view(viewset.test_request_view)
         resp = view(self.rf().get("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)

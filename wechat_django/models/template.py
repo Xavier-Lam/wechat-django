@@ -12,7 +12,12 @@ from . import appmethod, WeChatApp, WeChatModel
 class Template(WeChatModel):
     app = m.ForeignKey(
         WeChatApp, related_name="templates", on_delete=m.CASCADE)
+
     template_id = m.CharField(_("template_id"), max_length=64)
+    name = m.CharField(
+        _("name"), max_length=16, blank=True, null=True,
+        help_text=_("模板标识,用于程序快速查询模板,单app下唯一"))
+
     title = m.CharField(_("title"), max_length=32)
     content = m.TextField(_("content"))
     example = m.TextField(_("example"), blank=True, null=True)
@@ -29,7 +34,7 @@ class Template(WeChatModel):
         verbose_name = _("template")
         verbose_name_plural = _("templates")
 
-        unique_together = ("app", "template_id")
+        unique_together = (("app", "template_id"), ("app", "name"))
 
     @classmethod
     @appmethod("sync_templates")
@@ -127,6 +132,10 @@ class Template(WeChatModel):
                 # 未满说明没有下一页了
                 return
             offset += count
+
+    def save(self, *args, **kwargs):
+        self.name = self.name or None
+        return super(Template, self).save(*args, **kwargs)
 
     def __str__(self):
         return "{title} ({template_id})".format(

@@ -15,6 +15,7 @@ class WeChatConfig(AppConfig):
     def ready(self):
         import object_tool
         object_tool.ObjectToolConfig.register()
+
         if settings.PATCHADMINSITE:
             from .sites.admin import patch_admin
             patch_admin()

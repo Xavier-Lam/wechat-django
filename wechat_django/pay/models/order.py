@@ -45,7 +45,7 @@ class UnifiedOrder(WeChatModel):
         _("trade_type"), max_length=16, choices=enum2choices(TradeType))
     product_id = m.CharField(_("product id"), max_length=32, null=True)
     limit_pay = m.CharField(
-        _("limit_pay"), null=True, default=LimitPay.DEFAULT,
+        _("limit_pay"), max_length=32, null=True, default=LimitPay.DEFAULT,
         choices=enum2choices(LimitPay))
     openid = m.CharField(_("openid"), max_length=128, null=True)
     sub_openid = m.CharField(_("sub openid"), max_length=128, null=True)
@@ -104,7 +104,7 @@ class UnifiedOrder(WeChatModel):
             self.spbill_create_ip = self.spbill_create_ip or get_ip(request)\
                 or get_external_ip()
             notify_url = self.pay.app.build_url(
-                "pay_notify", request=request, absolute=True)
+                "order_notify", request=request, absolute=True)
             call_args = dict(
                 trade_type=self.trade_type,
                 body=self.body,
@@ -152,7 +152,7 @@ class UnifiedOrder(WeChatModel):
             self.update(result)
             return self.result, result
 
-    def update(self, result):
+    def update(self, result, signal=True):
         """由字典更新数据"""
         updated = False
         allowed_fields = (
@@ -166,9 +166,9 @@ class UnifiedOrder(WeChatModel):
         updated and self.save()
 
         try:
-            self.result.update(result)
+            self.result.update(result, signal)
         except AttributeError:
             from . import UnifiedOrderResult
             obj = UnifiedOrderResult(
                 order=self, transaction_id=result["transaction_id"])
-            obj.update(result)
+            obj.update(result, signal)
