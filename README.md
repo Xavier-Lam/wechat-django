@@ -7,11 +7,7 @@
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
-本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11.
-
-目前没有使用在生产环境使用本项目的案例,编写了部分单元测试,并进行了一部分简单的徒手测试.
-
-0.3.0只是一个预览版本,可能存在较多bug,并且有api及数据结构变更可能,欢迎贡献代码
+本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11. WeChat-Django只是一个预览版本,目前没有使用在生产环境使用本项目的案例,可能存在较多bug并且有api及数据结构变更可能.
 
 目录
 ======
@@ -64,7 +60,7 @@
 
 ### 更新
 1. 运行**pip install -U wechat-django**
-2. 运行**python manage.py migrate wechat_django** 来更新数据库结构
+2. 运行**python manage.py migrate** 来更新数据库结构
 
 ### 配置
 一般而言,默认配置足以满足需求
@@ -194,6 +190,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ## TODOS:
 * 修正model的related manager
+* Cookbook
 * app层面的message log和reply log
 * 完善单元测试
 * 后台表单验证

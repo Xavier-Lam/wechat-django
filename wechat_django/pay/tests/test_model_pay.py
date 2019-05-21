@@ -5,11 +5,11 @@ import os
 
 from wechatpy import WeChatPay as WeChatPayBaseClient
 
-from ..pay.models import WeChatPay
-from .base import mock, WeChatTestCase
+from ..models import WeChatPay
+from .base import mock, WeChatPayTestCase
 
 
-class PayTestCase(WeChatTestCase):
+class PayTestCase(WeChatPayTestCase):
     def test_client_init(self):
         """测试WeChatPayClient的构建"""
         mch_id = "mch_id"

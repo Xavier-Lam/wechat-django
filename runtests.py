@@ -11,7 +11,7 @@ def main():
     django.setup()
     TestRunner = get_runner(settings)
     test_runner = TestRunner()
-    failures = test_runner.run_tests(["wechat_django"])
+    failures = test_runner.run_tests(["wechat_django", "wechat_django.pay"])
     sys.exit(bool(failures))
 
 

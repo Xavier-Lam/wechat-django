@@ -13,7 +13,24 @@ from django.test import RequestFactory, TestCase
 from ..models import WeChatApp
 
 
-class WeChatTestCase(TestCase):
+class WeChatTestCaseBase(TestCase):
+    def assertCallArgsEqual(self, func, args=(), kwargs=None):
+        kwargs = kwargs or {}
+        call_args = func.call_args[0]
+        call_kwargs = func.call_args[1]
+        self.assertEqual(call_args, args)
+        self.assertEqual(
+            {k: v for k, v in call_kwargs.items() if k in kwargs}, kwargs)
+
+    @property
+    def base_url(self):
+        return "http://localhost/"
+
+    def rf(self, **defaults):
+        return RequestFactory(**defaults)
+
+
+class WeChatTestCase(WeChatTestCaseBase):
     @classmethod
     def setUpTestData(cls):
         super(WeChatTestCase, cls).setUpTestData()
@@ -29,21 +46,6 @@ class WeChatTestCase(TestCase):
         self.app = WeChatApp.objects.get_by_name("test")
         self.another_app = WeChatApp.objects.get_by_name("test1")
         self.miniprogram = WeChatApp.objects.get_by_name("miniprogram")
-
-    def assertCallArgsEqual(self, func, args=(), kwargs=None):
-        kwargs = kwargs or {}
-        call_args = func.call_args[0]
-        call_kwargs = func.call_args[1]
-        self.assertEqual(call_args, args)
-        self.assertEqual(
-            {k: v for k, v in call_kwargs.items() if k in kwargs}, kwargs)
-
-    @property
-    def base_url(self):
-        return "http://localhost/"
-
-    def rf(self, **defaults):
-        return RequestFactory(**defaults)
 
     def load_data(self, path):
         res_file = os.path.join(

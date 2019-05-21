@@ -157,5 +157,5 @@ class HandlerTestCase(WeChatTestCase):
 
     @property
     def url(self):
-        return reverse("wechat_django:handler",
-            kwargs=dict(appname=self.app.name))
+        return reverse(
+            "wechat_django:handler", kwargs=dict(appname=self.app.name))
