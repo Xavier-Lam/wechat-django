@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
+from django.dispatch import receiver
+from django.utils import timezone as tz
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from wechatpy.pay.utils import get_external_ip
@@ -22,40 +24,47 @@ class UnifiedOrder(WeChatModel):
         MICROPAY = "MICROPAY"
 
     class LimitPay(object):
-        DEFAULT = None
+        NONE = None
         NOCREDIT = "no_credit"
 
     class Receipt(object):
-        DEFAULT = None
+        NONE = None
         TRUE = "Y"
-    
+
+    class FeeType(object):
+        CNY = "CNY"
+
     pay = m.ForeignKey(WeChatPay, on_delete=m.CASCADE, related_name="orders")
 
     device_info = m.CharField(_("device_info"), max_length=32, null=True)
     body = m.CharField(_("order body"), max_length=128)
     detail = m.TextField(_("order detail"), max_length=6000, null=True)
     out_trade_no = m.CharField(_("out_trade_no"), max_length=32)
-    fee_type = m.CharField(_("fee_type"), max_length=16, null=True)
+    fee_type = m.CharField(
+        _("fee_type"), max_length=16, null=True, default=FeeType.CNY)
     total_fee = m.PositiveIntegerField(_("total_fee"))
-    spbill_create_ip = m.CharField(_("spbill_create_ip"), max_length=64)
-    time_start = PayDateTimeField("time_start", null=True)
-    time_expire = PayDateTimeField("time_expire", null=True)
+    spbill_create_ip = m.CharField(_("spbill_create_ip"), max_length=64) # TODO: 生成时是否应该赋值?
+    time_start = PayDateTimeField("time_start", default=tz.now)
+    time_expire = PayDateTimeField("time_expire")
     goods_tag = m.CharField(_("goods_tag"), max_length=32, null=True)
     trade_type = m.CharField(
         _("trade_type"), max_length=16, choices=enum2choices(TradeType))
     product_id = m.CharField(_("product id"), max_length=32, null=True)
     limit_pay = m.CharField(
-        _("limit_pay"), max_length=32, null=True, default=LimitPay.DEFAULT,
+        _("limit_pay"), max_length=32, null=True, default=LimitPay.NONE,
         choices=enum2choices(LimitPay))
     openid = m.CharField(_("openid"), max_length=128, null=True)
     sub_openid = m.CharField(_("sub openid"), max_length=128, null=True)
     receipt = m.CharField(
-        _("recept"), max_length=8, null=True, default=Receipt.DEFAULT,
+        _("recept"), max_length=8, null=True, default=Receipt.NONE,
         choices=enum2choices(Receipt))
     scene_info = JSONField(_("scene_info"), max_length=256, null=True)
 
+    comment = m.TextField(_("comment"), blank=True)
+
     ext_info = JSONField(default=dict, editable=False)
-    _call_args = JSONField(db_column="call_args", default=dict, editable=False)
+    _call_args = JSONField(
+        db_column="call_args", default=dict, null=True, editable=False)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
@@ -67,21 +76,34 @@ class UnifiedOrder(WeChatModel):
         index_together = (("pay", "created_at"), )
         unique_together = (("pay", "out_trade_no"),)
 
+    def transaction_id(self):
+        try:
+            return self.result.transaction_id
+        except AttributeError:
+            return None
+    transaction_id.short_description = _("transaction_id")
+
+    def trade_state(self):
+        try:
+            return self.result.trade_state
+        except AttributeError:
+            return None
+    trade_state.short_description = _("trade_state")
+
     @classmethod
-    @paymethod
+    @paymethod("create_order")
     def create(cls, pay, user=None, request=None, **kwargs):
         """
         :type pay: wechat_django.pay.models.WeChatPay
         :param user: 发生支付的用户,如不填写,请填写openid或sub_openid
         :type user: wechat_django.models.WeChatUser
         :param request: 发生此次请求的request
-        :param kwargs: 参见数据库其他各字段的值,以及
-                       `wechatpy.pay.api.order.WeChatOrder.create`方法的传参
+        :param kwargs: 参见模型其他各字段的值
         """
         data = {}
 
         if user:
-            if user.app.appid == pay.mch_app_id:
+            if pay.sub_appid and user.app.appid == pay.sub_appid:
                 data["sub_openid"] = user.openid
             else:
                 data["openid"] = user.openid
@@ -115,14 +137,15 @@ class UnifiedOrder(WeChatModel):
                 out_trade_no=self.out_trade_no,
                 detail=self.detail,
                 fee_type=self.fee_type,
-                time_start=self.time_start and str(self.time_start),
-                time_expire=self.time_expire and str(self.time_expire),
+                time_start=self.time_start,
+                time_expire=self.time_expire,
                 goods_tag=self.goods_tag,
                 product_id=self.product_id,
                 device_info=self.device_info,
                 limit_pay=self.limit_pay,
                 scene_info=self.scene_info,
-                sub_user_id=self.sub_openid
+                sub_user_id=self.sub_openid,
+                receipt=self.receipt
             )
             call_args.update(kwargs)
             self._call_args = call_args
@@ -136,11 +159,15 @@ class UnifiedOrder(WeChatModel):
 
     def close(self):
         """关闭订单"""
-        return self.pay.client.order.close(self.out_trade_no)
+        rv = self.pay.client.order.close(self.out_trade_no)
+        self.sync()
+        return rv
 
     def reverse(self):
         """撤销订单"""
-        return self.pay.client.order.reverse(out_trade_no=self.out_trade_no)
+        rv = self.pay.client.order.reverse(out_trade_no=self.out_trade_no)
+        self.sync()
+        return rv
 
     def sync(self):
         """更新订单状态"""
@@ -172,3 +199,14 @@ class UnifiedOrder(WeChatModel):
             obj = UnifiedOrderResult(
                 order=self, transaction_id=result["transaction_id"])
             obj.update(result, signal)
+
+    def __str__(self):
+        return "{0} ({1})".format(self.out_trade_no, self.body)
+
+
+@receiver(m.signals.pre_save, sender=UnifiedOrder)
+def on_order_created(sender, instance, *args, **kwargs):
+    """订单保存前初始化订单参数"""
+    if instance.time_expire is None:
+        # 订单过期时间默认创建时间2小时后
+        instance.time_expire = instance.time_start + tz.timedelta(hours=2)

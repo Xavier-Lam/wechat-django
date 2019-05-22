@@ -5,28 +5,27 @@ import os
 
 from wechatpy import WeChatPay as WeChatPayBaseClient
 
-from ..models import WeChatPay
 from .base import mock, WeChatPayTestCase
 
 
 class PayTestCase(WeChatPayTestCase):
     def test_client_init(self):
         """测试WeChatPayClient的构建"""
-        mch_id = "mch_id"
-        api_key = "api_key"
-        sub_mch_id = "sub_mch_id"
-        mch_app_id = "mch_app_id"
-        pay = WeChatPay(app=self.app, api_key=api_key, mch_id=mch_id)
-        sub_pay = WeChatPay(
-            app=self.app, api_key=api_key, mch_id=mch_id,
-            sub_mch_id=sub_mch_id, mch_app_id=mch_app_id)
+        pay = self.app.pay
+        sub_pay = self.app_sub.pay
+
+        mch_id = pay.mch_id
+        api_key = pay.api_key
+        sub_mch_id = sub_pay.sub_mch_id
+        mch_app_id = sub_pay.mch_app_id
+
         with mock.patch.object(WeChatPayBaseClient, "__init__"):
             pay.client
             self.assertCallArgsEqual(
                 WeChatPayBaseClient.__init__, kwargs=dict(
                     mch_id=mch_id,
                     api_key=api_key,
-                    appid=self.app.appid
+                    appid=pay.app.appid
                 ))
 
             sub_pay.client
@@ -35,20 +34,18 @@ class PayTestCase(WeChatPayTestCase):
                     mch_id=mch_id,
                     api_key=api_key,
                     appid=mch_app_id,
-                    sub_appid=self.app.appid,
+                    sub_appid=sub_pay.app.appid,
                     sub_mch_id=sub_mch_id
                 ))
 
     def test_client_cert(self):
         """测试请求时证书是否正确使用"""
-        mch_id = "mch_id"
-        api_key = "api_key"
-        mch_cert = b"mch_cert"
-        mch_key = b"mch_key"
-        pay = WeChatPay(app=self.app, api_key=api_key, mch_id=mch_id)
-        cert_pay = WeChatPay(
-            app=self.app, api_key=api_key, mch_id=mch_id, mch_cert=mch_cert,
-            mch_key=mch_key)
+        pay = self.app_nocert.pay
+        cert_pay = self.app.pay
+        mch_id = cert_pay.mch_id
+        api_key = cert_pay.api_key
+        mch_cert = cert_pay.mch_cert
+        mch_key = cert_pay.mch_key
 
         that = self
         origin_request = WeChatPayBaseClient._request

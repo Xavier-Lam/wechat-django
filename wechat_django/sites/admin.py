@@ -179,7 +179,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             )
 
             for model, model_admin in self._iter_wechatadmins():
-                info = (app_label, model._meta.model_name)
+                info = (model._meta.app_label, model._meta.model_name)
                 perms = model_admin.get_model_perms(request)
                 if not perms:
                     continue

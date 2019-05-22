@@ -8,7 +8,7 @@ from jsonfield import JSONField
 from wechat_django.models import WeChatModel
 from wechat_django.utils.model import enum2choices, model_fields
 from ..signals import order_updated
-from . import UnifiedOrder, WeChatPay
+from . import UnifiedOrder
 from .base import PayBooleanField, PayDateTimeField
 
 
@@ -60,14 +60,14 @@ class UnifiedOrderResult(WeChatModel):
     def update(self, result, signal=True):
         """根据参数更新订单状态"""
         excludes = ("transaction_id",)
-        model_fields = model_fields(UnifiedOrderResult, excludes=excludes)
+        all_fields = model_fields(UnifiedOrderResult, excludes=excludes)
         ignore_fields = (
             "return_code", "return_msg", "appid", "mch_id", "device_info",
             "nonce_str", "sign", "result_code", "openid", "trade_type",
             "fee_type", "out_trade_no")
         for k, v in result.items():
             if k not in ignore_fields:
-                if k in model_fields:
+                if k in all_fields:
                     setattr(self, k, v)
                 else:
                     self.ext_info[k] = v

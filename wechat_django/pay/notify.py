@@ -9,7 +9,7 @@ from functools import wraps
 from django.conf.urls import include, url
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import response
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from wechatpy.exceptions import InvalidSignatureException
 
@@ -19,8 +19,8 @@ from .exceptions import WeChatPayNotifyError
 
 
 def make_response(msg=None):
-    tpl = "<xml><return_msg><![CDATA[{code}}]]></return_msg><return_code><![CDATA[{msg}}]]></return_code></xml>"
-    code = "SUCCESS" if msg else "FAIL"
+    tpl = "<xml><return_msg><![CDATA[{msg}]]></return_msg><return_code><![CDATA[{code}]]></return_code></xml>"
+    code = "FAIL" if msg else "SUCCESS"
     xml = tpl.format(code=code, msg=msg)
     return response.HttpResponse(xml, content_type="application/xml")
 
@@ -31,11 +31,12 @@ class NotifyViewSet(BaseWeChatViewSet):
         @wraps(view)
         def decorated_view(request, appname):
             try:
-                data = self._prepare(request, appname)
+                pay, data = self._prepare(request, appname)
                 return make_response(view(request, pay, data))
             except WeChatPayNotifyError as e:
                 return make_response(e.msg)
             except:
+                raise
                 return make_response(_("Internal server error"))
 
         return decorated_view
@@ -49,15 +50,16 @@ class NotifyViewSet(BaseWeChatViewSet):
             raise WeChatPayNotifyError(_("Empty body"))
 
         try:
-            pay = self.app_queryset.prefetch_related("pay")\
-                .get_by_name(appname).pay
+            app = self.site.app_queryset.prefetch_related("pay")\
+                .get_by_name(appname)
         except WeChatApp.DoesNotExist as e:
             raise WeChatPayNotifyError(_("WeChat application not found"), e)
-        except AttributeError as e:
-            raise WeChatPayNotifyError(_("WeChat pay not configured"), e)
+
+        if not app.abilities.pay:
+            raise WeChatPayNotifyError(_("WeChat pay not configured"))
 
         try:
-            return pay.client.parse_payment_result(xml)
+            return app.pay, app.pay.client.parse_payment_result(xml)
         except InvalidSignatureException as e:
             raise WeChatPayNotifyError(_("Invalid signature"), e)
 

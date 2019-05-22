@@ -152,9 +152,7 @@ class WeChatApp(m.Model):
 
     @property
     def site_host(self):
-        config = settings.settings
-        return self.configurations.get("SITE_HOST", settings.SITE_HOST)\
-            or (config.ALLOWED_HOSTS and config.ALLOWED_HOSTS[0] or "")
+        return self.configurations.get("SITE_HOST", settings.SITE_HOST)
 
     def build_url(self, urlname, kwargs=None, request=None, absolute=False):
         """构建url"""
@@ -166,12 +164,18 @@ class WeChatApp(m.Model):
 
         if request and not self.site_host:
             baseurl = request._current_scheme_host
-        elif self.site_host:
-            protocol = "https://" if self.site_https else "http://"
-            baseurl = protocol + self.site_host
         else:
-            raise RuntimeError(
-                "You need setup a WECHAT_SITE_HOST when build absolute url.")
+            protocol = "https://" if self.site_https else "http://"
+            if self.site_host:
+                host = self.site_host
+            else:
+                allowed_hosts = settings.settings.ALLOWED_HOSTS
+                if not allowed_hosts:
+                    raise RuntimeError(
+                        "You need setup a WECHAT_SITE_HOST when build"
+                        "absolute url.")
+                host = allowed_hosts[0]
+            baseurl = protocol + host
         return baseurl + location
 
     @property

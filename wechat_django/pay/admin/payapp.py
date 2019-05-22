@@ -63,11 +63,8 @@ class WeChatPayInline(admin.StackedInline):
 
     def get_fields(self, request, obj=None):
         rv = super().get_fields(request, obj)
-        try:
-            inst = obj.pay
-        except AttributeError:
-            inst = None
-        if inst and inst.mch_cert and inst.mch_key:
+        pay = obj.pay if obj.abilities.pay else None
+        if pay and pay.mch_cert and pay.mch_key:
             rv.remove("_mch_cert")
             rv.remove("_mch_key")
         else:

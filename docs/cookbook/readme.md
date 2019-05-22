@@ -6,4 +6,5 @@
 ## [小程序](miniprogram.md)
 ## [微信授权](oauth.md)
 ## [微信支付](wechatpay.md)
+## [后台](admin.md)
 ## [进阶开发](advance-dev.md)

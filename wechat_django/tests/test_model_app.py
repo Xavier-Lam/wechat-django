@@ -2,10 +2,12 @@
 from __future__ import unicode_literals
 
 from django.test import override_settings
+from django.urls import reverse
 from wechatpy.client import WeChatClient as _Client
 from wechatpy.client.api import WeChatWxa
 
 from ..models import WeChatApp
+from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
@@ -86,3 +88,43 @@ class AppTestCase(WeChatTestCase):
             self.assertEqual(user.unionid, unionid)
             self.assertEqual(user.sessions.count(), 1)
             self.assertEqual(user.session.session_key, session_key)
+
+    def test_build_url(self):
+        """测试url构建"""
+        def assertUrlCorrect(hostname, urlname, request=None, secure=False, kwargs=None):
+            kwargs_copy = (kwargs or dict()).copy()
+            kwargs_copy["appname"] = self.app.name
+            location = reverse(
+                "wechat_django:{0}".format(urlname), kwargs=kwargs_copy)
+            self.assertEqual(
+                location, self.app.build_url(urlname, kwargs, absolute=False))
+
+            protocol = "https://" if secure else "http://"
+            self.assertEqual(
+                protocol + hostname + location,
+                self.app.build_url(
+                    urlname, kwargs, request=request, absolute=True))
+
+        url_name = "handler"
+        allowed_host = "example.com"
+        request_host = "example.com:1000"
+        settings_host = "example.com:2000"
+        configure_host = "example.com:3000"
+        req = self.rf(SERVER_NAME=request_host).get("/")
+
+        # 连request都没有时,取allowed host的第一个
+        assertUrlCorrect(allowed_host, url_name, secure=True)
+
+        # 什么都没有配置时,取request的host
+        assertUrlCorrect(request_host, url_name, req, secure=False)
+
+        settings.SITE_HOST = settings_host
+        settings.SITE_HTTPS = True
+
+        # app中未设置site host 取设置里的site host
+        assertUrlCorrect(settings_host, url_name, req, secure=True)
+        
+        # app中设置取app设置
+        self.app.configurations["SITE_HTTPS"] = False
+        self.app.configurations["SITE_HOST"] = configure_host
+        assertUrlCorrect(configure_host, url_name, req, secure=False)
