@@ -2,7 +2,7 @@
 
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label=opts.app_label wechat_app_id=wechat_app_id %}">{{ wechat_app.title }}</a>
+&rsaquo; <a href="{% url 'admin:wechat_funcs_list' app_label='wechat_django' wechat_app_id=wechat_app_id %}">{{ wechat_app.title }}</a>
 {% if view == "list_view" %}
 &rsaquo; {{ opts.verbose_name_plural|capfirst }}
 {% else %}

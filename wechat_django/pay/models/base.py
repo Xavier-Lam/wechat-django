@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models as m
 from django.utils import timezone as tz
+import six
 
 from wechat_django.models.base import create_shortcut
 from . import WeChatPay
@@ -19,10 +20,12 @@ class PayDateTimeField(m.DateTimeField):
         try:
             # 由微信字符串格式转换
             # TODO: 不知道会否有潜在时区问题
-            dt = tz.datetime.strptime(value, self._format)
-            return tz.make_aware(dt, self._tz)
+            if isinstance(value, six.text_type):
+                dt = tz.datetime.strptime(value, self._format)
+                return tz.make_aware(dt, self._tz)
         except ValueError:
-            return super(PayDateTimeField, self).to_python(value)
+            pass
+        return super(PayDateTimeField, self).to_python(value)
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
