@@ -22,7 +22,36 @@ class WeChatPayForm(forms.ModelForm):
 
     class Meta(object):
         model = WeChatPay
-        fields = "__all__"
+        fields = (
+            "title", "name", "weight", "mch_id", "api_key", "sub_mch_id",
+            "mch_app_id", "_mch_cert", "_mch_key", "clear_certs")
+        widgets = dict(
+            api_key=forms.PasswordInput(render_value=True),
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(WeChatPayForm, self).__init__(*args, **kwargs)
+
+        # 处理字段
+        inst = self.instance
+        if inst.pk:
+            self._readonly_field("name")
+            self._readonly_field("mch_id")
+            if not inst.mch_app_id:
+                self._remove_field("sub_mch_id")
+                self._remove_field("mch_app_id")
+        if inst.pk and inst.mch_cert and inst.mch_key:
+            self._remove_field("_mch_cert")
+            self._remove_field("_mch_key")
+        else:
+            self._remove_field("clear_certs")
+
+    def _remove_field(self, field):
+        self.fields[field].widget = forms.widgets.HiddenInput()
+        self.fields[field].disabled = True
+
+    def _readonly_field(self, field):
+        self.fields[field].disabled = True
 
     def clean__mch_cert(self):
         file = self.cleaned_data.get("_mch_cert")
@@ -61,15 +90,8 @@ class WeChatPayInline(admin.StackedInline):
     form = WeChatPayForm
     model = WeChatPay
 
-    def get_fields(self, request, obj=None):
-        rv = super().get_fields(request, obj)
-        pay = obj.pay if obj.abilities.pay else None
-        if pay and pay.mch_cert and pay.mch_key:
-            rv.remove("_mch_cert")
-            rv.remove("_mch_key")
-        else:
-            rv.remove("clear_certs")
-        return rv
+    def get_extra(self, request, obj=None):
+        return 0 if obj.pay else 1
 
 
 admin.site.unregister(WeChatApp)
@@ -83,7 +105,8 @@ class WeChatAppWithPayAdmin(WeChatAppAdmin):
         rv = super(WeChatAppWithPayAdmin, self).get_inline_instances(
             request, obj)
         if not obj or obj.type not in (
-            WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM):
+            WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM,
+            WeChatApp.Type.OTHER):
             return []
         # 支付权限
         if not has_wechat_permission(request, obj, "pay", "manage"):

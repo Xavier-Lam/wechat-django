@@ -157,6 +157,10 @@ class UnifiedOrder(WeChatModel):
         return self.pay.client.order.create(
             **self.call_args(request, **kwargs))
 
+    def jsapi_params(self, prepay_id, *args, **kwargs):
+        return self.pay.client.jsapi.get_jsapi_params(
+            prepay_id, *args, **kwargs)
+
     def close(self):
         """关闭订单"""
         rv = self.pay.client.order.close(self.out_trade_no)
