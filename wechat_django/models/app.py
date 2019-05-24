@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models as m
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
@@ -72,13 +73,7 @@ class Abilities(object):
     def pay(self):
         """微信支付能力"""
         types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM)
-        rv = bool(self.authed and self._app.type in types)
-        if rv:
-            try:
-                self._app.pay
-            except AttributeError:
-                return False
-        return rv
+        return bool(self.authed and self._app.type in types and self._app.pay)
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -106,6 +101,7 @@ class WeChatApp(m.Model):
         UNAUTH = 0x01 # 未认证
 
     class Type(object):
+        OTHER = 0
         SERVICEAPP = 1
         SUBSCRIBEAPP = 2
         MINIPROGRAM = 4
@@ -141,6 +137,10 @@ class WeChatApp(m.Model):
     objects = WeChatAppManager()
 
     abilities = Abilities()
+
+    @cached_property
+    def pay(self):
+        return self.pays.first()
 
     class Meta(object):
         verbose_name = _("WeChat app")
@@ -220,6 +220,8 @@ class WeChatApp(m.Model):
             if self.configurations.get("ACCESSTOKEN_URL"):
                 client.ACCESSTOKEN_URL = self.configurations["ACCESSTOKEN_URL"]
 
+            # TODO: self._client = client.wxa
+
         return self._client
 
     @property
@@ -288,6 +290,7 @@ class WeChatApp(m.Model):
         :raises: wechatpy.exceptions.WeChatClientException
         """
         from . import Session, WeChatUser
+        # TODO: 改为self.client.code_to_session
         data = self.client.wxa.code_to_session(code)
         user = WeChatUser.objects.upsert_by_dict(self, data)
         # 持久化session_key

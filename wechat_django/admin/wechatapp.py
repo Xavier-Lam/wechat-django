@@ -131,8 +131,10 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         rv = super(WeChatAppAdmin, self).get_readonly_fields(request, obj)
         if obj:
-            rv = rv + ("name", "appid", "type", "callback",
-                "created_at", "updated_at")
+            rv = rv + (
+                "name", "appid", "callback", "created_at", "updated_at")
+            if obj.type != 0:
+                rv = rv + ("type",)
         return rv
 
     def get_queryset(self, request):

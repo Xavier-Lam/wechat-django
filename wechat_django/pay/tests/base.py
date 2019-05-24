@@ -17,30 +17,30 @@ class WeChatPayTestCase(WeChatTestCaseBase):
         super(WeChatPayTestCase, cls).setUpTestData()
         app = WeChatApp.objects.create(
             title="pay", name="pay", appid="appid", appsecret="secret")
-        app.pay = WeChatPay.objects.create(
-            mch_id="mch_id", api_key="api_key", mch_cert=b"mch_cert",
+        pay = WeChatPay.objects.create(
+            app=app, mch_id="mch_id", api_key="api_key", mch_cert=b"mch_cert",
             mch_key=b"mch_key")
 
         app_nocert = WeChatApp.objects.create(
             title="pay_nocert", name="pay_nocert", appid="pay_nocert",
             appsecret="secret")
-        app_nocert.pay = WeChatPay.objects.create(
-            mch_id="mch_id", api_key="api_key")
+        pay = WeChatPay.objects.create(
+            app=app_nocert, mch_id="mch_id", api_key="api_key")
 
         miniprogram = WeChatApp.objects.create(
             title="miniprogram", name="miniprogram", appid="miniprogram",
             appsecret="secret", type=WeChatApp.Type.MINIPROGRAM)
-        miniprogram.pay = WeChatPay.objects.create(
-            mch_id="mch_id", api_key="api_key", mch_cert=b"mch_cert",
-            mch_key=b"mch_key")
+        pay = WeChatPay.objects.create(
+            app=miniprogram, mch_id="mch_id", api_key="api_key",
+            mch_cert=b"mch_cert", mch_key=b"mch_key")
 
         app_sub = WeChatApp.objects.create(
             title="pay_sub", name="pay_sub", appid="pay_sub_appid",
             appsecret="secret")
-        app_sub.pay = WeChatPay.objects.create(
-            mch_id="mch_id", api_key="api_key", sub_mch_id="sub_mch_id",
-            mch_app_id=app.appid, mch_cert=b"mch_cert",
-            mch_key=b"mch_key")
+        pay = WeChatPay.objects.create(
+            app=app_sub, mch_id="mch_id", api_key="api_key",
+            sub_mch_id="sub_mch_id", mch_app_id=app.appid,
+            mch_cert=b"mch_cert", mch_key=b"mch_key")
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("pay")
