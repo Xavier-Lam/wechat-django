@@ -7,7 +7,6 @@ import json
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
-import six
 
 from ..utils.model import enum2choices
 from . import appmethod, MessageHandler, WeChatApp, WeChatModel

@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 import object_tool
-from wechatpy.exceptions import WeChatClientException
 
 from ...models import Material
-from ..base import (
-    RecursiveDeleteActionMixin, DynamicChoiceForm, WeChatModelAdmin)
+from ..base import RecursiveDeleteActionMixin, WeChatModelAdmin
 
 
 class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
@@ -20,17 +17,17 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     __model__ = Material
 
     changelist_object_tools = ("sync", )
-    list_display = ("media_id", "type", "comment", "updatetime")
+    list_display = ("media_id", "alias", "type", "comment", "updatetime")
     list_filter = ("type", )
     search_fields = ("name", "media_id", "comment")
 
-    fields = ("type", "media_id", "name", "open", "comment")
+    fields = ("type", "media_id", "alias", "name", "open", "comment")
     readonly_fields = ("type", "media_id", "name", "open", "media_id")
 
     @mark_safe
     def preview(self, obj):
         if obj.type == Material.Type.IMAGE:
-            return '<img src="%s" />'%obj.url
+            return '<img src="%s" />' % obj.url
     preview.short_description = _("preview")
 
     def updatetime(self, obj):
@@ -66,8 +63,9 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
     @object_tool.confirm(short_description=_("Sync materials"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
+
         def action():
-            materials = Material.sync(request.app)
+            materials = request.app.sync_materials()
             msg = _("%(count)d materials successfully synchronized")
             return msg % dict(count=len(materials))
 
@@ -76,3 +74,8 @@ class MaterialAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def get_model_perms(self, request):
+        if not request.app.abilities.material:
+            return {}
+        return super(MaterialAdmin, self).get_model_perms(request)

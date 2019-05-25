@@ -55,15 +55,11 @@ class UserTag(WeChatModel):
             app.user_tags.filter(id__in=deleted_tag_ids).delete()
 
             for tag in tags:
-                data = dict(
-                    id=tag["id"],
-                    app=app,
-                    name=tag["name"]
-                )
+                data = dict(id=tag["id"], name=tag["name"])
                 if tag["id"] not in db_tag_ids:
-                    db_tag = cls.objects.create(_tag_local=True, **data)
+                    db_tag = app.user_tags.create(_tag_local=True, **data)
                 else:
-                    db_tag = (cls.objects.filter(id=tag["id"], app=app)
+                    db_tag = (app.user_tags.filter(id=tag["id"])
                         .update(name=tag["name"]))
                 rv.append(db_tag)
             # 存在一个问题

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 
+import six
 from wechatpy import WeChatPay as WeChatPayBaseClient
 
 from .base import mock, WeChatPayTestCase
@@ -46,6 +47,9 @@ class PayTestCase(WeChatPayTestCase):
         api_key = cert_pay.api_key
         mch_cert = cert_pay.mch_cert
         mch_key = cert_pay.mch_key
+        if six.PY2:
+            mch_cert = str(mch_cert)
+            mch_key = str(mch_key)
 
         that = self
         origin_request = WeChatPayBaseClient._request

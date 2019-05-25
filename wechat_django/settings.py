@@ -7,18 +7,15 @@ SITE_HOST = getattr(settings, "WECHAT_SITE_HOST", None)
 SITE_HTTPS = getattr(settings, "WECHAT_SITE_HTTPS", True)
 
 PATCHADMINSITE = getattr(settings, "WECHAT_PATCHADMINSITE", True)
-"""是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换"""
 
 SESSIONSTORAGE = getattr(
     settings, "WECHAT_SESSIONSTORAGE", "django.core.cache.cache")
 
-WECHATCLIENTFACTORY = getattr(
-    settings, "WECHAT_WECHATCLIENTFACTORY",
-    "wechat_django.client.get_client")
+WECHATCLIENT = getattr(
+    settings, "WECHAT_WECHATCLIENT", "wechat_django.client.WeChatClient")
 
-OAUTHCLIENTFACTORY = getattr(
-    settings, "WECHAT_OAUTHCLIENTFACTORY",
-    "wechat_django.oauth.get_client")
+OAUTHCLIENT = getattr(
+    settings, "WECHAT_OAUTHCLIENT", "wechat_django.oauth.WeChatOAuthClient")
 
 MESSAGETIMEOFFSET = getattr(settings, "WECHAT_MESSAGETIMEOFFSET", 180)
 

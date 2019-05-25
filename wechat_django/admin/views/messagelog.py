@@ -26,3 +26,8 @@ class MessageLogAdmin(WeChatModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def get_model_perms(self, request):
+        if not request.app.abilities.interactable:
+            return {}
+        return super(MessageLogAdmin, self).get_model_perms(request)

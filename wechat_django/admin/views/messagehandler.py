@@ -2,11 +2,10 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 import object_tool
-from wechatpy.exceptions import WeChatClientException
 
 from ...models import MessageHandler, MsgLogFlag, Reply, Rule
 from ...utils.model import enum2choices
@@ -146,7 +145,7 @@ class MessageHandlerAdmin(WeChatModelAdmin):
 
     changelist_object_tools = ("sync", )
     list_display = (
-        "name", "is_sync", 
+        "name", "is_sync",
         list_property(
             "available", boolean=True, short_description=_("available")),
         "enabled", "weight", "starts", "ends", "updated_at", "created_at")
@@ -162,7 +161,7 @@ class MessageHandlerAdmin(WeChatModelAdmin):
     def sync(self, request, queryset):
         self.check_wechat_permission(request, "sync")
         def action():
-            handlers = MessageHandler.sync(request.app)
+            handlers = request.app.sync_message_handlers()
             msg = _("%(count)d handlers successfully synchronized")
             return msg % dict(count=len(handlers))
 
@@ -193,3 +192,8 @@ class MessageHandlerAdmin(WeChatModelAdmin):
             request, obj, form, change)
 
     form = MessageHandlerForm
+
+    def get_model_perms(self, request):
+        if not request.app.abilities.interactable:
+            return {}
+        return super(MessageHandlerAdmin, self).get_model_perms(request)

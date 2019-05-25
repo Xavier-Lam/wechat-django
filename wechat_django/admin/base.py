@@ -7,23 +7,16 @@ import django
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.actions import delete_selected
-from django.contrib.admin.templatetags import admin_list, admin_urls
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import response
-from django.shortcuts import redirect
-from django.utils.encoding import force_text
-from django.utils.http import urlencode
-from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.urls import NoReverseMatch, resolve, reverse
+from django.urls import reverse
 from object_tool import CustomObjectToolModelAdminMixin
 import six
 from wechatpy.exceptions import WeChatClientException
 
 from ..models.permission import get_user_permissions
-from ..utils.web import mutable_GET
 
 
 registered_admins = []
@@ -150,7 +143,8 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
     def save_model(self, request, obj, form, change):
         if not change:
             obj.app_id = request.app_id
-        return super(WeChatModelAdmin, self).save_model(request, obj, form, change)
+        return super(WeChatModelAdmin, self).save_model(
+            request, obj, form, change)
     #endregion
 
     #region permissions

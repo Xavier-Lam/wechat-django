@@ -165,8 +165,7 @@ class MessageHandler(WeChatModel):
 
             if resp.get("message_default_autoreply_info"):
                 # 自动回复
-                handler = cls.objects.create_handler(
-                    app=app,
+                handler = app.message_handlers.create_handler(
                     name="微信配置自动回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_autoreply_open")),
@@ -189,8 +188,7 @@ class MessageHandler(WeChatModel):
 
             if resp.get("add_friend_autoreply_info"):
                 # 关注回复
-                handler = cls.objects.create_handler(
-                    app=app,
+                handler = app.message_handlers.create_handler(
                     name="微信配置关注回复",
                     src=MessageHandler.Source.MP,
                     enabled=bool(resp.get("is_add_friend_reply_open")),
@@ -210,8 +208,7 @@ class MessageHandler(WeChatModel):
     @classmethod
     def from_mp(cls, handler, app):
         from . import Reply, Rule
-        return cls.objects.create_handler(
-            app=app,
+        return app.message_handlers.create_handler(
             name=handler["rule_name"],
             src=MessageHandler.Source.MP,
             created_at=timezone.datetime.fromtimestamp(handler["create_time"]),
@@ -232,8 +229,7 @@ class MessageHandler(WeChatModel):
         :type menu: .Menu
         """
         from . import Reply, Rule
-        return cls.objects.create_handler(
-            app=app,
+        return app.message_handlers.create_handler(
             name="菜单[{0}]事件".format(data["name"]),
             src=cls.Source.MENU,
             rules=[Rule(

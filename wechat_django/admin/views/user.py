@@ -2,14 +2,13 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 import object_tool
-from wechatpy.exceptions import WeChatClientException
 
-from ...models import UserTag, WeChatApp, WeChatUser
+from ...models import UserTag, WeChatUser
 from ..base import WeChatModelAdmin
 
 
@@ -40,13 +39,13 @@ class WeChatUserAdmin(WeChatModelAdmin):
     actions = ("update",)
     changelist_object_tools = ("incremental_sync", "sync_all")
     list_display = (
-        "openid", "nickname", "avatar", "subscribe", "remark",  # "groupid",
+        "openid", "nickname", "avatar", "alias", "subscribe", "remark",
         "created_at")
-    search_fields = ("=openid", "=unionid", "nickname", "remark")
+    search_fields = ("=openid", "=unionid", "alias", "nickname", "remark")
 
     fields = (
-        "avatar", "nickname", "openid", "unionid", "sex", "city", "province",
-        "country", "language", "subscribe", "subscribetime",
+        "avatar", "nickname", "openid", "unionid", "alias", "sex", "city",
+        "province", "country", "language", "subscribe", "subscribetime",
         "subscribe_scene", "qr_scene", "qr_scene_str", "remark", "comment",
         "tags", "group", "created_at", "updated_at")
 

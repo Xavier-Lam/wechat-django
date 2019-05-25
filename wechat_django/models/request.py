@@ -69,8 +69,8 @@ class WeChatMessageInfo(WeChatInfo):
         :rtype: wechat_django.models.WeChatUser
         """
         if not hasattr(self, "_user"):
-            self._user = WeChatUser.objects.get_by_openid(
-                self.app, self.message.source, ignore_errors=True)
+            self._user = self.app.user_by_openid(
+                self.message.source, ignore_errors=True)
         return self._user
 
     @property
@@ -129,8 +129,7 @@ class WeChatOAuthInfo(WeChatInfo):
     @property
     def user(self):
         if not hasattr(self, "_user"):
-            self._user = WeChatUser.objects.get_by_openid(
-                self.app, self.openid)
+            self._user = WeChatUser.user_by_openid(self.openid)
         return super(WeChatOAuthInfo, self).user
 
     @property

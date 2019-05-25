@@ -67,12 +67,12 @@
 
 | 参数名 | 默认值 | 说明 |
 | --- | --- | --- |
-| WECHAT_SITE_HOST | None | 用于接收微信回调的域名 |
+| WECHAT_SITE_HOST | None | 用于接收微信回调的默认域名 |
 | WECHAT_SITE_HTTPS | True | 接收微信回调域名是否是https |
 | WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
-| WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 存储微信accesstoken等使用的Storage对象字符串,或一个接收 `wechat_django.models.WeChatApp` 对象并返回 [`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象的callable或指向该callable的字符串 | 
-| WECHAT_WECHATCLIENTFACTORY | "wechat_django.client.get_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.client.WeChatClient`](https://wechatpy.readthedocs.io/zh_CN/master/_modules/wechatpy/client.html) 子类的字符串,当默认的WeChatClient不能满足需求时,可通过修改生成工厂来定制自己的WeChatClient类,比如说某个公众号获取accesstoken的方式比较特殊,可以通过继承WeChatClient并复写fetch_access_token方法来实现 | 
-| WECHAT_OAUTHCLIENTFACTORY | "wechat_django.oauth.get_client" | 接受一个 `wechat_django.models.WeChatApp` 对象并返回指向一个 [`wechat_django.oauth.WeChatOAuthClient`](https://wechatpy.readthedocs.io/zh_CN/master/oauth.html) 子类的字符串,当默认的WeChatOAuthClient不能满足需求时,可通过修改生成工厂来定制自己的WWeChatOAuthClient类 | 
+| WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 用于存储微信accesstoken等数据的[`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象,或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
+| WECHAT_WECHATCLIENT | "wechat_django.client.WeChatClient" | 微信API请求类(`wechat_django.client.WeChatClient`)或接收`wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
+| WECHAT_OAUTHCLIENT | "wechat_django.oauth.WeChatOAuthClient" | 微信OAuth请求类(`wechat_django.oauth.WeChatOAuthClient`)或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
 | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放检查 默认检查 |
 
@@ -133,10 +133,9 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
     from wechatpy.exceptions import InvalidSignatureException
 
     signature = ""
-    rawData = ""
+    raw_data = ""
     try:
-        data = user.session.validate_message(
-            rawData, signature)
+        data = user.session.validate_message(raw_data, signature)
     except InvalidSignatureException:
         pass # 签名错误 session_key可能过期了
 
@@ -146,11 +145,10 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
     from wechatpy.exceptions import InvalidSignatureException
 
     signature = request.POST["signature"]
-    rawData = request.POST["rawData"]
+    raw_data = request.POST["rawData"]
     
     try:
-        data = user.session.validate_message(
-            rawData, signature)
+        data = user.session.validate_message(raw_data, signature)
     except InvalidSignatureException:
         return HttpResponse(status=401)
     
@@ -189,7 +187,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
-* 修正model的related manager
+* 是否可做成migrate权限全自助?
 * Cookbook
 * app层面的message log和reply log
 * 完善单元测试

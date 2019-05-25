@@ -132,7 +132,7 @@ class OrderTestCase(WeChatPayTestCase):
                     "id": "SZTX001",
                     "name": "腾大餐厅",
                     "area_code": "440305",
-                    "address": "科技园中一路腾讯大厦" 
+                    "address": "科技园中一路腾讯大厦"
                 }
             }
         )

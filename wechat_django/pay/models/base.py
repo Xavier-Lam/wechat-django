@@ -32,7 +32,7 @@ class PayDateTimeField(m.DateTimeField):
         return val.astimezone(self._tz).strftime(self._format) if val else ""
 
 
-class PayBooleanField(m.BooleanField):
+class PayBooleanField(m.NullBooleanField):
     def to_python(self, value):
         return value in (True, "Y") or None
 

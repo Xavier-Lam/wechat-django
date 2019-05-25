@@ -16,26 +16,10 @@ from . import appmethod, WeChatApp, WeChatModel
 
 
 class WeChatUserManager(m.Manager):
-    def get_by_openid(self, app, openid, ignore_errors=False):
-        try:
-            return self.get(app=app, openid=openid)
-        except self.model.DoesNotExist:
-            try:
-                return self.model.fetch_user(app, openid)
-            except Exception as e:
-                if isinstance(e, WeChatClientException)\
-                    and e.errcode == WeChatErrorCode.INVALID_OPENID:
-                    # 不存在抛异常
-                    raise
-                elif ignore_errors:
-                    pass # TODO: 好歹记个日志吧...
-                else:
-                    raise
-        return self.create(app=app, openid=openid)
-
-    def upsert_by_dict(self, app, user_dict):
+    def upsert_by_dict(self, user_dict, app=None):
         """根据oauth的结果更新"""
         assert "openid" in user_dict, "openid not found"
+        app = app or self.instance
         updates = {
             k: v for k, v in user_dict.items()
             if k in model_fields(self.model)
@@ -66,6 +50,9 @@ class WeChatUser(WeChatModel):
         on_delete=m.CASCADE)
     openid = m.CharField(_("openid"), max_length=36, null=False)
     unionid = m.CharField(_("unionid"), max_length=36, null=True)
+    alias = m.CharField(
+        _("alias"), max_length=16, blank=True, null=True,
+        help_text=_("用户别名,用于程序快速查询用户,单app下唯一"))
 
     nickname = m.CharField(_("nickname"), max_length=24, null=True)
     sex = m.SmallIntegerField(
@@ -101,19 +88,42 @@ class WeChatUser(WeChatModel):
         verbose_name_plural = _("users")
 
         ordering = ("app", "-created_at")
-        unique_together = (("app", "openid"), ("unionid", "app"))
+        unique_together = (
+            ("app", "openid"), ("unionid", "app"), ("app", "alias"))
 
     @property
     def group(self):
         from . import UserTag
         try:
-            return UserTag.objects.get(app=self.app, id=self.groupid).name
+            return self.app.user_tags.get(id=self.groupid).name
         except UserTag.DoesNotExist:
             return None
 
     def avatar(self, size=132):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
+
+    @classmethod
+    @appmethod
+    def user_by_openid(cls, app, openid, ignore_errors=False):
+        """根据用户openid拿到用户对象
+        :param ignore_errors: 当接口返回失败时还是强行插入user
+        """
+        try:
+            return app.users.get(openid=openid)
+        except cls.DoesNotExist:
+            try:
+                return app.fetch_user(openid)
+            except Exception as e:
+                if isinstance(e, WeChatClientException)\
+                    and e.errcode == WeChatErrorCode.INVALID_OPENID:
+                    # 不存在抛异常
+                    raise
+                elif ignore_errors:
+                    pass # TODO: 好歹记个日志吧...
+                else:
+                    raise
+        return app.users.create(openid=openid)
 
     @classmethod
     @appmethod("sync_users")
@@ -188,8 +198,7 @@ class WeChatUser(WeChatModel):
 
                     if len(user_tags) != len(tagid_list):
                         # 标签没有完全同步
-                        from . import UserTag
-                        tags = UserTag.sync(app)
+                        tags = app.sync_usertags()
                         user_tags = list(filter(lambda o: o.id in tagid_list, tags))
 
                     user.tags.set(user_tags, clear=False)
@@ -233,6 +242,10 @@ class WeChatUser(WeChatModel):
         else:
             self.fetch_user(self.app, self.openid)
         self.refresh_from_db()
+
+    def save(self, *args, **kwargs):
+        self.alias = self.alias or None
+        return super(WeChatUser, self).save(*args, **kwargs)
 
     def __str__(self):
         return "{nickname}({openid})".format(

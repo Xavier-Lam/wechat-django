@@ -10,7 +10,7 @@ from django.views import View
 import six
 from wechatpy import WeChatOAuth as _WeChatOAuthClient, WeChatOAuthException
 
-from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope, WeChatUser
+from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope
 from .sites.wechat import patch_request
 from .utils.web import auto_response, get_params
 
@@ -22,8 +22,10 @@ class WeChatOAuthClient(_WeChatOAuthClient):
     OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
     QRCONNECT_URL = "https://open.weixin.qq.com/connect/qrconnect"
 
-    def __init__(self, app_id, secret):
-        super(WeChatOAuthClient, self).__init__(app_id, secret, "")
+    def __init__(self, app):
+        if app.configurations.get("OAUTH_URL"):
+            self.OAUTH_URL = app.configurations["OAUTH_URL"]
+        super(WeChatOAuthClient, self).__init__(app.appid, app.appsecret, "")
 
     def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
         return self.OAUTH_URL + "?" + urlencode(dict(
@@ -182,7 +184,6 @@ class WeChatOAuthView(View):
     """
     #endregion
 
-
     def __init__(self, oauth_info=None, view=None, **kwargs):
         """
         :type oauth_info: wechat_django.oauth.wechat_auth
@@ -215,11 +216,6 @@ class WeChatOAuthView(View):
                 self.logger.warning("auth code failed: {0}".format(dict(
                     info=wechat,
                     code=code
-                )), exc_info=True)
-            except AssertionError:
-                self.logger.error("incorrect auth response: {0}".format(dict(
-                    info=wechat,
-                    user_dict=user_dict
                 )), exc_info=True)
 
         # 没有openid 响应未授权
@@ -267,8 +263,3 @@ class WeChatOAuthView(View):
         self.kwargs = kwargs
 
     __call__ = dispatch
-
-
-def get_client(wechat_app):
-    """:type wechat_app: wechat_django.models.WeChatApp"""
-    return WeChatOAuthClient

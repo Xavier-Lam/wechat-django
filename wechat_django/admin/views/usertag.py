@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ...models import UserTag
+from ...models import AppType, UserTag
 from ..utils import field_property
 from ..base import RecursiveDeleteActionMixin, WeChatModelAdmin
 
@@ -95,3 +95,8 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
         return super(UserTagAdmin, self).has_add_permission(request)\
             and self.get_queryset(request).exclude(
                 id__in=UserTag.SYS_TAGS).count() < 100
+
+    def get_model_perms(self, request):
+        if request.app.type not in (AppType.SERVICEAPP, AppType.SUBSCRIBEAPP):
+            return {}
+        return super(UserTagAdmin, self).get_model_perms(request)
