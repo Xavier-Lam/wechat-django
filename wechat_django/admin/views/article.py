@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin, messages
 from django.urls import reverse
-from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 import object_tool
-from wechatpy.exceptions import WeChatClientException
 
 from ...models import Article
 from ..utils import anchor
@@ -77,8 +74,9 @@ class ArticleAdmin(WeChatModelAdmin):
     @object_tool.confirm(short_description=_("Sync articles"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
+
         def action():
-            materials = Article.sync(request.app)
+            materials = request.app.sync_articles()
             msg = _("%(count)d articles successfully synchronized")
             return msg % dict(count=len(materials))
         
@@ -90,3 +88,8 @@ class ArticleAdmin(WeChatModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def get_model_perms(self, request):
+        if not request.app.abilities.material:
+            return {}
+        return super(ArticleAdmin, self).get_model_perms(request)

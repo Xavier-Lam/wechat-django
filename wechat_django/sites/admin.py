@@ -26,46 +26,49 @@ def wechat_admin_view(view, site):
     在请求上附上WeChatApp实例
     并在响应的模板上附上app,app_id等context
     """
+    def correct_url(request, object_id):
+        """修正请求url"""
+        resolved_url = resolve(request.path_info)
+        url_name = resolved_url.url_name
+        url_kwargs = resolved_url.kwargs
+
+        if object_id:
+            # 对于只有object_id没有app_id的 重定向到有app_id的url
+            modeladmin = view.__self__
+            try:
+                obj = modeladmin.model.objects.get(pk=object_id)
+            except modeladmin.model.DoesNotExist:
+                return response.HttpResponseBadRequest()
+
+            url_kwargs.update(
+                wechat_app_id=obj.app_id,
+                object_id=object_id
+            )
+            return response.HttpResponseRedirect(
+                reverse("admin:" + url_name, kwargs=url_kwargs)
+            )
+        else:
+            # 对于没有app_id的listview请求 优先取referrer的app_id
+            referrer = request.META.get("HTTP_REFERER", "")
+            path_info = urlparse(referrer).path
+            try:
+                app_id = resolve(path_info).kwargs["wechat_app_id"]
+            except (KeyError, Resolver404):
+                return response.HttpResponseNotFound()
+
+            url_kwargs.update(wechat_app_id=app_id)
+            resp = response.HttpResponseRedirect(
+                reverse("admin:" + url_name, kwargs=url_kwargs)
+            )
+            resp.status_code = 307
+            return resp
+
     @wraps(view)
     def decorated_func(request, *args, **kwargs):
         app_id = kwargs.pop("wechat_app_id", None)
         object_id = kwargs.get("object_id", None)
         if not app_id:
-            resolved_url = resolve(request.path_info)
-            url_name = resolved_url.url_name
-            url_kwargs = resolved_url.kwargs
-            if object_id:
-                # 对于只有object_id没有app_id的 重定向到有app_id的url
-                modeladmin = view.__self__
-                try:
-                    obj = modeladmin.model.objects.get(pk=object_id)
-                except modeladmin.model.DoesNotExist:
-                    return response.HttpResponseBadRequest()
-
-                url_kwargs.update(
-                    wechat_app_id=obj.app_id,
-                    object_id=object_id
-                )
-                return response.HttpResponseRedirect(
-                    reverse("admin:" + url_name, kwargs=url_kwargs)
-                )
-            else:
-                # 对于没有app_id的listview请求 优先取referrer的app_id
-                referrer = request.META.get("HTTP_REFERER", "")
-                path_info = urlparse(referrer).path
-                try:
-                    app_id = resolve(path_info).kwargs["wechat_app_id"]
-                except (KeyError, Resolver404):
-                    return response.HttpResponseNotFound()
-
-                url_kwargs.update(
-                    wechat_app_id=app_id
-                )
-                resp = response.HttpResponseRedirect(
-                    reverse("admin:" + url_name, kwargs=url_kwargs)
-                )
-                resp.status_code = 307
-                return resp
+            return correct_url(request, object_id)
 
         extra_context = kwargs.pop("extra_context", None) or {}
         try:
@@ -155,61 +158,11 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         app_id = getattr(request, "app_id", None)
         if app_id:
             # 微信相关模块
-            has_module_perms = bool(
-                get_user_permissions(
-                    request.user, request.app, exclude_manage=True,
-                    exclude_sub=True))
-            if not has_module_perms:
-                return None
-
-            app_label = WeChatApp._meta.app_label
-            rv = dict(
-                name=WeChatApp._meta.verbose_name_plural,
-                app_label=app_label,
-                app_url=reverse(
-                    "admin:wechat_funcs_list",
-                    current_app=self.name,
-                    kwargs=dict(
-                        wechat_app_id=app_id,
-                        app_label=app_label
-                    )
-                ),
-                has_module_perms=has_module_perms,
-                models=[]
-            )
-
-            for model, model_admin in self._iter_wechatadmins():
-                info = (model._meta.app_label, model._meta.model_name)
-                perms = model_admin.get_model_perms(request)
-                if not perms:
-                    continue
-                model_dict = {
-                    'name': model._meta.verbose_name_plural,
-                    'object_name': model._meta.object_name,
-                    'perms': perms,
-                }
-                if perms.get('change'):
-                    try:
-                        model_dict['admin_url'] = reverse(
-                            'admin:%s_%s_changelist' % info,
-                            current_app=self.name,
-                            kwargs=dict(wechat_app_id=app_id)
-                        )
-                    except NoReverseMatch:
-                        pass
-                if perms.get('add'):
-                    try:
-                        model_dict['add_url'] = reverse(
-                            'admin:%s_%s_add' % info,
-                            current_app=self.name,
-                            kwargs=dict(wechat_app_id=app_id)
-                        )
-                    except NoReverseMatch:
-                        pass
-                rv["models"].append(model_dict)
+            rv = self._build_wechat_func_dict(request)
             
             if not label:
-                return {app_label: rv}
+                # 我也不记得为啥要加这个了..
+                return {WeChatApp._meta.app_label: rv}
         else:
             with self._unregister_wechatadmins():
                 rv = super(WeChatAdminSiteMixin, self)._build_app_dict(request, label)
@@ -262,6 +215,62 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             'has_module_perms': bool(app_perms),
             'models': app_perms,
         }
+
+    def _build_wechat_func_dict(self, request):
+        """构建某一公众号下功能列表"""
+        has_module_perms = get_user_permissions(
+            request.user, request.app, exclude_manage=True, exclude_sub=True)
+        if not has_module_perms:
+            return None
+
+        app_id = request.app_id
+        app_label = WeChatApp._meta.app_label
+        rv = dict(
+            name=str(request.app),
+            app_label=app_label,
+            app_url=reverse(
+                "admin:wechat_funcs_list",
+                current_app=self.name,
+                kwargs=dict(
+                    wechat_app_id=app_id,
+                    app_label=app_label
+                )
+            ),
+            has_module_perms=True,
+            models=[]
+        )
+
+        for model, model_admin in self._iter_wechatadmins():
+            info = (model._meta.app_label, model._meta.model_name)
+            perms = model_admin.get_model_perms(request)
+            if not perms:
+                continue
+            model_dict = {
+                "name": model._meta.verbose_name_plural,
+                "object_name": model._meta.object_name,
+                "perms": perms,
+            }
+            if perms.get("change"):
+                try:
+                    model_dict["admin_url"] = reverse(
+                        "admin:%s_%s_changelist" % info,
+                        current_app=self.name,
+                        kwargs=dict(wechat_app_id=app_id)
+                    )
+                except NoReverseMatch:
+                    pass
+            if perms.get("add"):
+                try:
+                    model_dict['add_url'] = reverse(
+                        "admin:%s_%s_add" % info,
+                        current_app=self.name,
+                        kwargs=dict(wechat_app_id=app_id)
+                    )
+                except NoReverseMatch:
+                    pass
+            rv["models"].append(model_dict)
+
+        return rv
 
     def wechat_index(self, request, *args, **kwargs):
         """某个公众号后台管理首页"""

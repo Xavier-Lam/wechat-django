@@ -13,67 +13,11 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from .. import settings
+from ..exceptions import WeChatAbilityError
 from ..utils.model import enum2choices
 from . import MsgLogFlag
-
-
-class Abilities(object):
-    """微信号能力"""
-
-    def __init__(self, app=None):
-        """:type app: wechat_django.WeChatApp"""
-        self._app = app
-
-    @property
-    def interactable(self):
-        """是否可与微信进行消息交互"""
-        rv = self._app.token
-        if self._app.encoding_mode == WeChatApp.EncodingMode.SAFE:
-            rv = rv and self._app.encoding_aes_key
-        return bool(rv)
-
-    @property
-    def api(self):
-        """是否可调用微信api(可换取accesstoken)"""
-        return bool(self._app.appsecret)
-
-    @property
-    def oauth(self):
-        """是否可进行网页授权"""
-        return bool(
-            self.authed
-            and self._app.type == WeChatApp.Type.SERVICEAPP
-            and self.api)
-
-    @property
-    def menus(self):
-        """是否可配置菜单"""
-        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.SUBSCRIBEAPP)
-        return bool(self.authed and self.api and self._app.type in types)
-    
-    @property
-    def template(self):
-        """发送模板消息"""
-        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM)
-        return bool(self.authed and self.api and self._app.type in types)
-
-    @property
-    def user_manager(self):
-        """管理用户能力"""
-        types = (WeChatApp.Type.SUBSCRIBEAPP, WeChatApp.Type.SERVICEAPP)
-        return bool(self.authed and self.api and self._app.type in types)
-
-    @property
-    def authed(self):
-        """已认证"""
-        return bool(WeChatApp.Flag.UNAUTH ^ (
-            self._app.flags & WeChatApp.Flag.UNAUTH))
-
-    @property
-    def pay(self):
-        """微信支付能力"""
-        types = (WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM)
-        return bool(self.authed and self._app.type in types and self._app.pay)
+from .ability import Abilities
+from .constants import AppType
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -100,11 +44,7 @@ class WeChatApp(m.Model):
     class Flag(object):
         UNAUTH = 0x01 # 未认证
 
-    class Type(object):
-        OTHER = 0
-        SERVICEAPP = 1
-        SUBSCRIBEAPP = 2
-        MINIPROGRAM = 4
+    Type = AppType # TODO: deprecated
 
     title = m.CharField(
         _("title"), max_length=16, null=False,
@@ -163,7 +103,7 @@ class WeChatApp(m.Model):
             return location
 
         if request and not self.site_host:
-            baseurl = request._current_scheme_host
+            baseurl = "{}://{}".format(request.scheme, request.get_host())
         else:
             protocol = "https://" if self.site_https else "http://"
             if self.site_host:
@@ -199,29 +139,17 @@ class WeChatApp(m.Model):
 
     @property
     def client(self):
-        """:rtype: wechat_django.client.WeChatClient"""
+        """
+        :rtype: wechat_django.client.WeChatClient
+                or wechatpy.client.api.wxa.WeChatWxa
+        """
+        if not self.abilities.api:
+            raise WeChatAbilityError(WeChatAbilityError.API)
         if not hasattr(self, "_client"):
-            # session
-            if isinstance(settings.SESSIONSTORAGE, six.text_type):
-                settings.SESSIONSTORAGE = import_string(settings.SESSIONSTORAGE)
-            if callable(settings.SESSIONSTORAGE):
-                session = settings.SESSIONSTORAGE(self)
-            else:
-                session = settings.SESSIONSTORAGE
-
-            client_factory = import_string(settings.WECHATCLIENTFACTORY)
-            self._client = client = client_factory(self)(
-                self.appid,
-                self.appsecret,
-                session=session
-            )
-            client.appname = self.name
-            # API BASE URL
-            if self.configurations.get("ACCESSTOKEN_URL"):
-                client.ACCESSTOKEN_URL = self.configurations["ACCESSTOKEN_URL"]
-
-            # TODO: self._client = client.wxa
-
+            client_factory = import_string(settings.WECHATCLIENT)
+            self._client = client_factory(self)
+            if self.type == self.Type.MINIPROGRAM:
+                self._client = self._client.wxa
         return self._client
 
     @property
@@ -229,26 +157,25 @@ class WeChatApp(m.Model):
         """
         :rtype: wechat_django.WeChatOAuthClient
         """
+        if not self.abilities.oauth:
+            raise WeChatAbilityError(WeChatAbilityError.OAUTH)
         if not hasattr(self, "_oauth"):
-            from ..oauth import WeChatOAuthClient
-            client_factory = import_string(settings.OAUTHCLIENTFACTORY)
-            self._oauth = client_factory(self)(self.appid, self.appsecret)
-
-            if self.configurations.get("OAUTH_URL"):
-                self._oauth.OAUTH_URL = self.configurations["OAUTH_URL"]
-
+            client_factory = import_string(settings.OAUTHCLIENT)
+            self._oauth = client_factory(self)
         return self._oauth
 
     @property
     def crypto(self):
+        if not self.abilities.interactable:
+            raise WeChatAbilityError(WeChatAbilityError.INTERACTABLE)
+        if self.encoding_mode != self.EncodingMode.SAFE:
+            return
         if not hasattr(self, "_crypto"):
-            self._crypto = (self.encoding_mode == self.EncodingMode.SAFE
-                and self.abilities.interactable
-                and WeChatCrypto(
-                    self.token,
-                    self.encoding_aes_key,
-                    self.appid
-                )) or None
+            self._crypto = WeChatCrypto(
+                self.token,
+                self.encoding_aes_key,
+                self.appid
+            )
         return self._crypto
 
     def auth(self, code, scope=None):
@@ -256,25 +183,25 @@ class WeChatApp(m.Model):
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatClientException
         :raises: wechatpy.exceptions.WeChatOAuthException
-        """  
+        """
         if not self.abilities.api:
-            raise WeChatClientException(WeChatErrorCode.INVALID_CREDENTIAL)
-        
+            raise WeChatAbilityError(WeChatAbilityError.API)
+
         if self.type == WeChatApp.Type.SERVICEAPP:
             if not self.abilities.oauth:
-                raise WeChatClientException(WeChatErrorCode.UNAUTHORIZED_API)
+                raise WeChatAbilityError(WeChatAbilityError.OAUTH)
             return self._auth_service(code, scope)
         elif self.type == WeChatApp.Type.MINIPROGRAM:
             return self._auth_miniprogram(code)
         else:
             raise WeChatClientException(WeChatErrorCode.UNAUTHORIZED_API)
-    
+
     def _auth_service(self, code, scope=None):
         """服务号授权
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatOAuthException
         """
-        from . import WeChatSNSScope, WeChatUser
+        from . import WeChatSNSScope
         if isinstance(scope, six.text_type):
             scope = (scope,)
         data = self.oauth.fetch_access_token(code)
@@ -282,17 +209,16 @@ class WeChatApp(m.Model):
             # TODO: 优化授权流程 记录accesstoken及refreshtoken 延迟取userinfo
             user_info = self.oauth.get_user_info()
             data.update(user_info)
-        return WeChatUser.objects.upsert_by_dict(self, data), data
+        return self.users.upsert_by_dict(data), data
 
     def _auth_miniprogram(self, code):
         """小程式授权
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatClientException
         """
-        from . import Session, WeChatUser
-        # TODO: 改为self.client.code_to_session
-        data = self.client.wxa.code_to_session(code)
-        user = WeChatUser.objects.upsert_by_dict(self, data)
+        from . import Session
+        data = self.client.code_to_session(code)
+        user = self.users.upsert_by_dict(data)
         # 持久化session_key
         user.sessions.all().delete()
         user.sessions.add(Session(

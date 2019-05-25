@@ -5,13 +5,12 @@ import django
 from django import forms
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
+from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-from .. import settings
 from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
 from .base import has_wechat_permission
-from .utils import list_property
 
 
 class WeChatAppForm(forms.ModelForm):
@@ -49,7 +48,8 @@ class WeChatAppForm(forms.ModelForm):
             initial["log_message"] = inst.log_message
             initial["wechat_host"] = inst.site_host
             initial["wechat_https"] = inst.site_https
-            initial["accesstoken_url"] = inst.configurations.get("ACCESSTOKEN_URL", "")
+            initial["accesstoken_url"] = inst.configurations.get(
+                "ACCESSTOKEN_URL", "")
             initial["oauth_url"] = inst.configurations.get("OAUTH_URL", "")
             kwargs["initial"] = initial
         return super(WeChatAppForm, self).__init__(*args, **kwargs)
@@ -84,19 +84,41 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
     actions = None
     list_display = (
-        "title", "name", "type", "appid", "short_desc", 
-        list_property(
-            "abilities.interactable",
-            boolean=True, short_description=_("interactable")),
+        "title", "name", "type", "appid", "short_desc", "abilities",
         "created_at", "updated_at")
     search_fields = ("title", "name", "appid", "short_desc")
 
     fields = (
-        "title", "name", "appid", "appsecret", "type", "token",
+        "title", "name", "appid", "appsecret", "type", "abilities", "token",
         "encoding_aes_key", "encoding_mode", "desc", "log_message",
         "callback", "wechat_host", "wechat_https", "accesstoken_url",
         "oauth_url", "created_at", "updated_at"
     )
+    readonly_fields = ("abilities",)
+
+    @mark_safe
+    def abilities(self, obj):
+        abilities = []
+        if obj.abilities.authed:
+            abilities.append(_("authed"))
+        if obj.abilities.api:
+            abilities.append(_("api"))
+        if obj.abilities.interactable:
+            abilities.append(_("interactable"))
+        if obj.abilities.pay:
+            abilities.append(_("WeChat pay"))
+
+        styles = {
+            "background-color": "#70be2b",
+            "color": "white",
+            "border-radius": "5px",
+            "margin": "0 2px",
+            "padding": "2px 4px"
+        }
+        style_str = ";".join(["{0}: {1}".format(*o) for o in styles.items()])
+        tpl = '<span style="{0}">{1}</span>'
+        return "".join(map(lambda o: tpl.format(style_str, o), abilities))
+    abilities.short_description = _("abilities")
 
     def short_desc(self, obj):
         return truncatechars(obj.desc, 35)

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 import object_tool
 
@@ -15,13 +14,13 @@ class TemplateAdmin(WeChatModelAdmin):
 
     actions = None
     changelist_object_tools = ("sync",)
-    list_display = ("template_id", "title", "content", "created_at")
+    list_display = ("template_id", "alias", "title", "content", "created_at")
     search_fields = (
-        "template_id", "title", "content", "primary_industry",
+        "template_id", "alias", "title", "content", "primary_industry",
         "deputy_industry", "comment")
 
     fields = (
-        "template_id", "title", "content", "primary_industry",
+        "template_id", "alias", "title", "content", "primary_industry",
         "deputy_industry", "example", "comment", "created_at")
     readonly_fields = (
         "template_id", "title", "content", "primary_industry",
@@ -32,7 +31,7 @@ class TemplateAdmin(WeChatModelAdmin):
         self.check_wechat_permission(request, "sync")
 
         def action():
-            templates = Template.sync(request.app)
+            templates = request.app.sync_templates()
             msg = _("%(count)d templates successfully synchronized")
             return msg % dict(count=len(templates))
 

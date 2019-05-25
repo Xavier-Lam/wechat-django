@@ -3,9 +3,12 @@ from __future__ import unicode_literals
 
 import logging
 
+from django.utils.module_loading import import_string
 from wechatpy import exceptions as excs, WeChatClient as _Client
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.client import api
+
+from . import settings
 
 
 class WeChatMaterial(api.WeChatMaterial):
@@ -40,6 +43,17 @@ class WeChatClient(_Client):
     message = WeChatMessage()
 
     ACCESSTOKEN_URL = None
+
+    def __init__(self, app):
+        """:type app: wechat_django.models.WeChatApp"""
+        session = import_string(settings.SESSIONSTORAGE)
+        if callable(session):
+            session = session(app)
+        self.appname = app.name
+        if app.configurations.get("ACCESSTOKEN_URL"):
+            self.ACCESSTOKEN_URL = app.configurations["ACCESSTOKEN_URL"]
+        super(WeChatClient, self).__init__(
+            app.appid, app.appsecret, session=session)
 
     def _fetch_access_token(self, url, params):
         """自定义accesstoken url"""
@@ -90,8 +104,3 @@ class WeChatClient(_Client):
             kwargs["exc_info"] = True
         self._logger.log(level, msg)
         self._log_kwargs.clear()
-
-
-def get_client(wechat_app):
-    """:type wechat_app: wechat_django.models.WeChatApp"""
-    return WeChatClient

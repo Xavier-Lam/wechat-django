@@ -5,7 +5,7 @@ from datetime import timedelta
 import time
 
 from django.utils import timezone
-from wechatpy import events, messages, replies
+from wechatpy import messages
 
 from ..handler import message_handler
 from ..models import MessageHandler, Reply, Rule, WeChatMessageInfo

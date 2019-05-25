@@ -2,6 +2,13 @@
 from __future__ import unicode_literals
 
 
+class AppType(object):
+    OTHER = 0
+    SERVICEAPP = 1
+    SUBSCRIBEAPP = 2
+    MINIPROGRAM = 4
+
+
 class MsgType(object):
     TEXT = "text"
     IMAGE = "image"

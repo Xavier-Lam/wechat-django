@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 
-from wechat_django.admin.utils import field_property, list_property
 from ..models import UnifiedOrder
 from .base import WeChatPayModelAdmin
 

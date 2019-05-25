@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.urls import reverse
-
 from ..admin.base import WeChatModelAdmin
-from ..models import appmethod, WeChatModel, WeChatUser
-from ..sites.admin import wechat_admin_view, WeChatAdminSite
+from ..models import WeChatUser
+from ..sites.admin import WeChatAdminSite
 from .base import WeChatTestCase
 
 

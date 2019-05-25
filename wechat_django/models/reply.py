@@ -22,8 +22,8 @@ class Reply(WeChatModel):
         MUSIC = "music"
         NEWS = "news"
 
-        CUSTOM = "custom" # 自定义业务
-        FORWARD = "forward"  # 转发
+        CUSTOM = "custom" #  自定义业务
+        FORWARD = "forward"  #  转发
 
     handler = m.ForeignKey(
         MessageHandler, related_name="replies", on_delete=m.CASCADE)
@@ -128,8 +128,7 @@ class Reply(WeChatModel):
         """
         if self.type == self.MsgType.NEWS:
             klass = replies.ArticlesReply
-            media = Material.objects.get_by_media(
-                self.app, self.content["media_id"])
+            media = self.app.materials.get(media_id=self.content["media_id"])
             # 将media_id转为content
             data = dict(
                 articles=media.articles_json,

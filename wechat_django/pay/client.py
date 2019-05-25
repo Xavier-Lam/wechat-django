@@ -26,6 +26,7 @@ class WeChatPayClient(_Pay):
         if self.pay.mch_cert and self.pay.mch_key:
             # 证书文件要在硬盘上读取
             # 自动delete在windows下读取时报PermissionDenied
+            # TODO: 可以考虑第一次使用时写入证书 析构时移除证书 减少IO
             with NamedTemporaryFile("wb", delete=False) as mch_cert,\
                 NamedTemporaryFile("wb", delete=False) as mch_key:
                 mch_cert.write(self.pay.mch_cert)

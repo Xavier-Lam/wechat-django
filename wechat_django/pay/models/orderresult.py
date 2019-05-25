@@ -14,13 +14,13 @@ from .base import PayBooleanField, PayDateTimeField
 
 class UnifiedOrderResult(WeChatModel):
     class State(object):
-        SUCCESS = "SUCCESS" # 成功
-        REFUND = "REFUND" # 转入退款
-        NOTPAY = "NOTPAY" # 未支付
-        CLOSED = "CLOSED" # 已关闭
-        REVOKED = "REVOKED" # 已撤销(刷卡支付)
-        USERPAYING = "USERPAYING" # 用户支付中
-        PAYERROR = "PAYERROR" # 支付失败(其他原因，如银行返回失败)
+        SUCCESS = "SUCCESS" #  成功
+        REFUND = "REFUND" #  转入退款
+        NOTPAY = "NOTPAY" #  未支付
+        CLOSED = "CLOSED" #  已关闭
+        REVOKED = "REVOKED" #  已撤销(刷卡支付)
+        USERPAYING = "USERPAYING" #  用户支付中
+        PAYERROR = "PAYERROR" #  支付失败(其他原因，如银行返回失败)
 
     order = m.OneToOneField(
         UnifiedOrder, on_delete=m.CASCADE, related_name="result")
@@ -59,6 +59,7 @@ class UnifiedOrderResult(WeChatModel):
 
     def update(self, result, signal=True):
         """根据参数更新订单状态"""
+        # TODO: 支付成功后写入用户
         excludes = ("transaction_id",)
         all_fields = model_fields(UnifiedOrderResult, excludes=excludes)
         ignore_fields = (

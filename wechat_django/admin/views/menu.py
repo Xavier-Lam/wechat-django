@@ -71,20 +71,22 @@ class MenuAdmin(WeChatModelAdmin):
     @object_tool.confirm(short_description=_("Sync menus"))
     def sync(self, request, obj=None):
         self.check_wechat_permission(request, "sync")
+
         def action():
-            Menu.sync(request.app)
+            request.app.sync_menus()
             return _("Menus successful synchronized")
-            
+
         return self._clientaction(
             request, action, _("Sync menus failed with %(exc)s"))
 
     @object_tool.confirm(short_description=_("Publish menus"))
     def publish(self, request, obj=None):
-        self.check_wechat_permission(request, "sync")
+        self.check_wechat_permission(request, "publish")
+
         def action():
-            Menu.publish(request.app)
+            request.app.publish_menus()
             return _("Menus successful published")
-            
+
         return self._clientaction(
             request, action, _("Publish menus failed with %(exc)s"))
 

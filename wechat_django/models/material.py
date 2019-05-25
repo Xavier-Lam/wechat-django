@@ -14,15 +14,14 @@ from . import appmethod, WeChatApp, WeChatModel
 
 
 class MaterialManager(m.Manager):
-    def get_by_media(self, app, media_id):
-        return self.get(app=app, media_id=media_id)
-
-    def create_material(self, app, type=None, **kwargs):
+    def create_material(self, **kwargs):
         """创建永久素材"""
+        app = kwargs.pop("app", self.instance)
+        type = kwargs.pop("type", None)
         if type is None:
             raise NotImplementedError()
         if type == Material.Type.NEWS:
-            return self.create_news(app, **kwargs)
+            return self.create_news(app=app, **kwargs)
         else:
             media_id = kwargs["media_id"]
             if type == Material.Type.VIDEO and "url" not in kwargs:
@@ -38,8 +37,9 @@ class MaterialManager(m.Manager):
             record = dict(app=app, type=type, **kwargs)
             return self.update_or_create(defaults=record, **query)[0]
 
-    def create_news(self, app, **kwargs):
+    def create_news(self, **kwargs):
         """创建永久图文素材"""
+        app = kwargs.pop("app", self.instance)
         from . import Article
         # 插入media
         query = dict(app=app, media_id=kwargs["media_id"])
@@ -48,19 +48,19 @@ class MaterialManager(m.Manager):
             update_time=kwargs["update_time"]
         )
         record.update(query)
-        news, created = self.update_or_create(record, **query)
+        news, created = self.update_or_create(defaults=record, **query)
         if not created:
             # 移除所有article重新插入
             news.articles.all().delete()
 
         articles = (kwargs.get("content") or kwargs)["news_item"]
         fields = model_fields(Article)
-        Article.objects.bulk_create([
+        news.articles.bulk_create([
             Article(
                 index=idx,
                 material=news,
                 _thumb_url=article.get("thumb_url"),
-                **{k: v for k, v in article.items() if k in fields}  # 过滤article fields
+                **{k: v for k, v in article.items() if k in fields}
             )
             for idx, article in enumerate(articles)
         ])
@@ -76,9 +76,14 @@ class Material(WeChatModel):
 
     app = m.ForeignKey(
         WeChatApp, related_name="materials", on_delete=m.CASCADE)
+
     type = m.CharField(
         _("type"), max_length=5, choices=(enum2choices(Type)))
     media_id = m.CharField(_("media_id"), max_length=64)
+    alias = m.CharField(
+        _("alias"), max_length=16, blank=True, null=True,
+        help_text=_("素材别名,用于程序快速查询素材,单app下唯一"))
+
     name = m.CharField(_("name"), max_length=64, blank=True, null=True)
     url = m.CharField(_("url"), max_length=512, editable=False, null=True)
     update_time = m.IntegerField(
@@ -95,7 +100,7 @@ class Material(WeChatModel):
         verbose_name = _("material")
         verbose_name_plural = _("materials")
 
-        unique_together = (("app", "media_id"),)
+        unique_together = (("app", "media_id"), ("app", "alias"))
         ordering = ("app", "-update_time")
 
     @classmethod
@@ -106,8 +111,8 @@ class Material(WeChatModel):
             if type not in (cls.Type.NEWS, cls.Type.VIDEO):
                 raise NotImplementedError()
             data = app.client.material.get_raw(id)
-            return cls.objects.create_material(
-                app=app, type=type, media_id=id, **data)
+            return app.materials.create_material(
+                type=type, media_id=id, **data)
         else:
             updated = []
             for type, _ in enum2choices(cls.Type):
@@ -134,11 +139,11 @@ class Material(WeChatModel):
                 break
             offset += count
         # 删除被删除的 更新或新增获取的
-        (cls.objects.filter(app=app, type=type)
+        (app.materials.filter(type=type)
             .exclude(media_id__in=map(lambda o: o["media_id"], updates))
             .delete())
         return [
-            cls.objects.create_material(app=app, type=type, **item)
+            app.materials.create_material(type=type, **item)
             for item in updates]
 
     @classmethod
@@ -178,8 +183,8 @@ class Material(WeChatModel):
         data = app.client.material.add(type, file)
         media_id = data["media_id"]
         if save:
-            return cls.objects.create_material(
-                app=app, type=type, media_id=media_id, url=data.get("url"))
+            return app.materials.create_material(
+                type=type, media_id=media_id, url=data.get("url"))
         else:
             return media_id
 
@@ -198,6 +203,10 @@ class Material(WeChatModel):
             image=o.thumb_url,
             url=o.url
         ), self.articles.all()))
+
+    def save(self, *args, **kwargs):
+        self.alias = self.alias or None
+        return super(Material, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # 先远程素材删除

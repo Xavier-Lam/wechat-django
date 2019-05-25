@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from ..exceptions import AbilityError
+from ..exceptions import WeChatAbilityError
 from ..utils.model import model_fields
 from . import appmethod, WeChatApp, WeChatModel
 
@@ -14,9 +14,9 @@ class Template(WeChatModel):
         WeChatApp, related_name="templates", on_delete=m.CASCADE)
 
     template_id = m.CharField(_("template_id"), max_length=64)
-    name = m.CharField(
-        _("name"), max_length=16, blank=True, null=True,
-        help_text=_("模板标识,用于程序快速查询模板,单app下唯一"))
+    alias = m.CharField(
+        _("alias"), max_length=16, blank=True, null=True,
+        help_text=_("模板别名,用于程序快速查询模板,单app下唯一"))
 
     title = m.CharField(_("title"), max_length=32)
     content = m.TextField(_("content"))
@@ -34,7 +34,7 @@ class Template(WeChatModel):
         verbose_name = _("template")
         verbose_name_plural = _("templates")
 
-        unique_together = (("app", "template_id"), ("app", "name"))
+        unique_together = (("app", "template_id"), ("app", "alias"))
 
     @classmethod
     @appmethod("sync_templates")
@@ -49,7 +49,7 @@ class Template(WeChatModel):
         elif app.type == WeChatApp.Type.MINIPROGRAM:
             templates = list(cls._iter_wxa_templates(app))
         else:
-            raise AbilityError(AbilityError.TEMPLATE, "")
+            raise WeChatAbilityError(WeChatAbilityError.TEMPLATE)
 
         with transaction.atomic():
             (app.templates
@@ -60,7 +60,7 @@ class Template(WeChatModel):
                 defaults = dict(app=app)
                 defaults.update({
                     k: v for k, v in t.items() if k in model_fields(cls)})
-                template = cls.objects.update_or_create(
+                template = app.templates.update_or_create(
                     app=app, template_id=t["template_id"],
                     defaults=defaults
                 )[0]
@@ -99,7 +99,7 @@ class Template(WeChatModel):
             return self._send_miniprogram(
                 openid, data, form_id, pagepath, emphasis_keyword)
         else:
-            raise AbilityError(AbilityError.TEMPLATE, "")
+            raise WeChatAbilityError(WeChatAbilityError.TEMPLATE)
 
     def _send_service(
         self, openid, data, url=None, appid=None, pagepath=None):
@@ -114,7 +114,7 @@ class Template(WeChatModel):
     def _send_miniprogram(
         self, openid, data, form_id, page=None, emphasis_keyword=None):
         """发送小程序模板消息"""
-        return self.app.client.wxa.send_template_message(
+        return self.app.client.send_template_message(
             openid, self.template_id, data, form_id, page=page,
             emphasis_keyword=emphasis_keyword)
 
@@ -123,7 +123,7 @@ class Template(WeChatModel):
         while True:
             offset = 0
             count = 20
-            templates = app.client.wxa.list_templates(offset, count)
+            templates = app.client.list_templates(offset, count)
             if not templates:
                 return
             for template in templates:
@@ -134,7 +134,7 @@ class Template(WeChatModel):
             offset += count
 
     def save(self, *args, **kwargs):
-        self.name = self.name or None
+        self.alias = self.alias or None
         return super(Template, self).save(*args, **kwargs)
 
     def __str__(self):

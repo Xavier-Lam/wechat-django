@@ -132,7 +132,7 @@ class OAuthTestCase(WeChatTestCase):
             scope=WeChatSNSScope.USERINFO, state=state)
         resp = handler.unauthorization_response(request)
         self.assertIsInstance(resp, response.HttpResponseRedirect)
-        client = WeChatOAuthClient(self.app.appid, self.app.appsecret)
+        client = WeChatOAuthClient(self.app)
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, state))
 
@@ -144,7 +144,7 @@ class OAuthTestCase(WeChatTestCase):
             scope=WeChatSNSScope.USERINFO, state=state)
         resp = handler.unauthorization_response(request)
         self.assertIsInstance(resp, response.HttpResponseRedirect)
-        client = WeChatOAuthClient(self.app.appid, self.app.appsecret)
+        client = WeChatOAuthClient(self.app)
         self.assertEqual(resp.url, client.authorize_url(
             redirect_uri, WeChatSNSScope.USERINFO, path))
 

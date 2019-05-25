@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import django
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.test import Client
 from wechatpy.client import api
 
 from .. import models
@@ -131,7 +129,7 @@ class AdminViewTestCase(WeChatTestCase):
             content={})
         self.assertModelViewSuccess(
             models.MessageLog, log.id, status={"add": 403})
-    
+
     def test_user_view(self):
         """测试用户"""
         self.assertModelViewSuccess(

@@ -41,11 +41,7 @@ class Session(WeChatModel):
         """
         :raises: ValueError
         """
-        crypto = WeChatWxaCrypto(
-            self.session_key,
-            iv,
-            self.app.appid
-        )
+        crypto = WeChatWxaCrypto(self.session_key, iv, self.app.appid)
         return crypto.decrypt_message(msg)
 
     def validate_message(self, msg, sign):
