@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from functools import wraps
 
-from .constants import AppType
+from ..constants import AppType
 
 
 def ability(func):

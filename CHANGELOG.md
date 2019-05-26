@@ -11,7 +11,7 @@
 * 统一下单订单管理,回调及订单状态变更信号
 * 小程序的client由`wechat_django.client.WeChatClient`变更为`wechatpy.client.api.WeChatWxa`
 * 数个配置项更改
-* 站点代码重构
+* 站点及模型代码重构
 
 ## 0.2.5
 * 模板消息

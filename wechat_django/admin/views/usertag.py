@@ -9,7 +9,8 @@ from django.utils.translation import ugettext_lazy as _
 import object_tool
 from wechatpy.exceptions import WeChatClientException
 
-from ...models import AppType, UserTag
+from ...constants import AppType
+from ...models import UserTag
 from ..utils import field_property
 from ..base import RecursiveDeleteActionMixin, WeChatModelAdmin
 

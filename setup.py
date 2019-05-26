@@ -1,10 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
+import re
 from setuptools import find_packages, setup
 import sys
 
-import wechat_django
+
+package = dict()
+
+with open(os.path.join("wechat_django", "__init__.py"), "r") as f:
+    lines = f.readlines()
+    for line in lines:
+        match = re.match(r"(__\w+?__)\s*=\s*(.+)$", line)
+        if match:
+            package[match.group(1)] = eval(match.group(2))
 
 with open("README.md", "rb") as f:
     long_description = f.read().decode("utf-8")
@@ -12,20 +22,22 @@ with open("README.md", "rb") as f:
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 
-keywords = ["WeChat", "weixin", "wx", "WeChatPay", "micromessenger", "django", "微信", "微信支付"]
+keywords = [
+    "WeChat", "weixin", "wx", "WeChatPay", "micromessenger", "django",
+    "微信", "微信支付"]
 if sys.version_info.major == 2:
     keywords.remove("微信")
     keywords.remove("微信支付")
 
 setup(
-    name=wechat_django.__title__,
-    version=wechat_django.__version__,
-    author=wechat_django.__author__,
-    author_email=wechat_django.__author_email__,
-    url=wechat_django.__url__,
+    name=package["__title__"],
+    version=package["__version__"],
+    author=package["__author__"],
+    author_email=package["__author_email__"],
+    url=package["__url__"],
     packages=find_packages(),
     keywords=",".join(keywords),
-    description=wechat_django.__description__,
+    description=package["__description__"],
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,

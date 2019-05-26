@@ -188,7 +188,7 @@ class Reply(WeChatModel):
         return funcname, kwargs
 
     @classmethod
-    def from_mp(cls, data, app):
+    def from_mp(cls, app, data):
         type = data["type"]
         if type == "img":
             type = cls.MsgType.IMAGE
@@ -218,7 +218,8 @@ class Reply(WeChatModel):
         return cls(**kwargs)
 
     @classmethod
-    def from_menu(cls, data, app):
+    def from_menu(cls, menu, data):
+        app = menu.app
         type = data["type"]
         if type == "img":
             type = cls.MsgType.IMAGE
@@ -238,7 +239,7 @@ class Reply(WeChatModel):
         elif type == cls.MsgType.NEWS:
             media_id = data["value"]
             # 同步图文
-            Article.sync(app, media_id)
+            app.sync_articles(media_id)
             kwargs.update(
                 media_id=media_id,
                 content=data["news_info"]["list"]

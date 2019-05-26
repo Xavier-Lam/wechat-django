@@ -112,3 +112,11 @@ class WeChatAppWithPayAdmin(WeChatAppAdmin):
         if not has_wechat_permission(request, obj, "pay", "manage"):
             return []
         return rv
+
+    def get_deleted_objects(self, objs, request):
+        from ..models import UnifiedOrder
+        deleted_objects, model_count, perms_needed, protected =\
+            super(WeChatAppWithPayAdmin, self).get_deleted_objects(objs, request)
+        ignored_models = (UnifiedOrder._meta.verbose_name,)
+        perms_needed = perms_needed.difference(ignored_models)
+        return deleted_objects, model_count, perms_needed, protected

@@ -7,6 +7,7 @@ import logging
 from django.conf import settings
 from django.conf.urls import include, url
 from django.http import response
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import requests
@@ -14,11 +15,12 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from .. import settings as wechat_settings
-from ..models import WeChatApp, WeChatInfo
 from ..utils.web import auto_response
 
 
 def patch_request(request, appname=None, cls=None, **kwargs):
+    from ..models import WeChatInfo
+
     cls = cls or WeChatInfo
     appname = appname or request.wechat.appname
     wechat = cls(_appname=appname, _request=request)
@@ -60,6 +62,8 @@ class WeChatSite(object):
         """本站点能查询到的所有app
         :rtype: wechat_django.models.app.WeChatAppQuerySet
         """
+        from ..models import WeChatApp
+
         return WeChatApp.objects.get_queryset()
 
 
@@ -87,11 +91,7 @@ class WeChatViewSet(BaseWeChatViewSet):
         @wraps(view)
         def decorated_view(request, appname, *args, **kwargs):
             # 只允许queryset内的appname访问本站点
-            try:
-                app = self.site.app_queryset.get_by_name(appname)
-            except WeChatApp.DoesNotExist:
-                return response.HttpResponseNotFound()
-
+            app = get_object_or_404(self.site.app_queryset, name=appname)
             request = patch_request(request, appname, _app=app)
             resp = view(request, *args, **kwargs)
             return auto_response(resp)
@@ -125,7 +125,7 @@ class WeChatViewSet(BaseWeChatViewSet):
         except WeChatClientException as e:
             if e.errcode == WeChatErrorCode.INVALID_MEDIA_ID:
                 return response.HttpResponseNotFound()
-            self.get_logger(request.wechat.appname).warning(
+            app.logger("site").warning(
                 "an exception occurred when download material",
                 exc_info=True)
             return response.HttpResponseServerError()
@@ -138,9 +138,6 @@ class WeChatViewSet(BaseWeChatViewSet):
             if k.lower().startswith("content-"):
                 rv[k] = v
         return rv
-
-    def get_logger(self, appname):
-        return logging.getLogger("wechat.site.{0}".format(appname))
 
 
 default_site = WeChatSite()

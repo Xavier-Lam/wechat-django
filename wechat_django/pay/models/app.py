@@ -2,9 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.models import WeChatApp
+from .. import settings
 from ..client import WeChatPayClient
 
 
@@ -54,7 +56,8 @@ class WeChatPay(m.Model):
     def client(self):
         """:rtype: wechat_django.client.WeChatPayClient"""
         if not hasattr(self, "_client"):
-            self._client = WeChatPayClient(self)
+            client_factory = import_string(settings.PAYCLIENT)
+            self._client = client_factory(self)
         return self._client
 
     def __str__(self):

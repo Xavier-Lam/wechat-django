@@ -37,7 +37,6 @@ class WeChatMessage(api.WeChatMessage):
 
 class WeChatClient(_Client):
     """继承原有WeChatClient添加日志功能 追加accesstoken url获取"""
-    appname = None
     # 增加raw_get方法
     material = WeChatMaterial()
     message = WeChatMessage()
@@ -49,7 +48,7 @@ class WeChatClient(_Client):
         session = import_string(settings.SESSIONSTORAGE)
         if callable(session):
             session = session(app)
-        self.appname = app.name
+        self.app = app
         if app.configurations.get("ACCESSTOKEN_URL"):
             self.ACCESSTOKEN_URL = app.configurations["ACCESSTOKEN_URL"]
         super(WeChatClient, self).__init__(
@@ -80,13 +79,6 @@ class WeChatClient(_Client):
         return super(WeChatClient, self)._handle_result(
             res, method, url, *args, **kwargs)
 
-    @property
-    def _logger(self):
-        return logging.getLogger("wechat.api.{appname}".format(
-            type=type,
-            appname=self.appname
-        ))
-
     def _update_log(self, **kwargs):
         if not hasattr(self, "_log_kwargs"):
             self._log_kwargs = dict()
@@ -102,5 +94,5 @@ class WeChatClient(_Client):
         kwargs = dict()
         if level >= logging.WARNING:
             kwargs["exc_info"] = True
-        self._logger.log(level, msg)
+        self.app.logger("api").log(level, msg)
         self._log_kwargs.clear()

@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/wechat-django.svg)](https://pypi.org/project/wechat-django)
 [![Build Status](https://travis-ci.org/Xavier-Lam/wechat-django.svg?branch=master)](https://travis-ci.org/Xavier-Lam/wechat-django)
 
-**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信功能封装及最基本的[**后台管理支持**](docs/admin.md).
+**WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信及微信支付功能封装及基本的[**后台管理支持**](docs/admin.md).
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
@@ -72,8 +72,8 @@
 | WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
 | WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 用于存储微信accesstoken等数据的[`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象,或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
 | WECHAT_WECHATCLIENT | "wechat_django.client.WeChatClient" | 微信API请求类(`wechat_django.client.WeChatClient`)或接收`wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
-| WECHAT_OAUTHCLIENT | "wechat_django.oauth.WeChatOAuthClient" | 微信OAuth请求类(`wechat_django.oauth.WeChatOAuthClient`)或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
-| WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
+| WECHAT_OAUTHCLIENT | "wechat_django.oauth.WeChatOAuthClient" | 微信OAuth请求类(`wechat_django.oauth.WeChatOAuthClient`)或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 |
+| WECHAT_PAYCLIENT |  "wechat_django.pay.client.WeChatPayClient" | 微信支付请求类(`wechat_django.pay.client.WeChatPayClient`)或接收 `wechat_django.pay.models.WeChatPay` 对象并生成其实例的工厂方法 | | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放检查 默认检查 |
 
 ### 日志
@@ -93,7 +93,7 @@
 ### 网页授权
 可通过`wechat_django.oauth.wechat_auth`装饰器进行网页授权,授权后,request将被附上一个名为wechat的`wechat_django.oauth.WeChatOAuthInfo` 对象,可通过 request.wechat.user 拿到`wechat_django.models.WeChatUser`实例,通过 request.wechat.app 拿到`wechat_django.models.WeChatApp`实例,以下是一个基本示例
 
-    from wechat_django.oauth import wechat_auth
+    from wechat_django import wechat_auth
 
     @wechat_auth("your_app_name")
     def your_view(request, *args, **kwargs):
@@ -109,7 +109,7 @@
 通过`wechat_django.models.WeChatApp.auth`进行授权,输入客户端传来的code, 输出一个用户对象以及原始响应.这个方法只能拿到用户的openid与unionid.
 
     from wechat_django.models import WeChatApp
-    app = WeChatApp.get_by_name("your app name")
+    app = WeChatApp.objects.get_by_name("your app name")
     user, data = app.auth(code)
 
 对于授权后得到的session_key,框架会持久化至数据库,此后可以通过调用`wechat_django.models.WeChatUser.session`来执行相关操作.
@@ -119,11 +119,11 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 ### 小程序信息加解密及用户数据更新
 对于已经进行过小程序授权并且session_key尚未过期的用户,可以使用`wechat_django.models.Session.decrypt_message`来解密客户端传来的敏感数据
 
-    encryptedData = ""
+    encrypted_data = ""
     iv = ""
     try:
         data = user.session.decrypt_message(
-            encryptedData, iv)
+            encrypted_data, iv)
     except ValueError:
         pass # 无法正确解密数据 session_key可能过期了
 
@@ -164,7 +164,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 ### 自定义微信回复
 在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
 
-    from wechat_django.handler import message_handler
+    from wechat_django import message_handler
 
     @message_handler
     def custom_business(message):
@@ -187,7 +187,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
-* 是否可做成migrate权限全自助?
+* 是否可做成migrate权限全自助?重构权限模块?
 * Cookbook
 * app层面的message log和reply log
 * 完善单元测试
@@ -195,7 +195,6 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 * 自定义消息处理规则
 
 ### 计划的功能
-* 完善模板消息
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
 * 清理及保护永久素材

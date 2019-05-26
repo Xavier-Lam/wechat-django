@@ -10,8 +10,7 @@ from django.views import View
 import six
 from wechatpy import WeChatOAuth as _WeChatOAuthClient, WeChatOAuthException
 
-from .models import WeChatApp, WeChatOAuthInfo, WeChatSNSScope
-from .sites.wechat import patch_request
+from .constants import WeChatSNSScope
 from .utils.web import auto_response, get_params
 
 __all__ = (
@@ -194,8 +193,10 @@ class WeChatOAuthView(View):
         super(WeChatOAuthView, self).__init__(**kwargs)
 
     def dispatch(self, request, *args, **kwargs):
-        self._patch_request(request)
+        from .models import WeChatApp
+
         try:
+            self._patch_request(request)
             return self._dispatch(request, *args, **kwargs)
         except WeChatApp.DoesNotExist:
             return HttpResponseNotFound()
@@ -213,10 +214,11 @@ class WeChatOAuthView(View):
                 # 用当前url的state替换传入的state
                 wechat._state = get_params(request, "state", "")
             except WeChatOAuthException:
-                self.logger.warning("auth code failed: {0}".format(dict(
+                err_msg = "auth code failed: {0}".format(dict(
                     info=wechat,
                     code=code
-                )), exc_info=True)
+                ))
+                wechat.app.logger("oauth").warning(err_msg, exc_info=True)
 
         # 没有openid 响应未授权
         if self.oauth_info.required and not wechat.openid:
@@ -242,12 +244,10 @@ class WeChatOAuthView(View):
     def auth(self, app, code):
         return app.auth(code, self.oauth_info.scope)[0]
 
-    @property
-    def logger(self):
-        appname = self.oauth_info.appname
-        return logging.getLogger("wechat:oauth:{0}".format(appname))
-
     def _patch_request(self, request, *args, **kwargs):
+        from .models import WeChatOAuthInfo
+        from .sites.wechat import patch_request
+
         info = self.oauth_info
         state = info.state(request, *args, **kwargs) if callable(info.state)\
             else info.state
