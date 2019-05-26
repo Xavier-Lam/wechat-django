@@ -173,7 +173,7 @@ class MessageHandler(WeChatModel):
                     rules=[Rule(type=Rule.Type.ALL)],
                     replies=[
                         Reply.from_mp(
-                            resp["message_default_autoreply_info"], app)
+                            app, resp["message_default_autoreply_info"])
                     ]
                 )
                 handlers.append(handler)
@@ -182,7 +182,7 @@ class MessageHandler(WeChatModel):
                 and resp["keyword_autoreply_info"].get("list")):
                 handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
                 handlers.extend(
-                    MessageHandler.from_mp(handler, app)
+                    MessageHandler.from_mp(app, handler)
                     for handler in handlers_list
                 )
 
@@ -198,7 +198,7 @@ class MessageHandler(WeChatModel):
                         event=cls.EventType.SUBSCRIBE
                     )],
                     replies=[
-                        Reply.from_mp(resp["add_friend_autoreply_info"], app)
+                        Reply.from_mp(app, resp["add_friend_autoreply_info"])
                     ]
                 )
                 handlers.append(handler)
@@ -206,7 +206,7 @@ class MessageHandler(WeChatModel):
             return handlers
 
     @classmethod
-    def from_mp(cls, handler, app):
+    def from_mp(cls, app, handler):
         from . import Reply, Rule
         return app.message_handlers.create_handler(
             name=handler["rule_name"],
@@ -218,18 +218,18 @@ class MessageHandler(WeChatModel):
                 for rule in handler["keyword_list_info"][::-1]
             ],
             replies=[
-                Reply.from_mp(reply, app)
+                Reply.from_mp(app, reply)
                 for reply in handler["reply_list_info"][::-1]
             ]
         )
 
     @classmethod
-    def from_menu(cls, menu, data, app):
+    def from_menu(cls, menu, data):
         """
-        :type menu: .Menu
+        :type menu: wechat_django.models.Menu
         """
         from . import Reply, Rule
-        return app.message_handlers.create_handler(
+        return menu.app.message_handlers.create_handler(
             name="菜单[{0}]事件".format(data["name"]),
             src=cls.Source.MENU,
             rules=[Rule(
@@ -237,13 +237,12 @@ class MessageHandler(WeChatModel):
                 event=cls.EventType.CLICK,
                 key=menu.content["key"]
             )],
-            replies=[Reply.from_menu(data, app)]
+            replies=[Reply.from_menu(menu, data)]
         )
 
     @classmethod
     def handlerlog(cls, request):
-        logger = logging.getLogger(
-            "wechat.handler.{0}".format(request.wechat.appname))
+        logger = request.wechat.app.logger("handler")
         args = dict(
             params=request.GET,
             body=request.body,

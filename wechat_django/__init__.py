@@ -9,4 +9,8 @@ __version__ = "0.3.0"
 __author__ = "Xavier-Lam"
 __author_email__ = "Lam.Xavier@hotmail.com"
 
-default_app_config = 'wechat_django.apps.WeChatConfig'
+default_app_config = "wechat_django.apps.WeChatConfig"
+
+
+from .handler import message_handler
+from .oauth import wechat_auth, WeChatOAuthView, WeChatSNSScope

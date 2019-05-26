@@ -129,6 +129,11 @@ class WeChatAppAdmin(admin.ModelAdmin):
             "handler", request=self.request, absolute=True)
     callback.short_description = _("message callback url")
 
+    def delete_view(self, request, object_id, *args, **kwargs):
+        request.app = WeChatApp.objects.get(id=object_id)
+        return super(WeChatAppAdmin, self).delete_view(
+            request, object_id, *args, **kwargs)
+
     def get_urls(self):
         urlpatterns = super(WeChatAppAdmin, self).get_urls()
         # django 1.11 替换urlpattern为命名式的
@@ -190,5 +195,15 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def get_model_perms(self, request):
         return ({} if getattr(request, "app_id", None)
             else super(WeChatAppAdmin, self).get_model_perms(request))
+
+    def get_deleted_objects(self, objs, request):
+        from ..models import WeChatUser
+        from ..pay.models import UnifiedOrder
+        deleted_objects, model_count, perms_needed, protected =\
+            super(WeChatAppAdmin, self).get_deleted_objects(objs, request)
+        ignored_models = (
+            WeChatUser._meta.verbose_name, UnifiedOrder._meta.verbose_name)
+        perms_needed = perms_needed.difference(ignored_models)
+        return deleted_objects, model_count, perms_needed, protected
 
     form = WeChatAppForm

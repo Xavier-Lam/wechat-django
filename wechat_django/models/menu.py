@@ -128,7 +128,7 @@ class Menu(WeChatModel):
             # 生成一个唯一key
             key = md5(json.dumps(data).encode()).hexdigest()
             menu.content = dict(key=key)
-            MessageHandler.from_menu(menu, data, app)
+            MessageHandler.from_menu(menu, data)
         menu.save()
         return menu
 

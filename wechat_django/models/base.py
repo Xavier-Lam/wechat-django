@@ -65,21 +65,24 @@ class WeChatModelMetaClass(m.base.ModelBase):
 
     def __init__(cls, name, bases, attrs):
         super(WeChatModelMetaClass, cls).__init__(name, bases, attrs)
+
+        def shortcutmethod(method):
+            def wrapped_func(self, *args, **kwargs):
+                return method(self, *args, **kwargs)
+
+            method_name = method._shortcutmethod
+            rv = wraps(method)(wrapped_func)
+            rv.__name__ = str(method_name)
+            rv.__qualname__ = "{0}.{1}".format(
+                method._model.__name__, method_name)
+            return rv
+
         for attr in attrs:
             # 将modelmethod转换为shortcut method
-            value = getattr(cls, attr)
-            if getattr(value, "_shortcutmethod", False):
-                method = value
-
-                def wrapped_func(self, *args, **kwargs):
-                    return method(self, *args, **kwargs)
-
-                method_name = method._shortcutmethod
-                shortcutmethod = wraps(method)(wrapped_func)
-                shortcutmethod.__name__ = str(method_name)
-                shortcutmethod.__qualname__ = "{0}.{1}".format(
-                    method._model.__name__, method_name)
-                setattr(method._model, method_name, shortcutmethod)
+            val = getattr(cls, attr)
+            if getattr(val, "_shortcutmethod", False):
+                setattr(
+                    val._model, val._shortcutmethod, shortcutmethod(val))
 
 
 class WeChatModel(six.with_metaclass(WeChatModelMetaClass, m.Model)):

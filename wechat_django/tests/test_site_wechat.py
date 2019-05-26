@@ -39,8 +39,8 @@ class WeChatSiteTestCase(WeChatTestCase):
         view = viewset.wechat_view(viewset.test_view)
         resp = view(self.rf().get("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)
-        resp = view(self.rf().get("/"), self.another_app.name)
-        self.assertEqual(resp.status_code, 404)
+        self.assertRaises(
+            response.Http404, view, self.rf().get("/"), self.another_app.name)
 
     def test_wechat_view(self):
         """测试wechat_view"""

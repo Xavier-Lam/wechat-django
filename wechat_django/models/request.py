@@ -83,11 +83,6 @@ class WeChatMessageInfo(WeChatInfo):
         return self.request.body
 
 
-class WeChatSNSScope(object):
-    BASE = "snsapi_base"
-    USERINFO = "snsapi_userinfo"
-
-
 class WeChatOAuthInfo(WeChatInfo):
     """附带在request上的微信对象
     """
@@ -96,6 +91,8 @@ class WeChatOAuthInfo(WeChatInfo):
         """授权的scope
         :rtype: tuple
         """
+        from ..oauth import WeChatSNSScope
+
         if not hasattr(self, "_scope"):
             self._scope = (WeChatSNSScope.BASE,)
         return self._scope

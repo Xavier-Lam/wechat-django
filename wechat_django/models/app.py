@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+
 from django.db import models as m
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -17,7 +19,7 @@ from ..exceptions import WeChatAbilityError
 from ..utils.model import enum2choices
 from . import MsgLogFlag
 from .ability import Abilities
-from .constants import AppType
+from ..constants import AppType
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -93,30 +95,6 @@ class WeChatApp(m.Model):
     @property
     def site_host(self):
         return self.configurations.get("SITE_HOST", settings.SITE_HOST)
-
-    def build_url(self, urlname, kwargs=None, request=None, absolute=False):
-        """构建url"""
-        kwargs = kwargs or dict()
-        kwargs["appname"] = self.name
-        location = reverse("wechat_django:{0}".format(urlname), kwargs=kwargs)
-        if not absolute:
-            return location
-
-        if request and not self.site_host:
-            baseurl = "{}://{}".format(request.scheme, request.get_host())
-        else:
-            protocol = "https://" if self.site_https else "http://"
-            if self.site_host:
-                host = self.site_host
-            else:
-                allowed_hosts = settings.settings.ALLOWED_HOSTS
-                if not allowed_hosts:
-                    raise RuntimeError(
-                        "You need setup a WECHAT_SITE_HOST when build"
-                        "absolute url.")
-                host = allowed_hosts[0]
-            baseurl = protocol + host
-        return baseurl + location
 
     @property
     def type_name(self):
@@ -201,7 +179,7 @@ class WeChatApp(m.Model):
         :rtype: (wechat_django.models.WeChatUser, dict)
         :raises: wechatpy.exceptions.WeChatOAuthException
         """
-        from . import WeChatSNSScope
+        from ..oauth import WeChatSNSScope
         if isinstance(scope, six.text_type):
             scope = (scope,)
         data = self.oauth.fetch_access_token(code)
@@ -231,6 +209,34 @@ class WeChatApp(m.Model):
         except AttributeError:
             pass
         return user, data
+
+    def build_url(self, urlname, kwargs=None, request=None, absolute=False):
+        """构建url"""
+        kwargs = kwargs or dict()
+        kwargs["appname"] = self.name
+        location = reverse("wechat_django:{0}".format(urlname), kwargs=kwargs)
+        if not absolute:
+            return location
+
+        if request and not self.site_host:
+            baseurl = "{}://{}".format(request.scheme, request.get_host())
+        else:
+            protocol = "https://" if self.site_https else "http://"
+            if self.site_host:
+                host = self.site_host
+            else:
+                allowed_hosts = settings.settings.ALLOWED_HOSTS
+                if not allowed_hosts:
+                    raise RuntimeError(
+                        "You need setup a WECHAT_SITE_HOST when build"
+                        "absolute url.")
+                host = allowed_hosts[0]
+            baseurl = protocol + host
+        return baseurl + location
+
+    def logger(self, name):
+        return logging.getLogger(
+            "wechat.{name}.{app}".format(name=name, app=self.name))
 
     def __str__(self):
         rv = "{title} ({name}) - {type}".format(

@@ -55,7 +55,7 @@ class RecursiveDeleteActionMixin(object):
                         category=self.model.verbose_name_plural,
                         obj=o
                     )
-                    self.logger(request).warning(msg, exc_info=True)
+                    request.app.logger("admin").warning(msg, exc_info=True)
                     raise
     delete_selected.short_description = _("delete selected")
 
@@ -121,6 +121,7 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
         return urlpatterns
 
     def _clientaction(self, request, action, failed_msg, kwargs=None):
+        """调用微信请求action"""
         kwargs = kwargs or dict()
         try:
             msg = action()
@@ -129,9 +130,9 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
             kwargs.update(exc=e)
             msg = failed_msg % kwargs
             if isinstance(e, WeChatClientException):
-                self.logger(request).warning(msg, exc_info=True)
+                request.app.logger("admin").warning(msg, exc_info=True)
             else:
-                self.logger(request).error(msg, exc_info=True)
+                request.app.logger("admin").error(msg, exc_info=True)
             self.message_user(request, msg, level=messages.ERROR)
     #endregion
 
@@ -173,12 +174,6 @@ class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjec
         if not hasattr(request, "app"):
             return False
         return bool(get_user_permissions(request.user, request.app))
-    #endregion
-
-    #region utils
-    def logger(self, request):
-        name = "wechat.admin.{0}".format(request.app.name)
-        return logging.getLogger(name)
     #endregion
 
 
