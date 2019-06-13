@@ -24,7 +24,7 @@ class WeChatUserManager(m.Manager):
             k: v for k, v in user_dict.items()
             if k in model_fields(self.model)
         }
-        updates["synced_at"] = tz.datetime.now()
+        updates["synced_at"] = tz.now()
         return self.update_or_create(
             defaults=updates, app=app, openid=updates["openid"])[0]
 
@@ -183,7 +183,7 @@ class WeChatUser(WeChatModel):
 
             for user_dict in user_dicts:
                 defaults = {k: v for k, v in user_dict.items() if k in fields}
-                defaults["synced_at"] = tz.datetime.now()
+                defaults["synced_at"] = tz.now()
                 user = cls.objects.update_or_create(
                     defaults=defaults,
                     app=app,
@@ -217,7 +217,7 @@ class WeChatUser(WeChatModel):
             k: v for k, v in user_dict.items()
             if k in model_fields(cls)
         }
-        updates["synced_at"] = tz.datetime.now()
+        updates["synced_at"] = tz.now()
         return cls.objects.update_or_create(
             defaults=updates, app=app, openid=updates["openid"])[0]
 

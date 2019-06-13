@@ -58,8 +58,9 @@ class UnifiedOrderResult(WeChatModel):
         self.update(result)
         return self, result
 
-    def update(self, result, signal=True):
+    def update(self, result, signal=True, verify=True):
         """根据参数更新订单状态"""
+        verify and self.order.verify(result)
         # TODO: 支付成功后写入用户
         excludes = ("transaction_id",)
         all_fields = model_fields(UnifiedOrderResult, excludes=excludes)

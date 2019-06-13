@@ -27,6 +27,7 @@
   - [主动调用微信api](#主动调用微信api)
   - [自定义微信回复](#自定义微信回复)
   - [微信支付](#微信支付)
+    - [统一下单](#统一下单)
 - [后台使用简介](#后台使用简介)
 - [示例项目](#示例项目)
 - [TODOS:](#todos)
@@ -196,7 +197,24 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
     order.sync()
 
-订单状态更新信号
+当订单更新时,会发出`wechat_django.pay.signals.order_updated`信号.信号提供4个变量
+
+| 变量 | 说明 |
+| --- | --- |
+| result | 订单结果(`wechat_django.pay.models.UnifiedOrderResult`) |
+| order | 更新的订单(`wechat_django.pay.models.UnifiedOrder`) |
+| state | 订单状态(`wechat_django.pay.models.UnifiedOrderResult.State`) |
+| attach | 结果附带的信息(生成订单时传给微信服务器的attach) |
+
+使用示例
+
+    from django.dispatch import receiver
+    from wechat_django.pay import signals
+    @receiver(signals.order_updated)
+    def order_updated(reuslt, order, state, attach):
+        pass
+
+> 注意! 每次主动调用,微信通知或是后台重新触发都会发送信号,请自行确保订单成功信号逻辑只执行一次!
 
 
 ## 后台使用简介
@@ -207,6 +225,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ## TODOS:
 * 是否可做成migrate权限全自助?重构权限模块?
+* 可选加密存储敏感数据
 * Cookbook
 * app层面的message log和reply log
 * 完善单元测试

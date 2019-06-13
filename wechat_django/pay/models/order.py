@@ -16,6 +16,10 @@ from .base import PayDateTimeField, paymethod
 
 
 class UnifiedOrder(WeChatModel):
+    ALLOW_UPDATES = (
+        "device_info", "openid", "sub_openid", "trade_type", "total_fee",
+        "fee_type")
+
     class TradeType(object):
         JSAPI = "JSAPI"
         NATIVE = "NATIVE"
@@ -183,13 +187,11 @@ class UnifiedOrder(WeChatModel):
             self.update(result)
             return self.result, result
 
-    def update(self, result, signal=True):
+    def update(self, result, signal=True, verify=True):
         """由字典更新数据"""
+        verify and self.verify(result)
         updated = False
-        allowed_fields = (
-            "device_info", "openid", "sub_openid", "trade_type", "total_fee",
-            "fee_type")
-        for field in allowed_fields:
+        for field in self.ALLOW_UPDATES:
             data = result.get(field)
             if not getattr(self, field) and data:
                 setattr(self, field, data)
@@ -197,12 +199,16 @@ class UnifiedOrder(WeChatModel):
         updated and self.save()
 
         try:
-            self.result.update(result, signal)
+            self.result.update(result, signal=signal, verify=False)
         except AttributeError:
             from . import UnifiedOrderResult
             obj = UnifiedOrderResult(
                 order=self, transaction_id=result["transaction_id"])
-            obj.update(result, signal)
+            obj.update(result, signal=signal, verify=False)
+
+    def verify(self, result):
+        """检查订单结果参数"""
+        pass
 
     def __str__(self):
         return "{0} ({1})".format(self.out_trade_no, self.body)
