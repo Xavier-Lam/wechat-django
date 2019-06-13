@@ -98,10 +98,20 @@ class OrderTestCase(WeChatPayTestCase):
 
     def test_update(self):
         """测试更新订单"""
+        # 测试无result更新待支付订单
+        pass
+        # 测试无result更新已完成订单
+        pass
+        # 测试有result更新待支付订单
+        pass
+        # 测试有result更新已完成订单
         pass
 
     def test_sync(self):
         """测试同步订单"""
+        # 如果有result 走result的同步
+        pass
+        # 否则走order的同步
         pass
 
     def test_prepay(self):
@@ -136,3 +146,34 @@ class OrderTestCase(WeChatPayTestCase):
                 }
             }
         )
+
+    def success(self, pay):
+        """:type pay: wechat_django.pay.models.WeChatPay"""
+        return {
+            "openid": "openid",
+            "sub_mch_id": None,
+            "cash_fee_type": "CNY",
+            "settlement_total_fee": "101",
+            "nonce_str": "SAerH4jU0W6V1uGdo8cQFJa3M9BPOp2x",
+            "return_code": "SUCCESS",
+            "err_code_des": "SUCCESS",
+            "time_end": "20190613190854",
+            "mch_id": pay.mch_id,
+            "trade_type": "JSAPI",
+            "trade_state_desc": "ok",
+            "trade_state": "SUCCESS",
+            "sign": "2C8B829DBA4EB58369C2929233A772B5",
+            "cash_fee": "101",
+            "is_subscribe": "Y",
+            "return_msg": "OK",
+            "fee_type": "CNY",
+            "bank_type": "CMC",
+            "attach": "sandbox_attach",
+            "device_info": "sandbox",
+            "out_trade_no": str(uuid4()),
+            "transaction_id": str(uuid4()),
+            "total_fee": "101",
+            "appid": pay.appid,
+            "result_code": "SUCCESS",
+            "err_code": "SUCCESS"
+        }

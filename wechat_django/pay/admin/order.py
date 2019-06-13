@@ -1,15 +1,43 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from ..models import UnifiedOrder
+from ..models import UnifiedOrder, UnifiedOrderResult
 from .base import WeChatPayModelAdmin
+
+
+class OrderResultAdmin(admin.StackedInline):
+    model = UnifiedOrderResult
+
+    fields = (
+        "transaction_id", "trade_state", "time_end", "settlement_total_fee",
+        "cash_fee", "cash_fee_type", "coupon_fee", "bank_type", "detail",
+        "is_subscribe", "sub_is_subscribe", "created_at", "updated_at")
+
+    def get_fields(self, request, obj=None):
+        rv = super(OrderResultAdmin, self).get_fields(request, obj)
+        if not request.app.pay.sub_mch_id:
+            rv = list(rv)
+            rv.remove("sub_is_subscribe")
+        return rv
+
+    def get_readonly_fields(self, request, obj=None):
+        return self.get_fields(request, obj)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class OrderAdmin(WeChatPayModelAdmin):
     __category__ = "order"
     __model__ = UnifiedOrder
+
+    inlines = (OrderResultAdmin,)
 
     list_display = (
         "out_trade_no", "body", "total_fee", "trade_state", "transaction_id",

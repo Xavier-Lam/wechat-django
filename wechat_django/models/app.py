@@ -228,7 +228,7 @@ class WeChatApp(m.Model):
                 allowed_hosts = settings.settings.ALLOWED_HOSTS
                 if not allowed_hosts:
                     raise RuntimeError(
-                        "You need setup a WECHAT_SITE_HOST when build"
+                        "You need setup a WECHAT_SITE_HOST when build "
                         "absolute url.")
                 host = allowed_hosts[0]
             baseurl = protocol + host
