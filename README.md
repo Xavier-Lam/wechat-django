@@ -180,6 +180,25 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 ### 微信支付
 使用微信支付,需要在INSTALLED_APP的`wechat_django`后添加`wechat_django.pay`.
 
+#### 统一下单
+
+    from wechat_django.models import WeChatApp
+    app = WeChatApp.objects.get_by_name("your app name")
+    order = app.pay.create_order(
+        user="user-instance", body="body", total_fee=1, out_trade_no="***debug***20190613001") # 也可以用openid="openid"代替user参数
+    prepay = order.prepay(request)
+
+将jsapi参数交给前端
+
+    jsapi_params = order.jsapi_params(prepay["prepay_id"])
+
+主动查询订单状态
+
+    order.sync()
+
+订单状态更新信号
+
+
 ## 后台使用简介
 参见[管理后台使用简介](docs/admin.md) 文档
 

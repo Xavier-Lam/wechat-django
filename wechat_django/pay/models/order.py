@@ -145,7 +145,7 @@ class UnifiedOrder(WeChatModel):
                 limit_pay=self.limit_pay,
                 scene_info=self.scene_info,
                 sub_user_id=self.sub_openid,
-                receipt=self.receipt
+                # receipt=self.receipt
             )
             call_args.update(kwargs)
             self._call_args = call_args
@@ -163,7 +163,7 @@ class UnifiedOrder(WeChatModel):
 
     def close(self):
         """关闭订单"""
-        rv = self.pay.client.order.close(self.out_trade_no)
+        rv = self.pay.client.order.close(out_trade_no=self.out_trade_no)
         self.sync()
         return rv
 

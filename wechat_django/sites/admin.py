@@ -211,7 +211,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         return {
             'name': WeChatApp._meta.verbose_name_plural,
             'app_label': app_label,
-            # 'app_url': "#", # TODO: 修订app_url
+            'app_url': "#",
             'has_module_perms': bool(app_perms),
             'models': app_perms,
         }

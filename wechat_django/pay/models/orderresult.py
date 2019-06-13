@@ -53,7 +53,8 @@ class UnifiedOrderResult(WeChatModel):
 
     def sync(self):
         """更新订单状态"""
-        result = self.order.pay.client.order.query(self.transaction_id)
+        result = self.order.pay.client.order.query(
+            transaction_id=self.transaction_id)
         self.update(result)
         return self, result
 
