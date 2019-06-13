@@ -145,7 +145,7 @@ def message_handler(names_or_func=None):
         def custom_business(message):
             user = message.user
             # ...
-            return TextReply("hello", message=message.message)
+            return TextReply("hello")
 
         @message_handler(("app_a", "app_b"))
         def app_ab_only_business(message):

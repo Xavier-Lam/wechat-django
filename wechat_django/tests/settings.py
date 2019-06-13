@@ -59,6 +59,10 @@ DATABASES = {
     }
 }
 
+TIME_ZONE = 'Asia/shanghai'
+
+USE_TZ = True
+
 STATIC_URL = '/static/'
 
 ROOT_URLCONF = "wechat_django.tests.urls"
