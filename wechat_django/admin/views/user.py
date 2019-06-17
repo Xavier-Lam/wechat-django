@@ -116,7 +116,7 @@ class WeChatUserAdmin(WeChatModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return tuple(o for o in self.fields if o not in (
-            "remark", "tags", "comment"))
+            "alias", "remark", "tags", "comment"))
 
     def save_model(self, request, obj, form, change):
         if "remark" in form.changed_data:

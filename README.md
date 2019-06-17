@@ -152,7 +152,9 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
         data = user.session.validate_message(raw_data, signature)
     except InvalidSignatureException:
         return HttpResponse(status=401)
-    
+
+使用update方法更新用户数据
+
     user.update(data)
 
 ### 主动调用微信api
@@ -186,7 +188,8 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
     from wechat_django.models import WeChatApp
     app = WeChatApp.objects.get_by_name("your app name")
     order = app.pay.create_order(
-        user="user-instance", body="body", total_fee=1, out_trade_no="***debug***20190613001") # 也可以用openid="openid"代替user参数
+        user="user-instance", body="body", total_fee=1,
+        out_trade_no="***debug***20190613001") # 也可以用openid="openid"代替user参数
     prepay = order.prepay(request)
 
 将jsapi参数交给前端

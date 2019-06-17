@@ -131,6 +131,8 @@ class UnifiedOrder(WeChatModel):
                 or get_external_ip()
             notify_url = self.pay.app.build_url(
                 "order_notify", request=request, absolute=True)
+            time_start_field = self._meta.get_field("time_start")
+            time_expire_field = self._meta.get_field("time_expire")
             call_args = dict(
                 trade_type=self.trade_type,
                 body=self.body,
@@ -141,15 +143,15 @@ class UnifiedOrder(WeChatModel):
                 out_trade_no=self.out_trade_no,
                 detail=self.detail,
                 fee_type=self.fee_type,
-                time_start=self.time_start,
-                time_expire=self.time_expire,
+                time_start=time_start_field.value_from_object(self),
+                time_expire=time_expire_field.value_from_object(self),
                 goods_tag=self.goods_tag,
                 product_id=self.product_id,
                 device_info=self.device_info,
                 limit_pay=self.limit_pay,
                 scene_info=self.scene_info,
                 sub_user_id=self.sub_openid,
-                # receipt=self.receipt
+                receipt=self.receipt
             )
             call_args.update(kwargs)
             self._call_args = call_args
@@ -201,6 +203,7 @@ class UnifiedOrder(WeChatModel):
         try:
             self.result.update(result, signal=signal, verify=False)
         except AttributeError:
+            # TODO: 可能是没有transaction_id的
             from . import UnifiedOrderResult
             obj = UnifiedOrderResult(
                 order=self, transaction_id=result["transaction_id"])
