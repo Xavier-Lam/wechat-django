@@ -45,7 +45,7 @@ def wechat_admin_view(view, site):
                 object_id=object_id
             )
             return response.HttpResponseRedirect(
-                reverse("admin:" + url_name, kwargs=url_kwargs)
+                reverse("admin:" + url_name, kwargs=url_kwargs), status=307
             )
         else:
             # 对于没有app_id的listview请求 优先取referrer的app_id

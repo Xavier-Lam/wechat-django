@@ -43,8 +43,16 @@ class PayDateTimeField(m.DateTimeField):
 
 class PayBooleanField(m.NullBooleanField):
     def to_python(self, value):
-        return value in (True, "Y") or None
+        if value in (True, "Y"):
+            return True
+        elif value in (False, "N"):
+            return False
+        return None
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        return "Y" if val else ""
+        if val is True:
+            return "Y"
+        elif val is False:
+            return "N"
+        return ""
