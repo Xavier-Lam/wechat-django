@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
+
 from django.db import models as m
 from django.utils import timezone as tz
 import six
@@ -28,8 +30,15 @@ class PayDateTimeField(m.DateTimeField):
         return super(PayDateTimeField, self).to_python(value)
 
     def value_to_string(self, obj):
-        val = self.value_from_object(obj)
-        return val.astimezone(self._tz).strftime(self._format) if val else ""
+        rv = self.value_from_object(obj)
+        return rv.strftime(self._format) if val else ""
+
+    def value_from_object(self, obj):
+        rv = super(PayDateTimeField, self).value_from_object(obj)
+        if rv:
+            # 将服务器时区显式转换为上海区
+            rv = rv.astimezone(self._tz)
+        return rv
 
 
 class PayBooleanField(m.NullBooleanField):
