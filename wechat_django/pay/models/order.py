@@ -73,6 +73,10 @@ class UnifiedOrder(WeChatModel):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
+    @property
+    def app_id(self):
+        return self.pay.app_id
+
     class Meta(object):
         verbose_name = _("Unified order")
         verbose_name_plural = _("Unified orders")
@@ -181,13 +185,10 @@ class UnifiedOrder(WeChatModel):
 
     def sync(self):
         """更新订单状态"""
-        try:
-            return self.result.sync()
-        except AttributeError:
-            result = self.pay.client.order.query(
-                out_trade_no=self.out_trade_no)
-            self.update(result)
-            return self.result, result
+        result = self.pay.client.order.query(
+            out_trade_no=self.out_trade_no)
+        self.update(result)
+        return self.result, result
 
     def update(self, result, signal=True, verify=True):
         """由字典更新数据"""
@@ -203,14 +204,15 @@ class UnifiedOrder(WeChatModel):
         try:
             self.result.update(result, signal=signal, verify=False)
         except AttributeError:
-            # TODO: 可能是没有transaction_id的
             from . import UnifiedOrderResult
+            transaction_id = result.get("transaction_id") or None
             obj = UnifiedOrderResult(
-                order=self, transaction_id=result["transaction_id"])
+                order=self, transaction_id=transaction_id)
             obj.update(result, signal=signal, verify=False)
 
     def verify(self, result):
         """检查订单结果参数"""
+        # 检查金额一致
         pass
 
     def __str__(self):

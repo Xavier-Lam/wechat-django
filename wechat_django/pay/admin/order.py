@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+import object_tool
 
 from ..models import UnifiedOrder, UnifiedOrderResult
 from .base import WeChatPayModelAdmin
@@ -39,11 +40,13 @@ class OrderAdmin(WeChatPayModelAdmin):
 
     inlines = (OrderResultAdmin,)
 
+    actions = ("sync",)
     list_display = (
         "out_trade_no", "body", "total_fee", "trade_state", "transaction_id",
         "openid", "sub_openid", "time_start", "time_expire", "created_at",
         "updated_at")
 
+    change_object_tools = ("sync",)
     fields = (
         "out_trade_no", "body", "total_fee", "fee_type", "openid",
         "sub_openid", "time_start", "time_expire", "detail",
@@ -69,6 +72,16 @@ class OrderAdmin(WeChatPayModelAdmin):
         fields = list(self.get_fields(request, obj))
         fields.remove("comment")
         return fields
+
+    def sync(self, request, queryset_or_obj):
+        self.check_wechat_permission(request, "change")
+
+        if isinstance(queryset_or_obj, UnifiedOrder):
+            queryset_or_obj = [queryset_or_obj]
+
+        for obj in queryset_or_obj:
+            obj.sync()
+    sync.short_description = _("Sync order")
 
     def has_add_permission(self, request):
         return False

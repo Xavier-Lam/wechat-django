@@ -25,18 +25,19 @@ class UnifiedOrderResult(WeChatModel):
     order = m.OneToOneField(
         UnifiedOrder, on_delete=m.CASCADE, related_name="result")
 
-    transaction_id = m.CharField(_("transaction_id"), max_length=32)
+    transaction_id = m.CharField(
+        _("transaction_id"), max_length=32, null=True)
     trade_state = m.CharField(
         _("trade_state"), max_length=32, choices=enum2choices(State))
     time_end = PayDateTimeField(_("pay time_end"), null=True)
 
     settlement_total_fee = m.PositiveIntegerField(
         _("settlement_total_fee"), null=True)
-    cash_fee = m.PositiveIntegerField(_("cash_fee"))
+    cash_fee = m.PositiveIntegerField(_("cash_fee"), null=True)
     cash_fee_type = m.CharField(_("cash_fee_type"), max_length=16, null=True)
     coupon_fee = m.PositiveIntegerField(_("coupon_fee"), null=True)
 
-    bank_type = m.CharField(_("bank_type"), max_length=16)
+    bank_type = m.CharField(_("bank_type"), max_length=16, null=True)
     detail = m.TextField(_("detail"), max_length=8192, null=True)
 
     is_subscribe = PayBooleanField(_("is_subscribe"), null=True)
@@ -51,18 +52,11 @@ class UnifiedOrderResult(WeChatModel):
         verbose_name = _("Unified order result")
         verbose_name_plural = _("Unified order results")
 
-    def sync(self):
-        """更新订单状态"""
-        result = self.order.pay.client.order.query(
-            transaction_id=self.transaction_id)
-        self.update(result)
-        return self, result
-
     def update(self, result, signal=True, verify=True):
         """根据参数更新订单状态"""
         verify and self.order.verify(result)
         # TODO: 支付成功后写入用户
-        excludes = ("transaction_id",)
+        excludes = ("transaction_id",) if self.transaction_id else tuple()
         all_fields = model_fields(UnifiedOrderResult, excludes=excludes)
         ignore_fields = (
             "return_code", "return_msg", "appid", "mch_id", "device_info",
@@ -79,3 +73,6 @@ class UnifiedOrderResult(WeChatModel):
             order_updated.send(
                 sender=self.__class__, result=self, order=self.order,
                 state=self.trade_state, attach=result.get("attach"))
+
+    def __str__(self):
+        return _("%s reuslt") % self.order
