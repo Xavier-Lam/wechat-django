@@ -12,7 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from object_tool import CustomObjectToolModelAdminMixin
+from object_tool import CustomObjectToolModelAdmin
 import six
 from wechatpy.exceptions import WeChatClientException
 
@@ -98,7 +98,7 @@ class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
         return self
 
 
-class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjectToolModelAdminMixin, admin.ModelAdmin)):
+class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjectToolModelAdmin)):
     """所有微信相关业务admin的基类
 
     并且通过request.app_id及request.app拿到app信息

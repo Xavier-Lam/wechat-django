@@ -8,7 +8,8 @@ from wechatpy import WeChatPay as WeChatPayBaseClient
 
 from wechat_django.models import WeChatUser
 from wechat_django.utils.web import get_ip
-from ..models import UnifiedOrder, WeChatPay
+from ..models import UnifiedOrder, UnifiedOrderResult, WeChatPay
+from ..signals import order_updated
 from .base import mock, WeChatPayTestCase
 
 
@@ -16,18 +17,14 @@ class OrderTestCase(WeChatPayTestCase):
     def test_create(self):
         """测试生成订单"""
         openid = "openid"
-        body = "body"
-        total_fee = 100
 
         # 最简订单
-        minimal = dict(
-            body=body,
-            total_fee=total_fee
-        )
+        minimal = self.minimal_example
+        body = minimal["body"]
+        total_fee = minimal["total_fee"]
         user_main = self.app.users.create(openid=openid)
         request = self.rf().get("/")
-        order = self.app.pay.create_order(
-            user_main, request, out_trade_no=uuid4(), **minimal)
+        order = self.app.pay.create_order(user_main, request, **minimal)
         # 默认值
         self.assertEqual(order.trade_type, UnifiedOrder.TradeType.JSAPI)
         self.assertEqual(order.fee_type, UnifiedOrder.FeeType.CNY)
@@ -44,11 +41,11 @@ class OrderTestCase(WeChatPayTestCase):
         # 子商户订单
         user_sub = self.app_sub.users.create(openid=openid)
         order = self.app_sub.pay.create_order(
-            user_sub, request, out_trade_no=uuid4(), **minimal)
+            user_sub, request, **self.minimal_example)
         self.assertIsNone(order.openid)
         self.assertEqual(order.sub_openid, user_sub.openid)
         order = self.app_sub.pay.create_order(
-            user_main, request, out_trade_no=uuid4(), **minimal)
+            user_main, request, **self.minimal_example)
         self.assertIsNone(order.sub_openid)
         self.assertEqual(order.openid, user_main.openid)
 
@@ -100,18 +97,59 @@ class OrderTestCase(WeChatPayTestCase):
         """测试更新订单"""
         # 测试无result更新待支付订单
         pass
+
         # 测试无result更新已完成订单
-        pass
+        with mock.patch.object(UnifiedOrder, "verify"):
+            order = self.app.pay.create_order(**self.minimal_example)
+            result = self.success(self.app.pay, order)
+            order.update(result)
+            for key, value in result.items():
+                if key in UnifiedOrder.ALLOW_UPDATES:
+                    v = getattr(order, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+                if key in self.list_fields(UnifiedOrderResult):
+                    v = getattr(order.result, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+            self.assertEqual(UnifiedOrder.verify.call_count, 1)
+
         # 测试有result更新待支付订单
         pass
+
         # 测试有result更新已完成订单
         pass
 
+        # 测试再度更新已完成订单
+        pass
+
+    def test_verify(self):
+        """测试订单参数是否一致"""
+        pass
+
+    def test_signal(self):
+        """测试订单状态更新信号"""
+        with mock.patch.object(order_updated, "send"):
+            order = self.app.pay.create_order(**self.minimal_example)
+            result = self.success(self.app.pay, order)
+            order.update(result)
+            self.assertEqual(order_updated.send.call_count, 1)
+            kwargs = dict(
+                result=order.result,
+                order=order,
+                state=UnifiedOrderResult.State.SUCCESS,
+                attach=result.get("attach")
+            )
+            self.assertCallArgsEqual(order_updated.send, kwargs=kwargs)
+
+        with mock.patch.object(order_updated, "send"):
+            order = self.app.pay.create_order(**self.minimal_example)
+            result = self.success(self.app.pay, order)
+            order.update(result, signal=False)
+            self.assertEqual(order_updated.send.call_count, 0)
+
     def test_sync(self):
         """测试同步订单"""
-        # 如果有result 走result的同步
-        pass
-        # 否则走order的同步
         pass
 
     def test_prepay(self):
@@ -123,14 +161,22 @@ class OrderTestCase(WeChatPayTestCase):
         pass
 
     @property
+    def minimal_example(self):
+        return dict(
+            body="body",
+            out_trade_no=str(uuid4()),
+            total_fee=101
+        )
+
+    @property
     def full_example(self):
         return dict(
             device_info="013467007045764",
             body="body",
-            receipt="Y",
+            # receipt="Y",
             detail="detail",
             out_trade_no=uuid4(),
-            total_fee=100,
+            total_fee=101,
             time_start=tz.now(),
             time_expire=tz.now() + tz.timedelta(minutes=30),
             goods_tag="goods_tag",
@@ -147,8 +193,11 @@ class OrderTestCase(WeChatPayTestCase):
             }
         )
 
-    def success(self, pay):
-        """:type pay: wechat_django.pay.models.WeChatPay"""
+    def success(self, pay, order):
+        """
+        :type pay: wechat_django.pay.models.WeChatPay
+        :type order: wechat_django.pay.models.UnifiedOrder
+        """
         return {
             "openid": "openid",
             "sub_mch_id": None,
@@ -158,7 +207,7 @@ class OrderTestCase(WeChatPayTestCase):
             "return_code": "SUCCESS",
             "err_code_des": "SUCCESS",
             "time_end": "20190613190854",
-            "mch_id": pay.mch_id,
+            "mch_id": str(pay.mch_id),
             "trade_type": "JSAPI",
             "trade_state_desc": "ok",
             "trade_state": "SUCCESS",
@@ -170,10 +219,10 @@ class OrderTestCase(WeChatPayTestCase):
             "bank_type": "CMC",
             "attach": "sandbox_attach",
             "device_info": "sandbox",
-            "out_trade_no": str(uuid4()),
+            "out_trade_no": order.out_trade_no,
             "transaction_id": str(uuid4()),
             "total_fee": "101",
-            "appid": pay.appid,
+            "appid": str(pay.appid),
             "result_code": "SUCCESS",
             "err_code": "SUCCESS"
         }

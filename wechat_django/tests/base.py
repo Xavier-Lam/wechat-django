@@ -22,6 +22,15 @@ class WeChatTestCaseBase(TestCase):
         self.assertEqual(
             {k: v for k, v in call_kwargs.items() if k in kwargs}, kwargs)
 
+    def load_data(self, path):
+        res_file = os.path.join(
+            os.path.dirname(__file__), "data", '%s.json' % path)
+        with open(res_file, "rb") as f:
+            return json.loads(f.read().decode("utf-8"))
+
+    def list_fields(self, model):
+        return [f.name for f in model._meta.fields]
+
     @property
     def base_url(self):
         return "http://localhost/"
@@ -46,12 +55,6 @@ class WeChatTestCase(WeChatTestCaseBase):
         self.app = WeChatApp.objects.get_by_name("test")
         self.another_app = WeChatApp.objects.get_by_name("test1")
         self.miniprogram = WeChatApp.objects.get_by_name("miniprogram")
-
-    def load_data(self, path):
-        res_file = os.path.join(
-            os.path.dirname(__file__), "data", '%s.json' % path)
-        with open(res_file, "rb") as f:
-            return json.loads(f.read().decode("utf-8"))
 
     #region utils
     def _create_handler(self, rules=None, name="", replies=None, app=None,
