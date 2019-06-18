@@ -73,16 +73,16 @@ class UnifiedOrder(WeChatModel):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
-    @property
-    def app_id(self):
-        return self.pay.app_id
-
     class Meta(object):
         verbose_name = _("Unified order")
         verbose_name_plural = _("Unified orders")
 
         index_together = (("pay", "created_at"), )
         unique_together = (("pay", "out_trade_no"),)
+
+    @property
+    def app_id(self):
+        return self.pay.app_id
 
     def transaction_id(self):
         try:
@@ -129,15 +129,20 @@ class UnifiedOrder(WeChatModel):
         :param attach: 附加数据
         :param kwargs: 覆盖默认生成的数据
         """
-        if not self._call_args:
-            # TODO: attach和client_ip是否应该拿到外头
-            self.spbill_create_ip = self.spbill_create_ip or get_ip(request)\
-                or get_external_ip()
+        # 更新ip
+        self.spbill_create_ip = kwargs.pop(
+            "client_ip",
+            get_ip(request) or self.spbill_create_ip or get_external_ip())
+        if self._call_args:
+            self._call_args["client_ip"] = self.spbill_create_ip
+        else:
+            # 构建call_args并缓存
             notify_url = self.pay.app.build_url(
-                "order_notify", request=request, absolute=True)
+                "order_notify", request=request,
+                kwargs=dict(payname=self.pay.name), absolute=True)
             time_start_field = self._meta.get_field("time_start")
             time_expire_field = self._meta.get_field("time_expire")
-            call_args = dict(
+            self._call_args = dict(
                 trade_type=self.trade_type,
                 body=self.body,
                 total_fee=self.total_fee,
@@ -157,9 +162,8 @@ class UnifiedOrder(WeChatModel):
                 sub_user_id=self.sub_openid,
                 receipt=self.receipt
             )
-            call_args.update(kwargs)
-            self._call_args = call_args
-            self.save()
+            self._call_args.update(kwargs)
+        self.save()
         return self._call_args
 
     def prepay(self, request=None, **kwargs):
