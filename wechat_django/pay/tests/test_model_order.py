@@ -72,7 +72,8 @@ class OrderTestCase(WeChatPayTestCase):
         self.assertEqual(
             call_args["notify_url"],
             self.app.build_url(
-                "order_notify", request=request, absolute=True))
+                "order_notify", kwargs=dict(payname=self.app.pay.name),
+                request=request, absolute=True))
         self.assertEqual(call_args["client_ip"], get_ip(request))
         for k, v in full.items():
             fixed_key = key_map[k] if k in key_map else k
@@ -96,7 +97,20 @@ class OrderTestCase(WeChatPayTestCase):
     def test_update(self):
         """测试更新订单"""
         # 测试无result更新待支付订单
-        pass
+        with mock.patch.object(UnifiedOrder, "verify"):
+            order = self.app.pay.create_order(**self.minimal_example)
+            result = self.notpay(self.app.pay, order)
+            order.update(result)
+            for key, value in result.items():
+                if key in UnifiedOrder.ALLOW_UPDATES:
+                    v = getattr(order, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+                if key in self.list_fields(UnifiedOrderResult):
+                    v = getattr(order.result, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+            self.assertEqual(UnifiedOrder.verify.call_count, 1)
 
         # 测试无result更新已完成订单
         with mock.patch.object(UnifiedOrder, "verify"):
@@ -115,13 +129,57 @@ class OrderTestCase(WeChatPayTestCase):
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
 
         # 测试有result更新待支付订单
-        pass
+        order = self.app.pay.create_order(**self.minimal_example)
+        result = self.notpay(self.app.pay, order)
+        order.update(result)
+        with mock.patch.object(UnifiedOrder, "verify"):
+            result = self.notpay(self.app.pay, order)
+            order.update(result)
+            for key, value in result.items():
+                if key in UnifiedOrder.ALLOW_UPDATES:
+                    v = getattr(order, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+                if key in self.list_fields(UnifiedOrderResult):
+                    v = getattr(order.result, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+            self.assertEqual(UnifiedOrder.verify.call_count, 1)
 
         # 测试有result更新已完成订单
-        pass
+        order = self.app.pay.create_order(**self.minimal_example)
+        result = self.notpay(self.app.pay, order)
+        order.update(result)
+        with mock.patch.object(UnifiedOrder, "verify"):
+            result = self.success(self.app.pay, order)
+            order.update(result)
+            for key, value in result.items():
+                if key in UnifiedOrder.ALLOW_UPDATES:
+                    v = getattr(order, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+                if key in self.list_fields(UnifiedOrderResult):
+                    v = getattr(order.result, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+            self.assertEqual(UnifiedOrder.verify.call_count, 1)
 
         # 测试再度更新已完成订单
-        pass
+        with mock.patch.object(UnifiedOrder, "verify"):
+            result = self.success(self.app.pay, order)
+            order.update(result)
+            for key, value in result.items():
+                if key in UnifiedOrder.ALLOW_UPDATES:
+                    v = getattr(order, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+                if key in self.list_fields(UnifiedOrderResult):
+                    v = getattr(order.result, key)
+                    v = v if v is None else str(v)
+                    self.assertEqual(v, value)
+            self.assertEqual(UnifiedOrder.verify.call_count, 1)
+
+        # 测试回调更新
 
     def test_verify(self):
         """测试订单参数是否一致"""
@@ -193,6 +251,22 @@ class OrderTestCase(WeChatPayTestCase):
             }
         )
 
+    def notpay(self, pay, order):
+        return {
+            "return_code": "SUCCESS",
+            "return_msg": "OK",
+            "appid": str(pay.appid),
+            "mch_id": str(pay.mch_id),
+            "device_info": None,
+            "nonce_str": str(uuid4()),
+            "sign": str(uuid4()),
+            "result_code": "SUCCESS",
+            "total_fee": "101",
+            "out_trade_no": order.out_trade_no,
+            "trade_state": "NOTPAY",
+            "trade_state_desc": "订单未支付"
+        }
+
     def success(self, pay, order):
         """
         :type pay: wechat_django.pay.models.WeChatPay
@@ -203,7 +277,7 @@ class OrderTestCase(WeChatPayTestCase):
             "sub_mch_id": None,
             "cash_fee_type": "CNY",
             "settlement_total_fee": "101",
-            "nonce_str": "SAerH4jU0W6V1uGdo8cQFJa3M9BPOp2x",
+            "nonce_str": str(uuid4()),
             "return_code": "SUCCESS",
             "err_code_des": "SUCCESS",
             "time_end": "20190613190854",
@@ -211,7 +285,7 @@ class OrderTestCase(WeChatPayTestCase):
             "trade_type": "JSAPI",
             "trade_state_desc": "ok",
             "trade_state": "SUCCESS",
-            "sign": "2C8B829DBA4EB58369C2929233A772B5",
+            "sign": str(uuid4()),
             "cash_fee": "101",
             "is_subscribe": "Y",
             "return_msg": "OK",
@@ -220,7 +294,7 @@ class OrderTestCase(WeChatPayTestCase):
             "attach": "sandbox_attach",
             "device_info": "sandbox",
             "out_trade_no": order.out_trade_no,
-            "transaction_id": str(uuid4()),
+            "transaction_id": order.out_trade_no,
             "total_fee": "101",
             "appid": str(pay.appid),
             "result_code": "SUCCESS",
