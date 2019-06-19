@@ -216,8 +216,16 @@ class UnifiedOrder(WeChatModel):
 
     def verify(self, result):
         """检查订单结果参数"""
+        # 检查mch_id是否一致
+        assert result["mch_id"] == self.pay.mch_id, "incorrect mch_id"
+
+        # 检查out_order_no是否一致
+        assert result["out_trade_no"] == self.out_trade_no,\
+            "incorrect out trade no"
+
         # 检查金额一致
-        pass
+        assert str(result["total_fee"]) == str(self.total_fee),\
+            "incorrect total fee"
 
     def __str__(self):
         return "{0} ({1})".format(self.out_trade_no, self.body)

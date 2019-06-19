@@ -6,6 +6,7 @@ from uuid import uuid4
 import xmltodict
 
 from wechat_django.sites.wechat import default_site
+from ..exceptions import WeChatPayNotifyError
 from ..models import UnifiedOrderResult
 from ..notify import NotifyViewSet
 from .base import mock, WeChatPayTestCase
@@ -40,7 +41,22 @@ class NotifyTestCase(WeChatPayTestCase):
         appname = self.app.name
         url = self.app.build_url(
             "order_notify", kwargs=dict(payname=self.app.pay.name))
-        request = self.rf().post(url)
+        # 测试签名正确
+        order = self.app.pay.create_order(**self.minimal_example)
+        xml = self.success_order_notify(self.app.pay, order)
+        request = self.rf().post(
+            url, data=xml, content_type="text/xml")
+
+        viewset = NotifyViewSet(default_site)
+        with mock.patch("wechatpy.pay.calculate_signature") as m:
+            m.return_value = self.sign
+            pay, data = viewset._prepare(
+                request, self.app.name, self.app.pay.name)
+
+        # 测试签名错误
+        self.assertRaises(
+            WeChatPayNotifyError, viewset._prepare,
+            request, self.app.name, self.app.pay.name)
 
     def test_notify_order(self):
         """测试订单回调通知"""
