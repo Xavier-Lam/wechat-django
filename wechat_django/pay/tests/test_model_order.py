@@ -180,10 +180,49 @@ class OrderTestCase(WeChatPayTestCase):
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
 
         # 测试回调更新
+        result = self.notify(self.app.pay, order)
+        order.update(result)
+        for key, value in result.items():
+            if key in UnifiedOrder.ALLOW_UPDATES:
+                v = getattr(order, key)
+                v = v if v is None else str(v)
+                self.assertEqual(v, value)
+            if key in self.list_fields(UnifiedOrderResult):
+                v = getattr(order.result, key)
+                v = v if v is None else str(v)
+                self.assertEqual(v, value)
+
+        # 测试回调更新
+        order = self.app.pay.create_order(**self.minimal_example)
+        result = self.notify(self.app.pay, order)
+        order.update(result)
+        for key, value in result.items():
+            if key in UnifiedOrder.ALLOW_UPDATES:
+                v = getattr(order, key)
+                v = v if v is None else str(v)
+                self.assertEqual(v, value)
+            if key in self.list_fields(UnifiedOrderResult):
+                v = getattr(order.result, key)
+                v = v if v is None else str(v)
+                self.assertEqual(v, value)
 
     def test_verify(self):
         """测试订单参数是否一致"""
-        pass
+        order = self.app.pay.create_order(**self.minimal_example)
+        result = self.success(self.app.pay, order)
+        result["total_fee"] = 1
+        self.assertRaises(AssertionError, order.verify, result)
+
+        result = self.success(self.app.pay, order)
+        result["out_trade_no"] = "123"
+        self.assertRaises(AssertionError, order.verify, result)
+
+        result = self.success(self.app.pay, order)
+        result["mch_id"] = "abc"
+        self.assertRaises(AssertionError, order.verify, result)
+
+        result = self.success(self.app.pay, order)
+        order.verify(result)
 
     def test_signal(self):
         """测试订单状态更新信号"""
@@ -299,4 +338,24 @@ class OrderTestCase(WeChatPayTestCase):
             "appid": str(pay.appid),
             "result_code": "SUCCESS",
             "err_code": "SUCCESS"
+        }
+
+    def notify(self, pay, order):
+        return {
+            "appid": pay.appid,
+            "bank_type": "CFT",
+            "cash_fee": "1",
+            "fee_type": "CNY",
+            "is_subscribe": "N",
+            "mch_id": pay.mch_id,
+            "nonce_str": "nonce_str",
+            "openid": "openid",
+            "out_trade_no": order.out_trade_no,
+            "result_code": "SUCCESS",
+            "return_code": "SUCCESS",
+            "time_end": "20190618223614",
+            "total_fee": "101",
+            "trade_type": "JSAPI",
+            "transaction_id": order.out_trade_no,
+            "sign": "sign"
         }
