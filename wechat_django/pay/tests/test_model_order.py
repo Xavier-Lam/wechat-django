@@ -64,6 +64,9 @@ class OrderTestCase(WeChatPayTestCase):
         )
         full = self.full_example
         full["openid"] = "openid"
+        # 将时间转换为字符串
+        timezone = tz.pytz.timezone("Asia/Shanghai")
+        timeformat = "%Y%m%d%H%M%S"
         request = self.rf().get("/")
         order = self.app.pay.create_order(request=request, **full)
         call_args = order.call_args(request)
@@ -77,6 +80,8 @@ class OrderTestCase(WeChatPayTestCase):
         self.assertEqual(call_args["client_ip"], get_ip(request))
         for k, v in full.items():
             fixed_key = key_map[k] if k in key_map else k
+            if k in ("time_start", "time_expire"):
+                v = v.astimezone(timezone).strftime(timeformat)
             self.assertEqual(call_args[fixed_key], v)
 
         # 更新参数
@@ -91,6 +96,8 @@ class OrderTestCase(WeChatPayTestCase):
         self.assertEqual(call_args, order.call_args())
         for k, v in full.items():
             fixed_key = key_map[k] if k in key_map else k
+            if k in ("time_start", "time_expire"):
+                v = v.astimezone(timezone).strftime(timeformat)
             fixed_val = update[fixed_key] if fixed_key in update else v
             self.assertEqual(call_args[fixed_key], fixed_val)
 
@@ -341,7 +348,7 @@ class OrderTestCase(WeChatPayTestCase):
         }
 
     def notify(self, pay, order):
-        return {
+        rv = {
             "appid": pay.appid,
             "bank_type": "CFT",
             "cash_fee": "1",
@@ -359,3 +366,5 @@ class OrderTestCase(WeChatPayTestCase):
             "transaction_id": order.out_trade_no,
             "sign": "sign"
         }
+        rv["trade_state"] = rv["result_code"]
+        return rv

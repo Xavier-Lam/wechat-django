@@ -23,6 +23,8 @@ class PayDateTimeField(m.DateTimeField):
             # 由微信字符串格式转换
             # TODO: 不知道会否有潜在时区问题
             if isinstance(value, six.text_type):
+                if not value:
+                    return None
                 dt = tz.datetime.strptime(value, self._format)
                 return tz.make_aware(dt, self._tz)
         except ValueError:
@@ -31,7 +33,7 @@ class PayDateTimeField(m.DateTimeField):
 
     def value_to_string(self, obj):
         rv = self.value_from_object(obj)
-        return rv.strftime(self._format) if val else ""
+        return rv.strftime(self._format) if rv else ""
 
     def value_from_object(self, obj):
         rv = super(PayDateTimeField, self).value_from_object(obj)

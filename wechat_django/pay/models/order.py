@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
+
 from django.db import models as m
 from django.dispatch import receiver
 from django.utils import timezone as tz
@@ -136,6 +138,10 @@ class UnifiedOrder(WeChatModel):
         if self._call_args:
             self._call_args["client_ip"] = self.spbill_create_ip
         else:
+            if not self.time_start:
+                self.time_start = self.created_at
+            if not self.time_expire:
+                self.time_expire = self.created_at + datetime.timedelta(hours=2)
             # 构建call_args并缓存
             notify_url = self.pay.app.build_url(
                 "order_notify", request=request,
@@ -152,8 +158,8 @@ class UnifiedOrder(WeChatModel):
                 out_trade_no=self.out_trade_no,
                 detail=self.detail,
                 fee_type=self.fee_type,
-                time_start=time_start_field.value_from_object(self),
-                time_expire=time_expire_field.value_from_object(self),
+                time_start=time_start_field.value_to_string(self),
+                time_expire=time_expire_field.value_to_string(self),
                 goods_tag=self.goods_tag,
                 product_id=self.product_id,
                 device_info=self.device_info,
@@ -168,8 +174,12 @@ class UnifiedOrder(WeChatModel):
 
     def prepay(self, request=None, **kwargs):
         """调用统一下单接口"""
-        return self.pay.client.order.create(
-            **self.call_args(request, **kwargs))
+        call_args = self.call_args(request, **kwargs)
+        time_start_field = self._meta.get_field("time_start")
+        call_args["time_start"] = time_start_field.to_python(call_args["time_start"])
+        time_expire_field = self._meta.get_field("time_expire")
+        call_args["time_expire"] = time_expire_field.to_python(call_args["time_expire"])
+        return self.pay.client.order.create(**call_args)
 
     def jsapi_params(self, prepay_id, *args, **kwargs):
         return self.pay.client.jsapi.get_jsapi_params(
@@ -216,6 +226,7 @@ class UnifiedOrder(WeChatModel):
 
     def verify(self, result):
         """检查订单结果参数"""
+        from . import UnifiedOrderResult
         # 检查mch_id是否一致
         assert result["mch_id"] == self.pay.mch_id, "incorrect mch_id"
 
@@ -224,8 +235,9 @@ class UnifiedOrder(WeChatModel):
             "incorrect out trade no"
 
         # 检查金额一致
-        assert str(result["total_fee"]) == str(self.total_fee),\
-            "incorrect total fee"
+        if result["trade_state"] == UnifiedOrderResult.State.SUCCESS:
+            assert str(result["total_fee"]) == str(self.total_fee),\
+                "incorrect total fee"
 
     def __str__(self):
         return "{0} ({1})".format(self.out_trade_no, self.body)
