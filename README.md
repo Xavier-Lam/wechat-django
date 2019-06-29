@@ -30,7 +30,7 @@
     - [统一下单](#统一下单)
 - [后台使用简介](#后台使用简介)
 - [示例项目](#示例项目)
-- [TODOS:](#todos)
+- [TODOS:](#TODOS)
   - [计划的功能](#计划的功能)
   - [已知bugs](#已知bugs)
 
@@ -200,7 +200,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
     order.sync()
 
-当订单更新时,会发出`wechat_django.pay.signals.order_updated`信号.信号提供4个变量
+当订单更新时,会发出`wechat_django.pay.signals.order_updated`信号,sender为订单`re.compile("{appname}.{payname}")`.信号提供4个变量
 
 | 变量 | 说明 |
 | --- | --- |
@@ -213,9 +213,11 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
     from django.dispatch import receiver
     from wechat_django.pay import signals
+    
     @receiver(signals.order_updated)
-    def order_updated(reuslt, order, state, attach):
-        pass
+    def order_updated(result, order, state, attach):
+        if state == UnifiedOrderResult.State.SUCCESS:
+            pass
 
 > 注意! 每次主动调用,微信通知或是后台重新触发都会发送信号,请自行确保订单成功信号逻辑只执行一次!
 

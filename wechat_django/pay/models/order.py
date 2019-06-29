@@ -126,10 +126,11 @@ class UnifiedOrder(WeChatModel):
 
         return cls.objects.create(pay=pay, **data)
 
-    def call_args(self, request=None, **kwargs):
+    def call_args(self, request=None, dt2py=False, **kwargs):
         """调用统一下单接口的参数
         :param attach: 附加数据
         :param kwargs: 覆盖默认生成的数据
+        :param dt2py: 将请求微信的datetime格式转换为python的datetime格式
         """
         # 更新ip
         self.spbill_create_ip = kwargs.pop(
@@ -138,6 +139,9 @@ class UnifiedOrder(WeChatModel):
         if self._call_args:
             self._call_args["client_ip"] = self.spbill_create_ip
         else:
+            self.time_start = kwargs.pop("time_start", self.time_start)
+            self.time_expire = kwargs.pop("time_expire", self.time_expire)
+            # 显式设置起止时间
             if not self.time_start:
                 self.time_start = self.created_at
             if not self.time_expire:
@@ -146,8 +150,6 @@ class UnifiedOrder(WeChatModel):
             notify_url = self.pay.app.build_url(
                 "order_notify", request=request,
                 kwargs=dict(payname=self.pay.name), absolute=True)
-            time_start_field = self._meta.get_field("time_start")
-            time_expire_field = self._meta.get_field("time_expire")
             self._call_args = dict(
                 trade_type=self.trade_type,
                 body=self.body,
@@ -158,8 +160,8 @@ class UnifiedOrder(WeChatModel):
                 out_trade_no=self.out_trade_no,
                 detail=self.detail,
                 fee_type=self.fee_type,
-                time_start=time_start_field.value_to_string(self),
-                time_expire=time_expire_field.value_to_string(self),
+                time_start=PayDateTimeField.dt2str(self.time_start),
+                time_expire=PayDateTimeField.dt2str(self.time_expire),
                 goods_tag=self.goods_tag,
                 product_id=self.product_id,
                 device_info=self.device_info,
@@ -170,15 +172,17 @@ class UnifiedOrder(WeChatModel):
             )
             self._call_args.update(kwargs)
         self.save()
-        return self._call_args
+
+        rv = self._call_args.copy()
+        if dt2py:
+            # 将时间重新to_python
+            rv["time_start"] = PayDateTimeField.str2dt(rv["time_start"])
+            rv["time_expire"] = PayDateTimeField.str2dt(rv["time_expire"])
+        return rv
 
     def prepay(self, request=None, **kwargs):
         """调用统一下单接口"""
-        call_args = self.call_args(request, **kwargs)
-        time_start_field = self._meta.get_field("time_start")
-        call_args["time_start"] = time_start_field.to_python(call_args["time_start"])
-        time_expire_field = self._meta.get_field("time_expire")
-        call_args["time_expire"] = time_expire_field.to_python(call_args["time_expire"])
+        call_args = self.call_args(request, dt2py=True, **kwargs)
         return self.pay.client.order.create(**call_args)
 
     def jsapi_params(self, prepay_id, *args, **kwargs):

@@ -9,6 +9,7 @@ from wechatpy import WeChatPay as WeChatPayBaseClient
 from wechat_django.models import WeChatUser
 from wechat_django.utils.web import get_ip
 from ..models import UnifiedOrder, UnifiedOrderResult, WeChatPay
+from ..models.base import PayDateTimeField
 from ..signals import order_updated
 from .base import mock, WeChatPayTestCase
 
@@ -69,9 +70,10 @@ class OrderTestCase(WeChatPayTestCase):
         timeformat = "%Y%m%d%H%M%S"
         request = self.rf().get("/")
         order = self.app.pay.create_order(request=request, **full)
-        call_args = order.call_args(request)
-        self.assertEqual(call_args, order._call_args)
-        self.assertEqual(call_args, order.call_args())
+        call_args = order.call_args(request, dt2py=True)
+        self.assertEqual(call_args, order.call_args(dt2py=True))
+        _call_args = order.call_args(request)
+        self.assertEqual(_call_args, order._call_args)
         self.assertEqual(
             call_args["notify_url"],
             self.app.build_url(
@@ -81,8 +83,8 @@ class OrderTestCase(WeChatPayTestCase):
         for k, v in full.items():
             fixed_key = key_map[k] if k in key_map else k
             if k in ("time_start", "time_expire"):
-                v = v.astimezone(timezone).strftime(timeformat)
-            self.assertEqual(call_args[fixed_key], v)
+                v = PayDateTimeField.dt2str(v)
+            self.assertEqual(_call_args[fixed_key], v)
 
         # 更新参数
         update = dict(

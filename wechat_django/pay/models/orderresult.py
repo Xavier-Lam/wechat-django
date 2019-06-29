@@ -21,7 +21,7 @@ class UnifiedOrderResult(WeChatModel):
         REVOKED = "REVOKED"  # 已撤销(刷卡支付)
         USERPAYING = "USERPAYING"  # 用户支付中
         PAYERROR = "PAYERROR"  # 支付失败(其他原因，如银行返回失败)
-        FAIL = ""  # 回调拿到失败
+        FAIL = "FAIL"  # 回调拿到失败
 
     order = m.OneToOneField(
         UnifiedOrder, on_delete=m.CASCADE, related_name="result")
@@ -72,7 +72,7 @@ class UnifiedOrderResult(WeChatModel):
         self.save()
         if signal:
             order_updated.send(
-                sender=self.__class__, result=self, order=self.order,
+                sender=self.order.pay.symbol, result=self, order=self.order,
                 state=self.trade_state, attach=result.get("attach"))
 
     def __str__(self):

@@ -20,9 +20,8 @@ class WeChatAppForm(forms.ModelForm):
     wechat_host = forms.CharField(
         label=_("WeChat host"), required=False,
         help_text=_("接收微信回调的域名"))
-    wechat_https = forms.ChoiceField(
+    wechat_https = forms.BooleanField(
         label=_("WeChat https"), required=False,
-        choices=[(True, _("Yes")), (False, _("No"))],
         help_text=_("回调地址是否为https"))
 
     accesstoken_url = forms.URLField(

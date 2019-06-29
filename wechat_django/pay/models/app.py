@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import re
+
 from django.db import models as m
+from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
@@ -45,6 +48,12 @@ class WeChatPay(m.Model):
     @property
     def sub_appid(self):
         return self.app.appid if self.mch_app_id else None
+
+    @cached_property
+    def symbol(self):
+        if not self.pk:
+            raise AttributeError
+        return re.compile("{0}.{1}".format(self.app.name, self.name))
 
     class Meta(object):
         verbose_name = _("WeChat pay")
