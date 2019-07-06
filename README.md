@@ -231,7 +231,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 ## TODOS:
 * 是否可做成migrate权限全自助?重构权限模块?
 * 可选加密存储敏感数据
-* Cookbook
+* [Cookbook](docs/cookbook/README.md)
 * app层面的message log和reply log
 * 完善单元测试
 * 后台表单验证

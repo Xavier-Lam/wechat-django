@@ -16,7 +16,7 @@ def load_cert(self):
         # 自动delete在windows下读取时报PermissionDenied
         # TODO: 可以考虑第一次使用时写入证书 析构时移除证书 减少IO
         with NamedTemporaryFile("wb", delete=False) as mch_cert,\
-            NamedTemporaryFile("wb", delete=False) as mch_key:
+             NamedTemporaryFile("wb", delete=False) as mch_key:
             mch_cert.write(self.pay.mch_cert)
             mch_cert.flush()
             mch_cert.close()

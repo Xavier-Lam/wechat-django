@@ -16,7 +16,6 @@ from wechatpy.exceptions import InvalidSignatureException
 from wechat_django.models import WeChatApp
 from wechat_django.sites.wechat import BaseWeChatViewSet
 from .exceptions import WeChatPayNotifyError
-from .models import UnifiedOrderResult
 
 
 def make_response(msg=None):
@@ -37,6 +36,8 @@ class NotifyViewSet(BaseWeChatViewSet):
             except WeChatPayNotifyError as e:
                 return make_response(e.msg)
             except:
+                log = WeChatApp.objects.get_by_name(appname).logger("handler")
+                log.exception("WeChat Pay notify server error")
                 return make_response(_("Internal server error"))
 
         return decorated_view

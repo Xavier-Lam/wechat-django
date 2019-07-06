@@ -105,24 +105,28 @@ class WeChatUser(WeChatModel):
 
     @classmethod
     @appmethod
-    def user_by_openid(cls, app, openid, ignore_errors=False):
+    def user_by_openid(cls, app, openid, ignore_errors=False, sync_user=True):
         """根据用户openid拿到用户对象
-        :param ignore_errors: 当接口返回失败时还是强行插入user
+        :param ignore_errors: 当库中未找到用户或接口返回失败时还是强行插入user
+        :param sync_user: 从服务器拿用户数据
         """
         try:
             return app.users.get(openid=openid)
         except cls.DoesNotExist:
-            try:
-                return app.fetch_user(openid)
-            except Exception as e:
-                if isinstance(e, WeChatClientException)\
-                    and e.errcode == WeChatErrorCode.INVALID_OPENID:
-                    # 不存在抛异常
-                    raise
-                elif ignore_errors:
-                    pass # TODO: 好歹记个日志吧...
-                else:
-                    raise
+            if sync_user:
+                try:
+                    return app.fetch_user(openid)
+                except Exception as e:
+                    if isinstance(e, WeChatClientException)\
+                        and e.errcode == WeChatErrorCode.INVALID_OPENID:
+                        # 不存在抛异常
+                        raise
+                    elif ignore_errors:
+                        pass # TODO: 好歹记个日志吧...
+                    else:
+                        raise
+            elif not ignore_errors:
+                raise
         return app.users.create(openid=openid)
 
     @classmethod

@@ -11,3 +11,12 @@ def next_chunk(iterator, count=100):
             rv = []
     if rv:
         yield rv
+
+
+class Static:
+    __caches = dict()
+
+    def __new__(cls, obj):
+        if obj not in cls.__caches:
+            cls.__caches[obj] = obj
+        return cls.__caches[obj]

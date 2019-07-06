@@ -64,6 +64,17 @@ class WeChatMessageInfo(WeChatInfo):
         return self._message
 
     @property
+    def local_user(self):
+        """
+        不从微信服务器重新同步用户
+        :rtype: wechat_django.models.WeChatUser
+        """
+        if not hasattr(self, "_user") and not hasattr(self, "_local_user"):
+            self._local_user = self.app.user_by_openid(
+                self.message.source, ignore_errors=True, sync_user=False)
+        return self._user if hasattr(self, "_user") else self._local_user
+
+    @property
     def user(self):
         """
         :rtype: wechat_django.models.WeChatUser

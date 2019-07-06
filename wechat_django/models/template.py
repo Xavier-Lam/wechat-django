@@ -109,7 +109,7 @@ class Template(WeChatModel):
             pagepath=pagepath
         ) if appid else None
         return self.app.client.message.send_template(
-            openid, self.template_id, data, url=url, miniprogram=miniprogram)
+            openid, self.template_id, data, url=url, mini_program=miniprogram)
 
     def _send_miniprogram(
         self, openid, data, form_id, page=None, emphasis_keyword=None):

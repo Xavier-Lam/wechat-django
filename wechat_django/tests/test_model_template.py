@@ -145,7 +145,7 @@ class TemplateTestCase(WeChatTestCase):
             t.send(openid, data, **miniprogram)
             self.assertCallArgsEqual(
                 WeChatMessage.send_template, (openid, id, data),
-                {"miniprogram": miniprogram})
+                {"mini_program": miniprogram})
 
             # 发送kwargs
             t.send(openid, **data)

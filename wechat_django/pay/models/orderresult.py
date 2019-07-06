@@ -72,7 +72,7 @@ class UnifiedOrderResult(WeChatModel):
         self.save()
         if signal:
             order_updated.send(
-                sender=self.order.pay.symbol, result=self, order=self.order,
+                sender=self.order.pay.staticname, result=self, order=self.order,
                 state=self.trade_state, attach=result.get("attach"))
 
     def __str__(self):
