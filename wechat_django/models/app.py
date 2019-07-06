@@ -219,7 +219,9 @@ class WeChatApp(m.Model):
             return location
 
         if request and not self.site_host:
-            baseurl = "{}://{}".format(request.scheme, request.get_host())
+            baseurl = "{}://{}".format(
+                "https" if self.site_https else request.scheme,
+                request.get_host())
         else:
             protocol = "https://" if self.site_https else "http://"
             if self.site_host:

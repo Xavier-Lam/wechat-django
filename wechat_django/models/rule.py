@@ -66,18 +66,16 @@ class Rule(WeChatModel):
         """
         :type message: wechatpy.messages.BaseMessage
         """
-        s_eq = lambda a, b: a.lower() == b.lower()
-
         if self.type == self.Type.ALL:
             return True
         elif self.type == self.Type.MSGTYPE:
             return message.type == self.content["msg_type"]
         elif self.type == self.Type.EVENT:
             return (message.type == self.ReceiveMsgType.EVENT
-                and s_eq(message.event, self.content["event"]))
+                and self._event_match(message))
         elif self.type == self.Type.EVENTKEY:
             return (message.type == self.ReceiveMsgType.EVENT
-                and s_eq(message.event, self.content["event"])
+                and self._event_match(message)
                 and hasattr(message, "key")
                 and message.key == self.content["key"])
         elif self.type == self.Type.CONTAIN:
@@ -90,6 +88,16 @@ class Rule(WeChatModel):
             return (message.type == self.ReceiveMsgType.TEXT
                 and re.search(self.content["pattern"], message.content))
         return False
+
+    def _event_match(self, message):
+        event = message.event.lower()
+        target = self.content["event"].lower()
+        if target == MessageHandler.EventType.SUBSCRIBE:
+            # wechatpy对eventtype进行了二次封装
+            return event in (
+                MessageHandler.EventType.SUBSCRIBE, "subscribe_scan")
+        else:
+            return event == target
 
     @classmethod
     def from_mp(cls, data, handler=None):

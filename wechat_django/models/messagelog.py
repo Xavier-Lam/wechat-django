@@ -5,6 +5,7 @@ from django.db import models as m
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
+from wechatpy.events import BaseEvent
 
 from ..utils.model import enum2choices
 from . import Rule, WeChatApp, WeChatModel, WeChatUser
@@ -56,6 +57,9 @@ class MessageLog(WeChatModel):
             if key not in ("id", "source", "target", "create_time", "time")
         }
 
+        if isinstance(message, BaseEvent):
+            content["event"] = message.event
+
         kwargs = dict(
             app=app,
             user=user,
@@ -91,3 +95,6 @@ class MessageLog(WeChatModel):
             kwargs["created_at"] = timezone.datetime.fromtimestamp(
                 reply.time)
         return cls.objects.create(**kwargs)
+
+    def __str__(self):
+        return _("%s消息: %s") % (self.type, self.msg_id)

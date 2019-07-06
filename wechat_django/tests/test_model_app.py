@@ -116,7 +116,7 @@ class AppTestCase(WeChatTestCase):
         assertUrlCorrect(allowed_host, url_name, secure=True)
 
         # 什么都没有配置时,取request的host
-        assertUrlCorrect(request_host, url_name, req, secure=False)
+        assertUrlCorrect(request_host, url_name, req, secure=True)
 
         settings.SITE_HOST = settings_host
         settings.SITE_HTTPS = True

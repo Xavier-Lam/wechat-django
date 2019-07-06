@@ -7,7 +7,7 @@
 
 ## 被动消息
 ### 首次订阅
-在开始使用本项目前,请先在后台或shell中同步关注app的所有用户.当接收到消息时,判断`message.local_user.subscribe`为非真值,在取用`message.user`将同步了所有信息的用户写库,如果未认证,可以手动将`message.local_user.subscribe`置为`True`,并且保存.
+在开始使用本项目前,请先在后台或shell中同步关注app的所有用户.当接收到消息时,判断`message.local_user.subscribe`为非真值,再通过`message.user.update()`同步用户信息并写库,如果未认证,可以手动将`message.local_user.subscribe`置为`True`,并且保存.
 
     import time
     from wechat_django import message_handler
@@ -16,10 +16,11 @@
     def on_subscribe(message):
         user = message.local_user
         if not user.subscribe:
-            # 首次订阅
             if message.app.authed:
-                user = message.user
+                # 认证公众号 直接拉取用户信息
+                user.update()
             else:
+                # 未认证公众号 手动更新信息
                 user.subscribe = True
                 user.subscribe_time = time.time()
                 user.save()

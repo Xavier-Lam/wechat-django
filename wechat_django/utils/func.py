@@ -20,3 +20,6 @@ class Static:
         if obj not in cls.__caches:
             cls.__caches[obj] = obj
         return cls.__caches[obj]
+
+    def __init__(self, obj):
+        pass
