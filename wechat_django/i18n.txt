@@ -55,3 +55,12 @@
 {% trans "ADD_SCENE_PROFILE_ITEM" %}
 {% trans "ADD_SCENE_PAID" %}
 {% trans "ADD_SCENE_OTHERS" %}
+
+{% trans "SUCCESS" %}
+{% trans "REFUND" %}
+{% trans "NOTPAY" %}
+{% trans "CLOSED" %}
+{% trans "REVOKED" %}
+{% trans "USERPAYING" %}
+{% trans "PAYERROR" %}
+{% trans "FAIL" %}

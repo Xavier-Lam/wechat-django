@@ -97,4 +97,7 @@ class MessageLog(WeChatModel):
         return cls.objects.create(**kwargs)
 
     def __str__(self):
-        return _("%s消息: %s") % (self.type, self.msg_id)
+        return _("%(type)s消息: %(msg_id)s") % dict(
+            type=self.type,
+            msg_id=self.msg_id
+        )

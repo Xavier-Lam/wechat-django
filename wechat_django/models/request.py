@@ -137,7 +137,7 @@ class WeChatOAuthInfo(WeChatInfo):
     @property
     def user(self):
         if not hasattr(self, "_user"):
-            self._user = WeChatUser.user_by_openid(self.openid)
+            self._user = self.app.user_by_openid(self.openid)
         return super(WeChatOAuthInfo, self).user
 
     @property

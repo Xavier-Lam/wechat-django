@@ -54,7 +54,7 @@ class WeChatUser(WeChatModel):
         _("alias"), max_length=16, blank=True, null=True,
         help_text=_("用户别名,用于程序快速查询用户,单app下唯一"))
 
-    nickname = m.CharField(_("nickname"), max_length=24, null=True)
+    nickname = m.CharField(_("nickname"), max_length=32, null=True)
     sex = m.SmallIntegerField(
         _("gender"), choices=enum2choices(Gender), null=True)
     headimgurl = m.CharField(_("avatar"), max_length=256, null=True)

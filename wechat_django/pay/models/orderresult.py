@@ -76,4 +76,4 @@ class UnifiedOrderResult(WeChatModel):
                 state=self.trade_state, attach=result.get("attach"))
 
     def __str__(self):
-        return _("%s reuslt") % self.order
+        return _("%(order)s reuslt") % dict(order=self.order)

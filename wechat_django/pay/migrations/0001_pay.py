@@ -8,6 +8,8 @@ import django.utils.timezone
 import jsonfield.fields
 import wechat_django.pay.models.base
 
+from wechat_django.models.permission import upgrade_perms, downgrade_perms
+
 
 class Migration(migrations.Migration):
 
@@ -55,7 +57,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('transaction_id', models.CharField(max_length=32, verbose_name='transaction_id', null=True)),
-                ('trade_state', models.CharField(choices=[('CLOSED', 'CLOSED'), ('NOTPAY', 'NOTPAY'), ('PAYERROR', 'PAYERROR'), ('REFUND', 'REFUND'), ('REVOKED', 'REVOKED'), ('SUCCESS', 'SUCCESS'), ('USERPAYING', 'USERPAYING')], max_length=32, verbose_name='trade_state')),
+                ('trade_state', models.CharField(choices=[('CLOSED', 'CLOSED'), ('FAIL', 'FAIL'), ('NOTPAY', 'NOTPAY'), ('PAYERROR', 'PAYERROR'), ('REFUND', 'REFUND'), ('REVOKED', 'REVOKED'), ('SUCCESS', 'SUCCESS'), ('USERPAYING', 'USERPAYING')], max_length=32, verbose_name='trade_state')),
                 ('time_end', wechat_django.pay.models.base.PayDateTimeField(null=True, verbose_name='pay time_end')),
                 ('settlement_total_fee', models.PositiveIntegerField(null=True, verbose_name='settlement_total_fee')),
                 ('cash_fee', models.PositiveIntegerField(verbose_name='cash_fee', null=True)),
@@ -114,3 +116,8 @@ class Migration(migrations.Migration):
             index_together={('pay', 'created_at')},
         ),
     ]
+
+    migrations.RunPython(
+        lambda *args, **kwargs: upgrade_perms("pay_full", "pay_manage", "pay_order"),
+        lambda *args, **kwargs: downgrade_perms("pay_full", "pay_manage", "pay_order"),
+    )

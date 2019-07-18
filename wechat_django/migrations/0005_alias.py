@@ -44,4 +44,9 @@ class Migration(migrations.Migration):
             name='wechatuser',
             unique_together=set([('unionid', 'app'), ('app', 'openid'), ('app', 'alias')]),
         ),
+        migrations.AlterField(
+            model_name='wechatuser',
+            name='nickname',
+            field=models.CharField(max_length=32, null=True, verbose_name='nickname'),
+        ),
     ]
