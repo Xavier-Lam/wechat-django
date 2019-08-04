@@ -35,7 +35,7 @@ class OrderResultAdmin(admin.StackedInline):
 
 
 class OrderAdmin(WeChatPayModelAdmin):
-    __category__ = "order"
+    __category__ = "pay_order"
     __model__ = UnifiedOrder
 
     inlines = (OrderResultAdmin,)

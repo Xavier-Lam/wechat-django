@@ -93,26 +93,6 @@ class PermissionTestCase(WeChatTestCase):
         for perm_name in pm.list_perm_names(self.app):
             assertMenuCorrect(perm_name)
 
-    def test_pay_manage(self):
-        """测试支付权限"""
-        # WeChatPay.objects.create(
-        #     app=self.app, mch_id="mch_id", api_key="api_key")
-        perm_name = pm.get_perm_name(self.app, "pay_manage")
-        p_user = self._create_user(perm_name)
-        n_user = self._create_user()
-        admin = WeChatAppWithPayAdmin(WeChatApp, site)
-
-        request = self.rf().get("/admin/wechat_django/apps?id=" + str(self.app.id))
-        request.user = p_user
-        inlines = admin.get_inline_instances(request, self.app)
-        self.assertTrue(list(filter(
-            lambda o: isinstance(o, WeChatPayInline), inlines)))
-
-        request.user = n_user
-        inlines = admin.get_inline_instances(request, self.app)
-        self.assertFalse(list(filter(
-            lambda o: isinstance(o, WeChatPayInline), inlines)))
-
     def assertHasPermission(self, user, permission):
         permission = pm.get_perm_model(permission)
         self.assertIn(permission, user.user_permissions.all())

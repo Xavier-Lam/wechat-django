@@ -30,9 +30,10 @@
     - [统一下单](#统一下单)
 - [后台使用简介](#后台使用简介)
 - [示例项目](#示例项目)
-- [TODOS:](#TODOS)
+- [TODOS:](#todos)
   - [计划的功能](#计划的功能)
   - [已知bugs](#已知bugs)
+- [Changelog](#changelog)
 
 ## 功能
 * 公众号管理
@@ -239,6 +240,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 * 自动处理关注及取消关注事件
 
 ### 计划的功能
+* 公众号迁移
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
 * 清理及保护永久素材
@@ -248,6 +250,8 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ### 已知bugs
 * 多次同步消息处理器会重复生成永久素材
+
+## [Changelog](CHANGELOG.md)
 
 
 Xavier-Lam@NetDragon

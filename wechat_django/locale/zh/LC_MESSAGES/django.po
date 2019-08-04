@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-18 23:27+0800\n"
+"POT-Creation-Date: 2019-08-04 12:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Xavier-Lam <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1150,6 +1150,14 @@ msgstr "标价金额"
 #: .\wechat_django\pay\models\order.py:52
 msgid "spbill_create_ip"
 msgstr "终端ip"
+
+#: .\wechat_django\pay\models\order.py:53
+msgid "time_start"
+msgstr "交易起始时间"
+
+#: .\wechat_django\pay\models\order.py:54
+msgid "time_expire"
+msgstr "交易结束时间"
 
 #: .\wechat_django\pay\models\order.py:55
 msgid "goods_tag"

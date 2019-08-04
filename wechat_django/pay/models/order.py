@@ -50,8 +50,8 @@ class UnifiedOrder(WeChatModel):
         _("fee_type"), max_length=16, null=True, default=FeeType.CNY)
     total_fee = m.PositiveIntegerField(_("total_fee"))
     spbill_create_ip = m.CharField(_("spbill_create_ip"), max_length=64) # TODO: 生成时是否应该赋值?
-    time_start = PayDateTimeField("time_start", default=tz.now)
-    time_expire = PayDateTimeField("time_expire")
+    time_start = PayDateTimeField(_("time_start"), default=tz.now)
+    time_expire = PayDateTimeField(_("time_expire"))
     goods_tag = m.CharField(_("goods_tag"), max_length=32, null=True)
     trade_type = m.CharField(
         _("trade_type"), max_length=16, choices=enum2choices(TradeType))
