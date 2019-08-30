@@ -13,7 +13,7 @@ def next_chunk(iterator, count=100):
         yield rv
 
 
-class Static:
+class Static(object):
     __caches = dict()
 
     def __new__(cls, obj):
