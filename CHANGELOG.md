@@ -1,4 +1,7 @@
 # ChangeLog
+
+breaking changes以:exclamation:开头标注
+- [0.3.1](#031)
 - [0.3.0](#030)
 - [0.2.5](#025)
 - [0.2.4](#024)
@@ -6,16 +9,19 @@
 - [0.2.0](#020)
 - [0.1.0](#010)
 
+## 0.3.1
+* 移除settings中的`WECHAT_WECHATCLIENT`,`WECHAT_OAUTHCLIENT`,`WECHAT_PAYCLIENT`选项,请开发者[通过继承代理类实现](docs/cookbook/advance-dev.md#使用自定义请求客户端)
+
 ## 0.3.0
 * 微信支付client
 * 统一下单订单管理,回调及订单状态变更信号
-* 小程序的client由`wechat_django.client.WeChatClient`变更为`wechatpy.client.api.WeChatWxa`
-* 数个配置项更改
+* :exclamation: 小程序的client由`wechat_django.client.WeChatClient`变更为`wechatpy.client.api.WeChatWxa`**
+* :exclamation: 数个配置项更改
 * 站点及模型代码重构
 * 要求wechatpy最低版本1.8.3
 
 ## 0.2.5
-* 模板消息
+* [模板消息](docs/cookbook/messages.md#模板消息)
 
 ## 0.2.4
 * 小程序授权及验证/解密信息

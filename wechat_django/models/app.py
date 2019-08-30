@@ -124,11 +124,18 @@ class WeChatApp(m.Model):
         if not self.abilities.api:
             raise WeChatAbilityError(WeChatAbilityError.API)
         if not hasattr(self, "_client"):
-            client_factory = import_string(settings.WECHATCLIENT)
-            self._client = client_factory(self)
+            self._client = self._get_client()
             if self.type == self.Type.MINIPROGRAM:
                 self._client = self._client.wxa
         return self._client
+
+    def _get_client(self):
+        """
+        :rtype: wechat_django.client.WeChatClient
+                or wechatpy.client.api.wxa.WeChatWxa
+        """
+        from wechat_django.client import WeChatClient
+        return WeChatClient(self)
 
     @property
     def oauth(self):
@@ -138,9 +145,15 @@ class WeChatApp(m.Model):
         if not self.abilities.oauth:
             raise WeChatAbilityError(WeChatAbilityError.OAUTH)
         if not hasattr(self, "_oauth"):
-            client_factory = import_string(settings.OAUTHCLIENT)
-            self._oauth = client_factory(self)
+            self._oauth = self._get_oauth()
         return self._oauth
+
+    def _get_oauth(self):
+        """
+        :rtype: wechat_django.WeChatOAuthClient
+        """
+        from wechat_django.oauth import WeChatOAuthClient
+        return WeChatOAuthClient(self)
 
     @property
     def crypto(self):

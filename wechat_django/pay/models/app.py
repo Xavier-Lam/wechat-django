@@ -66,9 +66,13 @@ class WeChatPay(m.Model):
     def client(self):
         """:rtype: wechat_django.client.WeChatPayClient"""
         if not hasattr(self, "_client"):
-            client_factory = import_string(settings.PAYCLIENT)
-            self._client = client_factory(self)
+            self._client = self._get_client()
         return self._client
+
+    def _get_client(self):
+        """:rtype: wechat_django.client.WeChatPayClient"""
+        from wechat_django.pay.client import WeChatPayClient
+        return WeChatPayClient(self)
 
     def __str__(self):
         return "{0} ({1})".format(self.title, self.name)

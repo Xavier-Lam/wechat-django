@@ -83,6 +83,11 @@ class WeChatUser(WeChatModel):
 
     objects = WeChatUserManager()
 
+    is_staff = False
+    is_active = True
+    is_anonymous = False
+    is_authenticated = True
+
     class Meta(object):
         verbose_name = _("user")
         verbose_name_plural = _("users")

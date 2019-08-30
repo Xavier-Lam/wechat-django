@@ -72,10 +72,8 @@
 | WECHAT_SITE_HOST | None | 用于接收微信回调的默认域名 |
 | WECHAT_SITE_HTTPS | True | 接收微信回调域名是否是https |
 | WECHAT_PATCHADMINSITE | True | 是否将django默认的adminsite替换为wechat_django默认的adminsite, 默认替换 |
-| WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 用于存储微信accesstoken等数据的[`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象,或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
-| WECHAT_WECHATCLIENT | "wechat_django.client.WeChatClient" | 微信API请求类(`wechat_django.client.WeChatClient`)或接收`wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 | 
-| WECHAT_OAUTHCLIENT | "wechat_django.oauth.WeChatOAuthClient" | 微信OAuth请求类(`wechat_django.oauth.WeChatOAuthClient`)或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 |
-| WECHAT_PAYCLIENT |  "wechat_django.pay.client.WeChatPayClient" | 微信支付请求类(`wechat_django.pay.client.WeChatPayClient`)或接收 `wechat_django.pay.models.WeChatPay` 对象并生成其实例的工厂方法 | | WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
+| WECHAT_SESSIONSTORAGE | "django.core.cache.cache" | 用于存储微信accesstoken等数据的[`wechatpy.session.SessionStorage`](https://wechatpy.readthedocs.io/zh_CN/master/quickstart.html#id10) 对象,或接收 `wechat_django.models.WeChatApp` 对象并生成其实例的工厂方法 |
+| WECHAT_MESSAGETIMEOFFSET | 180 | 微信请求消息时,timestamp与服务器时间差超过该值的请求将被抛弃 |
 | WECHAT_MESSAGENOREPEATNONCE | True | 是否对微信消息防重放检查 默认检查 |
 
 ### 日志
