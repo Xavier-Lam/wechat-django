@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from django.db import models as m
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
@@ -19,6 +20,7 @@ class Rule(WeChatModel):
         CONTAIN = "contain"  # 包含
         EQUAL = "equal"  # 匹配
         REGEX = "regex"  # 正则
+        CUSTOM = "custom"
         ALL = "all"  # 全部
 
     class ReceiveMsgType(MsgType):
@@ -60,7 +62,32 @@ class Rule(WeChatModel):
         """
         :type message_info: wechat_django.models.WeChatMessageInfo
         """
+        if self.type == self.Type.CUSTOM:
+            return self._custom_match(message_info)
+
         return self._match(message_info.message)
+
+    def _custom_match(self, message_info):
+        """
+        :type message_info: wechat_django.models.WeChatMessageInfo
+        """
+        try:
+            func = import_string(self.content["program"])
+        except ImportError:
+            pass
+        else:
+            appname = message_info.app.name
+            message = message_info.message
+            if not hasattr(func, "message_rule"):
+                return False
+            elif (hasattr(func.message_rule, "__contains__")
+                  and appname not in func.message_rule):
+                return False
+            try:
+                return func(message_info)
+            except:
+                pass
+        return False
 
     def _match(self, message):
         """

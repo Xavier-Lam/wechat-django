@@ -3,8 +3,27 @@ from __future__ import unicode_literals
 
 from wechatpy import events, messages
 
-from ..models import MessageHandler, Rule
+from ..handler import message_rule
+from ..models import MessageHandler, Rule, WeChatApp
 from .base import WeChatTestCase
+
+
+def undecorated_rule(message_info):
+    return True
+
+
+def raise_exception_rule(message_info):
+    raise Exception()
+
+
+@message_rule
+def debug_rule(message_info):
+    return message_info.message.type == "text"
+
+
+@message_rule("test")
+def app_only_handler(message_info):
+    return True
 
 
 class HandlerTestCase(WeChatTestCase):
@@ -79,6 +98,35 @@ class HandlerTestCase(WeChatTestCase):
         self.assertMatch(rule, another_text_message)
         self.assertNotMatch(rule, image_message)
         self.assertNotMatch(rule, click_event)
+
+        # 测试自定义匹配
+        message_info = self._msg2info(text_message)
+        rule = Rule(
+            type=Rule.Type.CUSTOM,
+            program="wechat_django.tests.test_model_rule.debug_rule")
+        self.assertTrue(rule.match(message_info))
+        self.assertFalse(rule.match(self._msg2info(image_message)))
+
+        # 测试不属于本app
+        another_app = WeChatApp.objects.get_by_name("test1")
+        rule = Rule(
+            type=Rule.Type.CUSTOM,
+            program="wechat_django.tests.test_model_rule.app_only_handler")
+        self.assertTrue(rule.match(message_info))
+        self.assertFalse(rule.match(
+            self._msg2info(text_message, another_app)))
+
+        # 测试未装饰
+        rule = Rule(
+            type=Rule.Type.CUSTOM,
+            program="wechat_django.tests.test_model_rule.undecorated_rule")
+        self.assertFalse(rule.match(message_info))
+
+        # 测试抛异常自定义匹配
+        rule = Rule(
+            type=Rule.Type.CUSTOM,
+            program="wechat_django.tests.test_model_handler.raise_exception_rule")
+        self.assertFalse(rule.match(message_info))
 
         # 测试handler匹配
         handler3 = self._create_handler(rules=[dict(

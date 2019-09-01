@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from six.moves.urllib.parse import urlparse
 from wechatpy import parse_message
 
 from . import WeChatApp, WeChatUser
@@ -104,7 +105,7 @@ class WeChatOAuthInfo(WeChatInfo):
         """
         from ..oauth import WeChatSNSScope
 
-        if not hasattr(self, "_scope"):
+        if not getattr(self, "_scope", None):
             self._scope = (WeChatSNSScope.BASE,)
         return self._scope
 
@@ -122,16 +123,30 @@ class WeChatOAuthInfo(WeChatInfo):
             self.state
         )
 
+    _redirect_uri = None
+
     @property
     def redirect_uri(self):
         """授权后重定向回的地址"""
-        return self._redirect_uri
+        # 绝对路径
+        if self._redirect_uri and urlparse(self._redirect_uri).netloc:
+            return self._redirect_uri
+
+        request = self.request
+        return request.build_absolute_uri(
+            self._redirect_uri
+            or (request.is_ajax() and request.META.get("HTTP_REFERER"))
+            or None
+        )
+
+    @redirect_uri.setter
+    def redirect_uri(self, value):
+        self._redirect_uri = value
 
     @property
     def openid(self):
         if not hasattr(self, "_openid"):
-            self._openid = self.request.get_signed_cookie(
-                self.session_key, None)
+            self._openid = self.request.session.get(self.session_key)
         return self._openid
 
     @property

@@ -165,7 +165,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 具体client的使用方式,请移步[wechatpy文档](https://wechatpy.readthedocs.io/zh_CN/master/client/index.html)
 
 ### 自定义微信回复
-在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.decorators.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
+在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.handler.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
 
     from wechat_django import message_handler
 
@@ -231,14 +231,15 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
+* 微信通知信号
+* 自定义消息处理规则
+* 自动处理关注及取消关注事件
 * 是否可做成migrate权限全自助?重构权限模块?
 * 可选加密存储敏感数据
 * [Cookbook](docs/cookbook/readme.md)
 * app层面的message log和reply log
 * 完善单元测试
 * 后台表单验证
-* 自定义消息处理规则
-* 自动处理关注及取消关注事件
 
 ### 计划的功能
 * 公众号迁移

@@ -10,12 +10,15 @@ breaking changes以:exclamation:开头标注
 - [0.1.0](#010)
 
 ## 0.3.1
+* 微信网页授权对django-rest-framework进行兼容
+* [自定义消息处理规则](docs/cookbook/messages.md#自定义处理规则)
+* 接收到微信消息与处理完成微信消息信号
 * 移除settings中的`WECHAT_WECHATCLIENT`,`WECHAT_OAUTHCLIENT`,`WECHAT_PAYCLIENT`选项,请开发者[通过继承代理类实现](docs/cookbook/advance-dev.md#使用自定义请求客户端)
 
 ## 0.3.0
 * 微信支付client
 * 统一下单订单管理,回调及订单状态变更信号
-* :exclamation: 小程序的client由`wechat_django.client.WeChatClient`变更为`wechatpy.client.api.WeChatWxa`**
+* :exclamation: 小程序的client由`wechat_django.client.WeChatClient`变更为`wechatpy.client.api.WeChatWxa`
 * :exclamation: 数个配置项更改
 * 站点及模型代码重构
 * 要求wechatpy最低版本1.8.3

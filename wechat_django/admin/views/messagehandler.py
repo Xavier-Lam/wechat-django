@@ -56,7 +56,9 @@ class RuleInline(admin.StackedInline):
             choices=enum2choices(MessageHandler.EventType), required=False)
         key = forms.CharField(label=_("event key"), required=False)
         pattern = forms.CharField(label=_("pattern"), required=False)
-        # media_id = forms.CharField(label=_("media_id"), required=False)
+        program = forms.CharField(
+            label=_("custom program"), required=False,
+            help_text=_("自定义处理规则应该是轻量并且无副作用的"))
 
         class Meta(object):
             model = Rule
@@ -64,16 +66,19 @@ class RuleInline(admin.StackedInline):
 
         def allowed_fields(self, type, cleaned_data):
             if type in (Rule.Type.CONTAIN, Rule.Type.REGEX, Rule.Type.EQUAL):
-                fields = ("pattern", )
+                fields = ("pattern",)
             elif type == Rule.Type.EVENT:
-                fields = ("event", )
+                fields = ("event",)
             elif type == Rule.Type.EVENTKEY:
                 fields = ("event", "key")
             elif type == Rule.Type.MSGTYPE:
-                fields = ("msg_type", )
+                fields = ("msg_type",)
+            elif type == Rule.Type.CUSTOM:
+                fields = ("program",)
             else:
                 fields = tuple()
             return fields
+
     form = RuleForm
 
 

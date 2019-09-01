@@ -19,6 +19,8 @@
             case "equal":
             case "regex":
                 $row.find(".form-row.field-pattern").show();
+            case "custom":
+                $row.find(".form-row.field-program").show();
                 break;
         }
     };

@@ -19,10 +19,10 @@ from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
 import xmltodict
 
-from . import settings
+from . import settings, signals
 from .exceptions import BadMessageRequest, MessageHandleError
 
-__all__ = ("handler", "Handler", "message_handler")
+__all__ = ("handler", "Handler", "message_handler", "message_rule")
 
 
 class Handler(View):
@@ -30,35 +30,16 @@ class Handler(View):
         """
         :type request: wechat_django.requests.WeChatMessageRequest
         """
-        from .models import MessageHandler
-
         if not request.wechat.app.abilities.interactable:
             return response.HttpResponseNotFound()
-        log = MessageHandler.handlerlog(request)
         try:
             self._verify(request)
             resp = super(Handler, self).dispatch(request)
             if not isinstance(resp, response.HttpResponseNotFound):
-                log(logging.DEBUG, "receive a message")
+                self.log(logging.DEBUG, "receive a message")
             return resp
-        except MultiValueDictKeyError:
-            log(logging.WARNING, "bad request args", exc_info=True)
-            return response.HttpResponseBadRequest()
-        except BadMessageRequest:
-            log(logging.WARNING, "bad request", exc_info=True)
-            return response.HttpResponseBadRequest()
-        except InvalidSignatureException:
-            log(logging.WARNING, "invalid signature", exc_info=True)
-            return response.HttpResponseBadRequest()
-        except xmltodict.expat.ExpatError:
-            log(logging.WARNING, "deserialize message failed", exc_info=True)
-            return response.HttpResponseBadRequest()
-        except MessageHandleError:
-            log(logging.WARNING, "handle message failed", exc_info=True)
-            return ""
-        except:
-            log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
-            return ""
+        except Exception as e:
+            return self._handle_exception(request, e)
 
     def get(self, request):
         return request.GET["echostr"]
@@ -68,13 +49,24 @@ class Handler(View):
         from .sites.wechat import patch_request
 
         request = patch_request(request, cls=WeChatMessageInfo)
-        reply = self._handle(request.wechat)
-        if reply:
-            xml = reply.render()
-            if request.wechat.app.crypto:
-                xml = request.wechat.app.crypto.encrypt_message(
-                    xml, request.GET["nonce"], request.GET["timestamp"])
-            return response.HttpResponse(xml, content_type="text/xml")
+        message_info = request.wechat
+        signals.message_received.send(request.wechat.app.staticname,
+                                      message_info=message_info)
+        try:
+            reply = self._handle(message_info)
+            signals.message_handled.send(request.wechat.app.staticname,
+                                         message_info=message_info,
+                                         reply=reply)
+            if reply:
+                xml = reply.render()
+                if request.wechat.app.crypto:
+                    xml = request.wechat.app.crypto.encrypt_message(
+                        xml, request.GET["nonce"], request.GET["timestamp"])
+                return response.HttpResponse(xml, content_type="text/xml")
+        except Exception as exc:
+            signals.message_error.send(request.wechat.app.staticname,
+                                       message_info=message_info, exc=exc)
+            raise
         return ""
 
     def _verify(self, request):
@@ -132,9 +124,38 @@ class Handler(View):
             return None
         return reply
 
+    def _handle_exception(self, request, exc):
+        if isinstance(exc, MultiValueDictKeyError):
+            self.log(logging.WARNING, "bad request args", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, BadMessageRequest):
+            self.log(logging.WARNING, "bad request", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, InvalidSignatureException):
+            self.log(logging.WARNING, "invalid signature", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, xmltodict.expat.ExpatError):
+            self.log(logging.WARNING, "deserialize message failed", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, MessageHandleError):
+            self.log(logging.WARNING, "handle message failed", exc_info=True)
+            return ""
+        else:
+            self.log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
+            return ""
+
+    _log = None
+    @property
+    def log(self):
+        if not self._log:
+            from .models import MessageHandler
+            self._log = MessageHandler.handlerlog(self.request)
+        return self._log
+
 
 def message_handler(names_or_func=None):
-    """自定义回复业务需加装该装饰器
+    """
+    自定义回复业务需加装该装饰器
     被装饰的自定义业务接收一个``wechat_django.models.WeChatMessageInfo``对象
     并且返回一个``wechatpy.replies.BaseReply``对象
 
@@ -151,11 +172,34 @@ def message_handler(names_or_func=None):
         def app_ab_only_business(message):
             # ...
     """
+    return _decorator("message_handler", names_or_func)
+
+
+def message_rule(names_or_func=None):
+    """
+    自定义规则需加装该装饰器
+    接收一个`wechat_django.models.WeChatMessageInfo`对象
+    返回一个bool值,真值则表示规则符合
+
+        @message_rule
+        def custom_rule(message_info):
+            user = message.user
+            # ...
+            return True
+
+        @message_rule(("app_a", "app_b"))
+        def app_ab_only_rule(message):
+            # ...
+    """
+    return _decorator("message_rule", names_or_func)
+
+
+def _decorator(property, names_or_func):
     def decorator(view_func):
         @wraps(view_func)
         def decorated_view(message):
             return view_func(message)
-        decorated_view.message_handler = names or True
+        setattr(decorated_view, property, names or True)
 
         return decorated_view
 

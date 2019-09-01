@@ -29,19 +29,6 @@ def get_ip(request):
     return ip
 
 
-def get_params(request, key, default=None):
-    """获取url上的参数"""
-    if request.is_ajax():
-        try:
-            referrer = request.META["HTTP_REFERER"]
-            query = dict(parse_qsl(urlparse(referrer).query))
-            return query.get(key, default)
-        except:
-            return default
-    else:
-        return request.GET.get(key, default)
-
-
 def auto_response(resp):
     if isinstance(resp, text_type):
         return response.HttpResponse(resp)

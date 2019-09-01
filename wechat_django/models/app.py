@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import logging
 
+from django.apps import apps
 from django.db import models as m
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -16,6 +17,7 @@ from wechatpy.exceptions import WeChatClientException
 
 from .. import settings
 from ..exceptions import WeChatAbilityError
+from ..utils.func import Static
 from ..utils.model import enum2choices
 from . import MsgLogFlag
 from .ability import Abilities
@@ -82,7 +84,15 @@ class WeChatApp(m.Model):
 
     @cached_property
     def pay(self):
-        return self.pays.first()
+        if apps.is_installed("wechat_django.pay"):
+            return self.pays.first()
+
+    @cached_property
+    def staticname(self):
+        """发送信号的sender"""
+        if not self.pk:
+            raise AttributeError
+        return Static("{appname}".format(appname=self.name))
 
     class Meta(object):
         verbose_name = _("WeChat app")
