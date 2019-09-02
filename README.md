@@ -7,7 +7,7 @@
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
-本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11. WeChat-Django只是一个预览版本,目前没有使用在生产环境使用本项目的案例,可能存在较多bug并且有api及数据结构变更可能.
+本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11. WeChat-Django只是一个预览版本,可能存在较多bug并且有api及数据结构变更可能.
 
 目录
 ======
@@ -28,6 +28,7 @@
   - [微信支付](#%e5%be%ae%e4%bf%a1%e6%94%af%e4%bb%98)
     - [统一下单](#%e7%bb%9f%e4%b8%80%e4%b8%8b%e5%8d%95)
     - [订单更新(回调)通知](#%e8%ae%a2%e5%8d%95%e6%9b%b4%e6%96%b0%e5%9b%9e%e8%b0%83%e9%80%9a%e7%9f%a5)
+  - [django-rest-framework](#django-rest-framework)
 - [后台使用简介](#%e5%90%8e%e5%8f%b0%e4%bd%bf%e7%94%a8%e7%ae%80%e4%bb%8b)
 - [示例项目](#%e7%a4%ba%e4%be%8b%e9%a1%b9%e7%9b%ae)
 - [TODOS:](#todos)
@@ -223,6 +224,8 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 > 注意! 每次主动调用,微信通知或是后台重新触发都会发送信号,请自行确保订单成功信号逻辑只执行一次!
 
+### django-rest-framework
+
 
 ## 后台使用简介
 参见[管理后台使用简介](docs/admin.md) 文档
@@ -232,8 +235,8 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ## TODOS:
 * 微信通知信号
-* 自定义消息处理规则
-* 自动处理关注及取消关注事件
+* 改造patch_request为middleware,手工调用
+* 改造handler为APIView
 * 是否可做成migrate权限全自助?重构权限模块?
 * 可选加密存储敏感数据
 * [Cookbook](docs/cookbook/readme.md)

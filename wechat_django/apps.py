@@ -19,3 +19,9 @@ class WeChatConfig(AppConfig):
         if settings.PATCHADMINSITE:
             from .sites.admin import patch_admin
             patch_admin()
+
+        # 注册注册关注,取关事件
+        from . import signals
+        from .handler import handle_subscribe_events
+
+        signals.message_received.connect(handle_subscribe_events)

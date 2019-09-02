@@ -20,7 +20,11 @@
         user = message.user
         return user.openid == "1234567"
 
+> 自定义处理规则应该是轻量并且无副作用的,抛出异常或不存在的自定义处理规则将被当作不匹配略过
+
 ### 首次订阅
+> 本项适用于v0.3.0及其之前版本,v0.3.1起,WeChat-Django会自动更新订阅状态.
+
 在开始使用本项目前,请先在后台或shell中同步关注app的所有用户.当接收到消息时,判断`message.local_user.subscribe`为非真值,再通过`message.user.update()`同步用户信息并写库,如果未认证,可以手动将`message.local_user.subscribe`置为`True`,并且保存.
 
     import time

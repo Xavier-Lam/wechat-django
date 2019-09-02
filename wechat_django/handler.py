@@ -15,6 +15,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views import View
 import six
 from wechatpy import replies
+from wechatpy.events import BaseEvent
 from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
 import xmltodict
@@ -22,7 +23,8 @@ import xmltodict
 from . import settings, signals
 from .exceptions import BadMessageRequest, MessageHandleError
 
-__all__ = ("handler", "Handler", "message_handler", "message_rule")
+__all__ = ("handler", "handle_subscribe_events", "Handler", "message_handler",
+           "message_rule")
 
 
 class Handler(View):
@@ -145,6 +147,7 @@ class Handler(View):
             return ""
 
     _log = None
+
     @property
     def log(self):
         if not self._log:
@@ -210,6 +213,22 @@ def _decorator(property, names_or_func):
         return decorator(names_or_func)
 
     return decorator
+
+
+def handle_subscribe_events(sender, message_info, **kwargs):
+    """处理关注,取关"""
+    message = message_info.message
+    if isinstance(message, BaseEvent):
+        # 关注事件
+        if message.event in ("subscribe", "subscribe_scan"):
+            message_info.local_user.subscribe = True
+            message_info.local_user.subscribe_time = time.time()
+            message_info.local_user.save()
+
+        # 取关事件
+        if message.event == "unsubscribe":
+            message_info.local_user.subscribe = False
+            message_info.local_user.save()
 
 
 handler = Handler.as_view()
