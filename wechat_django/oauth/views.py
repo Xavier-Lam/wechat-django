@@ -164,7 +164,7 @@ def wechat_auth(appname, scope=None, redirect_uri=None, required=True,
 
         attrs = {method.lower(): view for method in methods}
         attrs["appname"] = appname
-        View = type("WeChatOAuthView", (WeChatOAuthView,), attrs)
+        View = type(str("WeChatOAuthView"), (WeChatOAuthView,), attrs)
 
         return View.as_view(appname=appname, scope=scope,
                             redirect_uri=redirect_uri, required=required,

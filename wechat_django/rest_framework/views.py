@@ -99,3 +99,9 @@ class APIView(View):
         self.response = self.finalize_response(request, response, *args,
                                                **kwargs)
         return self.response
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize attributes shared by all view methods."""
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs

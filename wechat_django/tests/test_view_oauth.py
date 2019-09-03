@@ -344,7 +344,7 @@ class OAuthTestCase(WeChatTestCase):
         scope = kwargs.get("scope")
         if scope and isinstance(scope, six.text_type):
             kwargs["scope"] = (scope,)
-        cls = type("WeChatOAuthView", (WeChatOAuthView,), dict())
+        cls = type(str("WeChatOAuthView"), (WeChatOAuthView,), dict())
         kwargs = cls.prepare_init_kwargs(appname=appname, **kwargs)
         rv = cls(**kwargs)
         rv.setup(request)
