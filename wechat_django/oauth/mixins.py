@@ -52,6 +52,10 @@ class WeChatOAuthViewMixin(object):
 
     authentication_classes = (WeChatOAuthSessionAuthentication,)
 
+    def __init__(self, *args, **kwargs):
+        super(WeChatOAuthViewMixin, self).__init__(*args, **kwargs)
+        assert self.appname, "appname must be set"
+
     def initialize_request(self, request, *args, **kwargs):
         request = super(WeChatOAuthViewMixin, self).initialize_request(
             request, *args, **kwargs)

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'wechat_django', #!wechat_django 添加wechat_django
     'wechat_django.pay', #!wechat_django 添加微信支付相关功能
     'wechat'
@@ -54,7 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'sample.urls'
+ROOT_URLCONF = 'wechat.urls'
 
 TEMPLATES = [
     {
@@ -72,7 +73,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'sample.wsgi.application'
+WSGI_APPLICATION = 'wechat.wsgi.application'
 
 
 # Database

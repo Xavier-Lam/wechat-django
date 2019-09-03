@@ -2,9 +2,10 @@
 from django.conf import settings
 from django.conf.urls import url
 from django.http.response import HttpResponse
+from wechatpy.replies import TextReply
 
 from wechat_django import message_handler, wechat_auth, WeChatSNSScope
-from wechatpy.replies import TextReply
+
 
 #!wechat_django oauth示例
 @wechat_auth(settings.SAMPLEAPPNAME)

@@ -9,7 +9,7 @@ if __name__ == "__main__":
     except:
         pass
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sample.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wechat.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError:

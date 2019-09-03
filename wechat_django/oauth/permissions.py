@@ -9,7 +9,7 @@ except ImportError:
 
 class WeChatAuthenticated(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.wechat.openid)
+        return hasattr(request, "wechat") and bool(request.wechat.openid)
 
     def has_object_permission(self, request, view, obj):
         return self.has_permission(request, view)

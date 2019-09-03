@@ -225,7 +225,14 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 > 注意! 每次主动调用,微信通知或是后台重新触发都会发送信号,请自行确保订单成功信号逻辑只执行一次!
 
 ### django-rest-framework
+本项目class-based OAuth授权兼容django-rest-framework.
 
+  1. 构造一个继承`wechat_django.oauth.WeChatOAuthViewMixin`的视图类;
+  2. 在视图类中定义`appname`属性;
+  3. 根据需要,定义`permission_classes`(如若资源必须授权才可访问,请在permission_classes中添加`wechat_django.oauth.WeChatAuthenticated`);
+  4. 根据需要,自行处理异常,在`handle_exception`方法中捕获`rest_framework.exceptions.NotAuthenticated`,自行处理.
+
+可以参见示例项目的[rest.py](sample/wechat/rest.py)文件.
 
 ## 后台使用简介
 参见[管理后台使用简介](docs/admin.md) 文档
@@ -234,7 +241,6 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
-* 微信通知信号
 * 改造patch_request为middleware,手工调用
 * 改造handler为APIView
 * 是否可做成migrate权限全自助?重构权限模块?

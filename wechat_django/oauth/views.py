@@ -55,12 +55,19 @@ class WeChatOAuthView(WeChatOAuthViewMixin, APIView):
                 "incorrect scope"
 
         # 对于必须授权的请求 在permissions中添加WeChatAuthenticated
-        required = initKwargs.get("required", cls.required)
-        if required:
-            base_permissions = getattr(cls, "permission_classes", tuple())
-            if WeChatAuthenticated not in base_permissions:
-                initKwargs["permission_classes"] = type(base_permissions)(
-                    [WeChatAuthenticated] + list(base_permissions))
+        required = initKwargs.get("required")
+        if required is None:
+            required = cls.required
+        # 重新处理base_permissions
+        base_permissions = getattr(cls, "permission_classes", tuple())
+        base_type = type(base_permissions)
+        base_permissions = list(base_permissions)
+        if required and WeChatAuthenticated not in base_permissions:
+            initKwargs["permission_classes"] = base_type(
+                [WeChatAuthenticated] + base_permissions)
+        elif not required and WeChatAuthenticated in base_permissions:
+            base_permissions.remove(WeChatAuthenticated)
+            initKwargs["permission_classes"] = base_type(base_permissions)
 
         return initKwargs
 
@@ -155,8 +162,9 @@ def wechat_auth(appname, scope=None, redirect_uri=None, required=True,
         def view(self, request, *args, **kwargs):
             return func(request, *args, **kwargs)
 
-        View = type("WeChatOAuthView", (WeChatOAuthView,),
-                    {method.lower(): view for method in methods})
+        attrs = {method.lower(): view for method in methods}
+        attrs["appname"] = appname
+        View = type("WeChatOAuthView", (WeChatOAuthView,), attrs)
 
         return View.as_view(appname=appname, scope=scope,
                             redirect_uri=redirect_uri, required=required,
