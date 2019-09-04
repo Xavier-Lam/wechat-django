@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from functools import wraps
+
 from django.http import response as django_response
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -57,8 +59,10 @@ class WeChatViewMixin(object):
         from wechat_django.models import WeChatInfo
 
         appname = self._get_appname(request, *args, **kwargs)
-        return WeChatInfo(_request=request, _appname=appname,
-                          _app_queryset=self.app_queryset)
+        wechat = WeChatInfo(_request=request, _appname=appname,
+                            _app_queryset=self.app_queryset)
+        wechat.app  # 不懒惰加载了..不然没法判断queryset是否正确
+        return wechat
 
     def _update_wechat_info(self, request, *args, **kwargs):
         """
@@ -79,16 +83,20 @@ class WeChatView(WeChatViewMixin, APIView):
         return appname
 
 
-def wechat_view(regex, name, methods=None):
+def wechat_view(regex, name=None, methods=None, bind=False):
     """函数view装饰器,方便生成非class-based View"""
 
     methods = methods or ("GET",)
 
-    def decorator(view):
+    def decorator(func):
         """
         :rtype: wechat_django.sites.wechat.WeChatView
         """
-        attrs = {method.lower(): view for method in methods}
+        @wraps(func)
+        def view(self, request, *args, **kwargs):
+            return func(request, *args, **kwargs)
+
+        attrs = {method.lower(): func if bind else view for method in methods}
         attrs["url_pattern"] = regex
         attrs["url_name"] = name
         return type(str("WeChatView"), (WeChatView,), attrs)

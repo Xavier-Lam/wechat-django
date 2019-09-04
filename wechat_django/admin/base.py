@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import logging
-
 import django
 from django import forms
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.contrib.admin.actions import delete_selected
 from django.contrib.admin.views.main import ChangeList
 from django.core.exceptions import PermissionDenied
@@ -98,7 +96,8 @@ class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
         return self
 
 
-class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass, CustomObjectToolModelAdmin)):
+class WeChatModelAdmin(six.with_metaclass(WeChatModelAdminMetaClass,
+                                          CustomObjectToolModelAdmin)):
     """所有微信相关业务admin的基类
 
     并且通过request.app_id及request.app拿到app信息

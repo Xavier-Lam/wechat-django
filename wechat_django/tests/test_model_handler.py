@@ -6,14 +6,11 @@ import time
 
 from django.urls import reverse
 from django.utils import timezone
-from wechatpy import events, messages
+from wechatpy import messages
 
 from ..handler import Handler, message_handler
-from ..models import (MessageHandler, Reply, Rule, WeChatMessageInfo,
-                      WeChatUser)
+from ..models import MessageHandler, Rule, WeChatUser
 from .base import mock, WeChatTestCase
-from .interceptors import (common_interceptor, wechatapi,
-    wechatapi_accesstoken, wechatapi_error)
 
 
 @message_handler

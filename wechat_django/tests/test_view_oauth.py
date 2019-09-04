@@ -8,7 +8,6 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import response
 from django.test import RequestFactory
 from django.test.utils import override_settings
-from django.utils.http import urlencode
 import six
 from six.moves.urllib.parse import parse_qsl, urlparse
 

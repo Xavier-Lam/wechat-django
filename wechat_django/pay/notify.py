@@ -4,16 +4,11 @@
 
 from __future__ import unicode_literals
 
-from functools import wraps
-
-from django.conf.urls import include, url
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import response
 from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.csrf import csrf_exempt
 from wechatpy.exceptions import InvalidSignatureException
 
-from wechat_django.models import WeChatApp
 from wechat_django.sites.wechat import default_site, WeChatView
 from .exceptions import WeChatPayNotifyError
 

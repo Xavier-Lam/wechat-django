@@ -7,15 +7,12 @@ from functools import wraps
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.http import response
-from django.template.response import SimpleTemplateResponse
 from django.urls import NoReverseMatch, resolve, Resolver404, reverse
-from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
 from object_tool import CustomObjectToolAdminSiteMixin
 from six.moves.urllib.parse import urlparse
 
 from ..admin.base import registered_admins, WeChatModelAdmin
-from ..admin.utils import get_request_params
 from ..models import WeChatApp
 from ..models.permission import get_user_permissions
 from .wechat import default_site as default_wechat_site
@@ -72,7 +69,7 @@ def wechat_admin_view(view, site):
 
         extra_context = kwargs.pop("extra_context", None) or {}
         try:
-            app = site.wechat_site.app_queryset.get(id=app_id)
+            app = site.wechat_site.get_app_queryset().get(id=app_id)
         except WeChatApp.DoesNotExist:
             return response.HttpResponseNotFound()
 
@@ -159,7 +156,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         if app_id:
             # 微信相关模块
             rv = self._build_wechat_func_dict(request)
-            
+
             if not label:
                 # 我也不记得为啥要加这个了..
                 return {WeChatApp._meta.app_label: rv}
@@ -180,7 +177,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         app_label = WeChatApp._meta.app_label
 
         # 过滤有权限的app
-        query = self.wechat_site.app_queryset
+        query = self.wechat_site.get_app_queryset()
         if not request.user.is_superuser:
             perms = get_user_permissions(request.user)
             allowed_apps = {

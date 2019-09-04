@@ -12,4 +12,3 @@ class AdminSiteTestCase(WeChatTestCase):
 
         # 测试响应有extra_context
         pass
-

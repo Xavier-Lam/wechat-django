@@ -71,13 +71,15 @@ class Handler(WeChatView):
             self.log(logging.WARNING, "invalid signature", exc_info=True)
             return response.HttpResponseBadRequest()
         elif isinstance(exc, xmltodict.expat.ExpatError):
-            self.log(logging.WARNING, "deserialize message failed", exc_info=True)
+            self.log(logging.WARNING, "deserialize message failed",
+                     exc_info=True)
             return response.HttpResponseBadRequest()
         elif isinstance(exc, MessageHandleError):
             self.log(logging.WARNING, "handle message failed", exc_info=True)
             return ""
         else:
-            self.log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
+            self.log(logging.ERROR, "an unexcepted error occurred",
+                     exc_info=True)
             return ""
 
     def get(self, request, appname):

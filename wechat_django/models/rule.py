@@ -77,7 +77,6 @@ class Rule(WeChatModel):
             pass
         else:
             appname = message_info.app.name
-            message = message_info.message
             if not hasattr(func, "message_rule"):
                 return False
             elif (hasattr(func.message_rule, "__contains__")

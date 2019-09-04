@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.http.response import Http404
 from six.moves.urllib.parse import urlparse
 from wechatpy import parse_message
 
-from . import WeChatApp, WeChatUser
+from . import WeChatApp
 
 
 class WeChatInfo(object):
@@ -22,7 +23,10 @@ class WeChatInfo(object):
         :rtype: wechat_django.models.WeChatApp
         """
         if not hasattr(self, "_app"):
-            self._app = self.app_queryset.get_by_name(self.appname)
+            try:
+                self._app = self.app_queryset.get_by_name(self.appname)
+            except WeChatApp.DoesNotExist:
+                raise Http404()
         return self._app
 
     @property
@@ -106,7 +110,6 @@ class WeChatMessageInfo(WeChatInfo):
         if not hasattr(self, "_message"):
             app = self.app
             request = self.request
-            raw = self.raw
             if app.crypto:
                 self._raw = app.crypto.decrypt_message(
                     self.raw,

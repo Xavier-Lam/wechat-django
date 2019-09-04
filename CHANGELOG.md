@@ -1,6 +1,7 @@
 # ChangeLog
 
 breaking changes以:exclamation:开头标注
+- [0.3.2](#032)
 - [0.3.1](#031)
 - [0.3.0](#030)
 - [0.2.5](#025)
@@ -8,6 +9,9 @@ breaking changes以:exclamation:开头标注
 - [0.2.2](#022)
 - [0.2.0](#020)
 - [0.1.0](#010)
+
+## 0.3.2
+* 重构站点,视图,全部继承django-rest-framework风格的APIView
 
 ## 0.3.1
 * 微信网页授权对django-rest-framework进行兼容

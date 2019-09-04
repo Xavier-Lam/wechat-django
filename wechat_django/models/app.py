@@ -7,7 +7,6 @@ from django.apps import apps
 from django.db import models as m
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 import six
@@ -46,7 +45,7 @@ class WeChatApp(m.Model):
         SAFE = 2
 
     class Flag(object):
-        UNAUTH = 0x01 # 未认证
+        UNAUTH = 0x01  # 未认证
 
     Type = AppType # TODO: deprecated
 

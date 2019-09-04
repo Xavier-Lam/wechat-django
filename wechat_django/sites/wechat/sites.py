@@ -1,36 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from functools import wraps
-import logging
-
-from django.conf import settings
 from django.conf.urls import include, url
-from django.http import response
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-import requests
-from wechatpy.constants import WeChatErrorCode
-from wechatpy.exceptions import WeChatClientException
-
-from wechat_django import settings as wechat_settings
 
 
 class WeChatSite(object):
     name = "wechat_django"
 
+    base_url = r"^(?P<appname>[-_a-zA-Z\d]+)/"
+
     _registered_views = []
 
-    @property
-    def app_queryset(self):
-        """取用WeChatApp实例时的默认查询集合,可重载为其他代理类查询集合"""
-        if not hasattr(self, "_app_queryset"):
-            from wechat_django.models import WeChatApp
-
-            return WeChatApp.objects
-
-        return self._app_queryset
+    app_queryset = None
 
     def register(self, cls):
         self._registered_views.append(cls)
@@ -41,7 +22,7 @@ class WeChatSite(object):
 
     def get_urls(self):
         return [
-            url(r"^(?P<appname>[-_a-zA-Z\d]+)/", include([
+            url(self.base_url, include([
                 url(
                     cls.url_pattern,
                     self._create_view(cls),
@@ -55,8 +36,17 @@ class WeChatSite(object):
     def urls(self):
         return self.get_urls(), "wechat_django", self.name
 
+    def get_app_queryset(self):
+        """取用WeChatApp实例时的默认查询集合,可重载为其他代理类查询集合"""
+        if not self.app_queryset:
+            from wechat_django.models import WeChatApp
+
+            return WeChatApp.objects
+
+        return self.app_queryset
+
     def _create_view(self, cls):
-        return cls.as_view(app_queryset=getattr(self, "_app_queryset", None))
+        return cls.as_view(app_queryset=self.app_queryset)
 
 
 default_site = WeChatSite()

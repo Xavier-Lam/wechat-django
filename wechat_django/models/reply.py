@@ -22,8 +22,8 @@ class Reply(WeChatModel):
         MUSIC = "music"
         NEWS = "news"
 
-        CUSTOM = "custom" #  自定义业务
-        FORWARD = "forward"  #  转发
+        CUSTOM = "custom"  # 自定义业务
+        FORWARD = "forward"  # 转发
 
     handler = m.ForeignKey(
         MessageHandler, related_name="replies", on_delete=m.CASCADE)

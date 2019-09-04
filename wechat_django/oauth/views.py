@@ -106,7 +106,7 @@ class WeChatOAuthView(WeChatOAuthViewMixin, APIView):
 
 
 def wechat_auth(appname, scope=None, redirect_uri=None, required=True,
-                response=None, state="", methods=None):
+                response=None, state="", methods=None, bind=False):
     """
     微信网页授权
     :param appname: WeChatApp的name
@@ -114,7 +114,7 @@ def wechat_auth(appname, scope=None, redirect_uri=None, required=True,
     :type scope: str or iterable
     :param redirect_uri: 未授权时的重定向地址 当未设置response时将自动执行授权
                         当ajax请求时默认取referrer 否则取当前地址
-                        注意 请不要在地址上带有code及state参数 否则可能引发问题 
+                        注意 请不要在地址上带有code及state参数 否则可能引发问题
     :type redirect_uri: str or Callable[
         [
             django.http.request.HttpRequest,
@@ -162,7 +162,7 @@ def wechat_auth(appname, scope=None, redirect_uri=None, required=True,
         def view(self, request, *args, **kwargs):
             return func(request, *args, **kwargs)
 
-        attrs = {method.lower(): view for method in methods}
+        attrs = {method.lower(): func if bind else view for method in methods}
         attrs["appname"] = appname
         View = type(str("WeChatOAuthView"), (WeChatOAuthView,), attrs)
 
