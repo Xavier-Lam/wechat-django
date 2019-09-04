@@ -8,8 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.models import WeChatApp
 from wechat_django.utils.func import Static
-from .. import settings
-from ..client import WeChatPayClient
 
 
 class WeChatPay(m.Model):

@@ -241,8 +241,6 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 可参考[本项目sample文件夹](sample)
 
 ## TODOS:
-* 改造patch_request为middleware,手工调用
-* 改造handler为APIView
 * 是否可做成migrate权限全自助?重构权限模块?
 * 可选加密存储敏感数据
 * [Cookbook](docs/cookbook/readme.md)

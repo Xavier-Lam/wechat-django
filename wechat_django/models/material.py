@@ -18,6 +18,7 @@ class MaterialManager(m.Manager):
         """创建永久素材"""
         app = kwargs.pop("app", self.instance)
         type = kwargs.pop("type", None)
+
         if type is None:
             raise NotImplementedError()
         if type == Material.Type.NEWS:
@@ -39,8 +40,10 @@ class MaterialManager(m.Manager):
 
     def create_news(self, **kwargs):
         """创建永久图文素材"""
-        app = kwargs.pop("app", self.instance)
         from . import Article
+
+        app = kwargs.pop("app", self.instance)
+
         # 插入media
         query = dict(app=app, media_id=kwargs["media_id"])
         record = dict(
@@ -125,19 +128,7 @@ class Material(WeChatModel):
     @appmethod("sync_type_materials")
     def sync_type(cls, app, type):
         """同步某种类型的永久素材"""
-        count = 20
-        offset = 0
-        updates = []
-        while True:
-            data = app.client.material.batchget(
-                media_type=type,
-                offset=offset,
-                count=count
-            )
-            updates.extend(data["item"])
-            if data["total_count"] <= offset + count:
-                break
-            offset += count
+        updates = cls.get_all_materials(app, type)
         # 删除被删除的 更新或新增获取的
         (app.materials.filter(type=type)
             .exclude(media_id__in=map(lambda o: o["media_id"], updates))
@@ -145,6 +136,29 @@ class Material(WeChatModel):
         return [
             app.materials.create_material(type=type, **item)
             for item in updates]
+
+    @classmethod
+    @appmethod("migrate_type_materials")
+    def migrate_type(cls, app, type, src):
+        """从src公众号迁移某种类型的永久素材到app公众号"""
+        raise NotImplementedError()
+
+    @classmethod
+    def get_all_materials(cls, app, type):
+        count = 20
+        offset = 0
+        rv = []
+        while True:
+            data = app.client.material.batchget(
+                media_type=type,
+                offset=offset,
+                count=count
+            )
+            rv.extend(data["item"])
+            if data["total_count"] <= offset + count:
+                break
+            offset += count
+        return rv
 
     @classmethod
     def as_permenant(cls, media_id, app, save=True):

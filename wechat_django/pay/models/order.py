@@ -53,8 +53,8 @@ class UnifiedOrder(WeChatModel):
     time_start = PayDateTimeField(_("time_start"), default=tz.now)
     time_expire = PayDateTimeField(_("time_expire"))
     goods_tag = m.CharField(_("goods_tag"), max_length=32, null=True)
-    trade_type = m.CharField(
-        _("trade_type"), max_length=16, choices=enum2choices(TradeType))
+    trade_type = m.CharField(_("trade_type"), max_length=16,
+                             choices=enum2choices(TradeType))
     product_id = m.CharField(_("product id"), max_length=32, null=True)
     limit_pay = m.CharField(
         _("limit_pay"), max_length=32, null=True, default=LimitPay.NONE,
@@ -69,8 +69,8 @@ class UnifiedOrder(WeChatModel):
     comment = m.TextField(_("comment"), blank=True)
 
     ext_info = JSONField(default=dict, editable=False)
-    _call_args = JSONField(
-        db_column="call_args", default=dict, null=True, editable=False)
+    _call_args = JSONField(db_column="call_args", default=dict, null=True,
+                           editable=False)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)

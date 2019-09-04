@@ -10,7 +10,6 @@ from .base import WeChatModel, appmethod
 from .template import Template
 from .user import WeChatUser
 from .usertag import UserTag
-from .request import WeChatInfo, WeChatMessageInfo, WeChatOAuthInfo
 from .material import Material
 from .article import Article
 from .messagehandler import MessageHandler

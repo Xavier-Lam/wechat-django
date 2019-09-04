@@ -90,7 +90,7 @@ class WeChatTestCase(WeChatTestCaseBase):
 
     def _msg2info(self, message, app=None, **kwargs):
         """:rtype: WeChatMessageInfo"""
-        from ..models import WeChatMessageInfo
+        from ..handler import WeChatMessageInfo
         return WeChatMessageInfo(
             _app=app or self.app,
             _message=message,

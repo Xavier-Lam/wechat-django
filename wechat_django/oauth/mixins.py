@@ -5,6 +5,7 @@ from wechat_django.constants import WeChatSNSScope
 from wechat_django.sites.wechat import WeChatViewMixin
 
 from .authentication import WeChatOAuthSessionAuthentication
+from .request import WeChatOAuthInfo
 
 
 class WeChatOAuthViewMixin(WeChatViewMixin):
@@ -57,14 +58,12 @@ class WeChatOAuthViewMixin(WeChatViewMixin):
         assert self.appname, "appname must be set"
 
     def _update_wechat_info(self, request, *args, **kwargs):
-        from wechat_django.models import WeChatOAuthInfo
-
         state = self.state(request, *args, **kwargs) if callable(self.state)\
             else self.state
         redirect_uri = self.redirect_uri(request, *args, **kwargs)\
             if callable(self.redirect_uri)\
             else self.redirect_uri
-        
+
         wechat = WeChatOAuthInfo.from_wechat_info(request.wechat)
         wechat._state = state
         wechat._redirect_uri = redirect_uri

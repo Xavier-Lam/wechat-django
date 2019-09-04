@@ -71,9 +71,9 @@ class UnifiedOrderResult(WeChatModel):
                     self.ext_info[k] = v
         self.save()
         if signal:
-            order_updated.send(
-                sender=self.order.pay.staticname, result=self, order=self.order,
-                state=self.trade_state, attach=result.get("attach"))
+            order_updated.send(sender=self.order.pay.staticname, result=self,
+                               order=self.order, state=self.trade_state,
+                               attach=result.get("attach"))
 
     def __str__(self):
         return _("%(order)s reuslt") % dict(order=self.order)

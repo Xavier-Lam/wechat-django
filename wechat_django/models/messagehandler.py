@@ -50,7 +50,7 @@ class MessageHandler(WeChatModel):
         VIEW = "VIEW"
 
     class Flag(object):
-        TERMINALONEXCEPTION = 0x01 # 当回复全部时 一个回复发生异常 中断其他回复
+        TERMINALONEXCEPTION = 0x01  # 当回复全部时 一个回复发生异常 中断其他回复
 
     app = m.ForeignKey(
         WeChatApp, on_delete=m.CASCADE, related_name="message_handlers",

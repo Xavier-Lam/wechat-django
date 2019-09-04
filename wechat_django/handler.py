@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.http import response
 from django.utils.datastructures import MultiValueDictKeyError
 import six
-from wechatpy import replies
+from wechatpy import parse_message, replies
 from wechatpy.events import BaseEvent
 from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
@@ -21,10 +21,56 @@ import xmltodict
 
 from . import settings, signals
 from .exceptions import BadMessageRequest, MessageHandleError
-from .sites.wechat import default_site, WeChatView
+from .sites.wechat import default_site, WeChatInfo, WeChatView
 
 __all__ = ("handle_subscribe_events", "Handler", "message_handler",
-           "message_rule")
+           "message_rule", "WeChatMessageInfo")
+
+
+class WeChatMessageInfo(WeChatInfo):
+    """由微信接收到的消息"""
+
+    @property
+    def openid(self):
+        return self.message.source
+
+    @property
+    def user(self):
+        """
+        :rtype: wechat_django.models.WeChatUser
+        """
+        if not hasattr(self, "_user"):
+            self._user = self.app.user_by_openid(
+                self.message.source, ignore_errors=True)
+        return self._user
+
+    @property
+    def message(self):
+        """
+        :raises: xmltodict.expat.ExpatError
+        :rtype: wechatpy.messages.BaseMessage
+        """
+        if not hasattr(self, "_message"):
+            app = self.app
+            request = self.request
+            if app.crypto:
+                self._raw = app.crypto.decrypt_message(
+                    self.raw,
+                    request.GET["msg_signature"],
+                    request.GET["timestamp"],
+                    request.GET["nonce"]
+                )
+            self._message = parse_message(self.raw)
+        return self._message
+
+    @property
+    def raw(self):
+        """原始消息
+        :rtype: str
+        """
+        if hasattr(self, "_raw"):
+            return self._raw
+        return self.request.body
 
 
 @default_site.register
@@ -107,7 +153,6 @@ class Handler(WeChatView):
         return ""
 
     def _update_wechat_info(self, request, *args, **kwargs):
-        from .models import WeChatMessageInfo
         return WeChatMessageInfo.from_wechat_info(request.wechat)
 
     @contextmanager

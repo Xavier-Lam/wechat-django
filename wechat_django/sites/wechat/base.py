@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from six import text_type
 
 from wechat_django.rest_framework.views import APIView
+from .request import WeChatInfo
 
 
 class WeChatViewMixin(object):
@@ -56,8 +57,6 @@ class WeChatViewMixin(object):
         构建request的wechat属性
         :rtype: wechat_django.models.WeChatInfo
         """
-        from wechat_django.models import WeChatInfo
-
         appname = self._get_appname(request, *args, **kwargs)
         wechat = WeChatInfo(_request=request, _appname=appname,
                             _app_queryset=self.app_queryset)

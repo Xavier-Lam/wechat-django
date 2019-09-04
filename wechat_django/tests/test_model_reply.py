@@ -13,8 +13,8 @@ from wechatpy import messages, parse_message, replies
 from wechatpy.utils import check_signature, WeChatSigner
 
 from ..exceptions import MessageHandleError
-from ..handler import Handler
-from ..models import MessageHandler, Reply, WeChatMessageInfo
+from ..handler import Handler, WeChatMessageInfo
+from ..models import MessageHandler, Reply
 
 from .base import mock, WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
