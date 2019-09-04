@@ -27,12 +27,3 @@ def get_ip(request):
     else:
         ip = request.META.get("REMOTE_ADDR")
     return ip
-
-
-def auto_response(resp):
-    if isinstance(resp, text_type):
-        return response.HttpResponse(resp)
-    elif isinstance(resp, dict):
-        return response.JsonResponse(resp)
-    else:
-        return resp

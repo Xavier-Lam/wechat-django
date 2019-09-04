@@ -15,7 +15,7 @@ class WeChatOAuthAuthentication(BaseAuthentication):
     """
     def authenticate(self, request):
         wechat = request.wechat
-        code = self._get_params(request, "code")
+        code = self._get_code(request)
         if wechat.openid:
             return wechat.user, wechat.openid
         elif code:
@@ -24,7 +24,7 @@ class WeChatOAuthAuthentication(BaseAuthentication):
                 wechat._openid = user.openid
                 wechat._user = user
                 # 用当前url的state替换传入的state
-                wechat._state = self._get_params(request, "state", "")
+                wechat._state = self._get_state(request)
                 return wechat.user, wechat.openid
             except WeChatOAuthException:
                 err_msg = "auth code failed: {0}".format(dict(
@@ -35,6 +35,12 @@ class WeChatOAuthAuthentication(BaseAuthentication):
 
     def authenticate_header(self, request):
         return 'WOAuth realm="{0}"'.format(request.wechat.app.appid)
+
+    def _get_code(self, request):
+        return self._get_params(request, "code")
+
+    def _get_state(self, request):
+        return self._get_params(request, "state", "")
 
     def _auth(self, app, code, scope):
         return app.auth(code, scope)[0]

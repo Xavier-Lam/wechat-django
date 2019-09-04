@@ -8,7 +8,7 @@ import xmltodict
 from wechat_django.sites.wechat import default_site
 from ..exceptions import WeChatPayNotifyError
 from ..models import UnifiedOrderResult
-from ..notify import NotifyViewSet
+from ..notify import NotifyView
 from .base import mock, WeChatPayTestCase
 
 
@@ -24,11 +24,10 @@ class NotifyTestCase(WeChatPayTestCase):
         xml = self.success_order_notify(self.app.pay, order)
         with mock.patch("wechatpy.pay.calculate_signature") as m:
             m.return_value = self.sign
-            resp = self.client.post(
-                url, data=xml, content_type="text/xml")
+            resp = self.client.post(url, data=xml, content_type="text/xml")
             data = xmltodict.parse(resp.content)["xml"]
             self.assertEqual(data["return_code"], "SUCCESS")
-            self.assertNotEqual(data["return_msg"], "OK")
+            self.assertEqual(data["return_msg"], "OK")
 
         # 测试失败响应
         resp = self.client.get(url)
@@ -39,24 +38,24 @@ class NotifyTestCase(WeChatPayTestCase):
     def test_prepare_request(self):
         """测试请求预处理"""
         appname = self.app.name
-        url = self.app.build_url(
-            "order_notify", kwargs=dict(payname=self.app.pay.name))
+        url = self.app.build_url("order_notify",
+                                 kwargs=dict(payname=self.app.pay.name))
         # 测试签名正确
         order = self.app.pay.create_order(**self.minimal_example)
         xml = self.success_order_notify(self.app.pay, order)
+
+        view = NotifyView()
         request = self.rf().post(
             url, data=xml, content_type="text/xml")
+        request = view.initialize_request(request, appname=self.app.name)
 
-        viewset = NotifyViewSet(default_site)
         with mock.patch("wechatpy.pay.calculate_signature") as m:
             m.return_value = self.sign
-            pay, data = viewset._prepare(
-                request, self.app.name, self.app.pay.name)
+            pay, data = view._prepare(request, self.app.pay.name)
 
         # 测试签名错误
-        self.assertRaises(
-            WeChatPayNotifyError, viewset._prepare,
-            request, self.app.name, self.app.pay.name)
+        self.assertRaises(WeChatPayNotifyError, view._prepare, request,
+                          self.app.pay.name)
 
     def test_notify_order(self):
         """测试订单回调通知"""
@@ -64,16 +63,15 @@ class NotifyTestCase(WeChatPayTestCase):
             "order_notify", kwargs=dict(payname=self.app.pay.name))
         order = self.app.pay.create_order(**self.minimal_example)
         xml = self.success_order_notify(self.app.pay, order)
+
+        view = NotifyView()
         request = self.rf().post(
             url, data=xml, content_type="text/xml")
-
-        viewset = NotifyViewSet(default_site)
+        request = view.initialize_request(request, appname=self.app.name)
         with mock.patch("wechatpy.pay.calculate_signature") as m:
             m.return_value = self.sign
-            pay, data = viewset._prepare(
-                request, self.app.name, self.app.pay.name)
+            view.post(request, self.app.name, self.app.pay.name)
 
-        viewset.order_notify(request, pay, data)
         self.assertEqual(order.result.transaction_id, order.out_trade_no)
         self.assertEqual(
             order.result.trade_state, UnifiedOrderResult.State.SUCCESS)

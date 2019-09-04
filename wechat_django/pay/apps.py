@@ -17,8 +17,3 @@ class WeChatPayConfig(AppConfig):
         from .models.permisssion import permissions, permission_required
         base_pm.permissions.update(permissions)
         base_pm.permission_required.update(permission_required)
-
-        # 注册viewsets
-        from wechat_django.sites import wechat
-        from .notify import NotifyViewSet
-        wechat.register(NotifyViewSet)

@@ -12,7 +12,6 @@ import time
 from django.core.cache import cache
 from django.http import response
 from django.utils.datastructures import MultiValueDictKeyError
-from django.views import View
 import six
 from wechatpy import replies
 from wechatpy.events import BaseEvent
@@ -22,57 +21,18 @@ import xmltodict
 
 from . import settings, signals
 from .exceptions import BadMessageRequest, MessageHandleError
+from .sites.wechat import default_site, WeChatView
 
-__all__ = ("handler", "handle_subscribe_events", "Handler", "message_handler",
+__all__ = ("handle_subscribe_events", "Handler", "message_handler",
            "message_rule")
 
 
-class Handler(View):
-    def dispatch(self, request):
-        """
-        :type request: wechat_django.requests.WeChatMessageRequest
-        """
-        if not request.wechat.app.abilities.interactable:
-            return response.HttpResponseNotFound()
-        try:
-            self._verify(request)
-            resp = super(Handler, self).dispatch(request)
-            if not isinstance(resp, response.HttpResponseNotFound):
-                self.log(logging.DEBUG, "receive a message")
-            return resp
-        except Exception as e:
-            return self._handle_exception(request, e)
+@default_site.register
+class Handler(WeChatView):
+    url_pattern = r"^$"
+    url_name = "handler"
 
-    def get(self, request):
-        return request.GET["echostr"]
-
-    def post(self, request):
-        from .models import WeChatMessageInfo
-        from .sites.wechat import patch_request
-
-        request = patch_request(request, cls=WeChatMessageInfo)
-        message_info = request.wechat
-        signals.message_received.send(request.wechat.app.staticname,
-                                      message_info=message_info)
-        try:
-            reply = self._handle(message_info)
-            signals.message_handled.send(request.wechat.app.staticname,
-                                         message_info=message_info,
-                                         reply=reply)
-            if reply:
-                xml = reply.render()
-                if request.wechat.app.crypto:
-                    xml = request.wechat.app.crypto.encrypt_message(
-                        xml, request.GET["nonce"], request.GET["timestamp"])
-                return response.HttpResponse(xml, content_type="text/xml")
-        except Exception as exc:
-            signals.message_error.send(request.wechat.app.staticname,
-                                       message_info=message_info, exc=exc)
-            raise
-        return ""
-
-    def _verify(self, request):
-        """检验请求"""
+    def initial(self, request, appname):
         try:
             timestamp = int(request.GET["timestamp"])
         except ValueError:
@@ -93,6 +53,60 @@ class Handler(View):
                 timestamp,
                 nonce
             )
+
+    def finalize_response(self, request, resp, *args, **kwargs):
+        if not isinstance(resp, response.HttpResponseNotFound):
+            self.log(logging.DEBUG, "receive a message")
+        return super(Handler, self).finalize_response(
+            request, resp, *args, **kwargs)
+
+    def handle_exception(self, exc):
+        if isinstance(exc, MultiValueDictKeyError):
+            self.log(logging.WARNING, "bad request args", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, BadMessageRequest):
+            self.log(logging.WARNING, "bad request", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, InvalidSignatureException):
+            self.log(logging.WARNING, "invalid signature", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, xmltodict.expat.ExpatError):
+            self.log(logging.WARNING, "deserialize message failed", exc_info=True)
+            return response.HttpResponseBadRequest()
+        elif isinstance(exc, MessageHandleError):
+            self.log(logging.WARNING, "handle message failed", exc_info=True)
+            return ""
+        else:
+            self.log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
+            return ""
+
+    def get(self, request, appname):
+        return request.GET["echostr"]
+
+    def post(self, request, appname):
+        message_info = request.wechat
+        signals.message_received.send(request.wechat.app.staticname,
+                                      message_info=message_info)
+        try:
+            reply = self._handle(message_info)
+            signals.message_handled.send(request.wechat.app.staticname,
+                                         message_info=message_info,
+                                         reply=reply)
+            if reply:
+                xml = reply.render()
+                if request.wechat.app.crypto:
+                    xml = request.wechat.app.crypto.encrypt_message(
+                        xml, request.GET["nonce"], request.GET["timestamp"])
+                return response.HttpResponse(xml, content_type="text/xml")
+        except Exception as exc:
+            signals.message_error.send(request.wechat.app.staticname,
+                                       message_info=message_info, exc=exc)
+            raise
+        return ""
+
+    def _update_wechat_info(self, request, *args, **kwargs):
+        from .models import WeChatMessageInfo
+        return WeChatMessageInfo.from_wechat_info(request.wechat)
 
     @contextmanager
     def _no_repeat_nonces(self, sign, nonce, time_diff):
@@ -125,26 +139,6 @@ class Handler(View):
         if not reply or isinstance(reply, replies.EmptyReply):
             return None
         return reply
-
-    def _handle_exception(self, request, exc):
-        if isinstance(exc, MultiValueDictKeyError):
-            self.log(logging.WARNING, "bad request args", exc_info=True)
-            return response.HttpResponseBadRequest()
-        elif isinstance(exc, BadMessageRequest):
-            self.log(logging.WARNING, "bad request", exc_info=True)
-            return response.HttpResponseBadRequest()
-        elif isinstance(exc, InvalidSignatureException):
-            self.log(logging.WARNING, "invalid signature", exc_info=True)
-            return response.HttpResponseBadRequest()
-        elif isinstance(exc, xmltodict.expat.ExpatError):
-            self.log(logging.WARNING, "deserialize message failed", exc_info=True)
-            return response.HttpResponseBadRequest()
-        elif isinstance(exc, MessageHandleError):
-            self.log(logging.WARNING, "handle message failed", exc_info=True)
-            return ""
-        else:
-            self.log(logging.ERROR, "an unexcepted error occurred", exc_info=True)
-            return ""
 
     _log = None
 
@@ -229,6 +223,3 @@ def handle_subscribe_events(sender, message_info, **kwargs):
         if message.event == "unsubscribe":
             message_info.local_user.subscribe = False
             message_info.local_user.save()
-
-
-handler = Handler.as_view()

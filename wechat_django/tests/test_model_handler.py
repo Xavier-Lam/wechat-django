@@ -11,8 +11,7 @@ from wechatpy import events, messages
 from ..handler import Handler, message_handler
 from ..models import (MessageHandler, Reply, Rule, WeChatMessageInfo,
                       WeChatUser)
-from ..sites.wechat import patch_request
-from .base import WeChatTestCase
+from .base import mock, WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
 
@@ -57,11 +56,14 @@ class HandlerTestCase(WeChatTestCase):
         """测试同步"""
         pass
 
-    def test_subscribe_events(self):
+    @mock.patch.object(Handler, "_get_appname")
+    def test_subscribe_events(self, _get_appname):
         """测试关注,取关事件"""
-        # url = reverse("wechat_django:handler",
-        #               kwargs=dict(appname=self.app.name))
-        url = "/"
+
+        _get_appname.return_value = self.app.name
+
+        url = reverse("wechat_django:handler",
+                      kwargs=dict(appname=self.app.name))
         openid = "test_subscribe_events"
         user = WeChatUser.objects.upsert_by_dict(dict(openid=openid), self.app)
         self.assertIsNone(user.subscribe)
@@ -79,8 +81,8 @@ class HandlerTestCase(WeChatTestCase):
         """.format(openid)
         request = self.rf().post(
             url, subscribe_event_text, content_type="text/xml")
-        request = patch_request(request, self.app.name)
-        self.assertEqual(handler.post(request), "")
+        request = handler.initialize_request(request)
+        self.assertEqual(handler.post(request, self.app.name), "")
         user.refresh_from_db()
         self.assertTrue(user.subscribe)
 
@@ -95,8 +97,8 @@ class HandlerTestCase(WeChatTestCase):
         """.format(openid)
         request = self.rf().post(
             url, unsubscribe_event_text, content_type="text/xml")
-        request = patch_request(request, self.app.name)
-        self.assertEqual(handler.post(request), "")
+        request = handler.initialize_request(request)
+        self.assertEqual(handler.post(request, self.app.name), "")
         user.refresh_from_db()
         self.assertEqual(user.subscribe, False)
 
@@ -113,7 +115,7 @@ class HandlerTestCase(WeChatTestCase):
         """.format(openid)
         request = self.rf().post(
             url, subscribe_event_text, content_type="text/xml")
-        request = patch_request(request, self.app.name)
-        self.assertEqual(handler.post(request), "")
+        request = handler.initialize_request(request)
+        self.assertEqual(handler.post(request, self.app.name), "")
         user.refresh_from_db()
         self.assertTrue(user.subscribe)

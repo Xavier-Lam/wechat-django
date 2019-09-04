@@ -3,4 +3,3 @@
 from __future__ import unicode_literals
 
 from .wechat import default_site as wechat, WeChatSite
-from .admin import default_site as admin, WeChatAdminSite, WeChatAdminSiteMixin

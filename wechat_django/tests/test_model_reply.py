@@ -13,9 +13,10 @@ from wechatpy import messages, parse_message, replies
 from wechatpy.utils import check_signature, WeChatSigner
 
 from ..exceptions import MessageHandleError
+from ..handler import Handler
 from ..models import MessageHandler, Reply, WeChatMessageInfo
-from ..sites.wechat import patch_request
-from .base import WeChatTestCase
+
+from .base import mock, WeChatTestCase
 from .interceptors import (common_interceptor, wechatapi,
     wechatapi_accesstoken, wechatapi_error)
 
@@ -212,8 +213,9 @@ class ReplyTestCase(WeChatTestCase):
         </xml>""".format(sender=sender, content=content)
         req_url = url + "?" + urlencode(query_data)
         request = RequestFactory().post(req_url, xml, content_type="text/xml")
-
-        patch_request(request, self.app.name, WeChatMessageInfo)
+        with mock.patch.object(Handler, "_get_appname"):
+            Handler._get_appname.return_value = self.app.name
+            request = Handler().initialize_request(request)
         message = request.wechat
 
         reply_text = "abc"

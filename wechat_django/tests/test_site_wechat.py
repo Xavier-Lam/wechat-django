@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.http import response
 
-from ..sites.wechat import WeChatSite, WeChatViewSet
+from ..sites.wechat import WeChatSite, WeChatView
 from .base import WeChatTestCase
 
 
@@ -28,41 +28,42 @@ class WeChatSiteTestCase(WeChatTestCase):
                 return super(TestSite, self).app_queryset.filter(
                     name=that.app.name)
 
-        class TestViewSet(WeChatViewSet):
-            def test_view(self, request):
+        class TestView(WeChatView):
+            def get(self, request, appname):
                 return response.HttpResponse(status=204)
-        
+
+            def _get_appname(self, request, appname):
+                return appname
+
         # 在app_queryset中的公众号可访问,否则404
         site = TestSite()
-        site.register(TestViewSet)
-        viewset = site.get_registered(TestViewSet)
-        view = viewset.wechat_view(viewset.test_view)
+        view = site._create_view(TestView)
         resp = view(self.rf().get("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)
-        self.assertRaises(
-            response.Http404, view, self.rf().get("/"), self.another_app.name)
+        resp = view(self.rf().get("/"), self.another_app.name)
+        self.assertEqual(resp.status_code, 404)
 
     def test_wechat_view(self):
         """测试wechat_view"""
         that = self
-        class ViewSet(WeChatViewSet):
-            def test_view(self, request):
-                return response.HttpResponse(status=204)
-
-            def test_request_view(self, request):
+        class View(WeChatView):
+            def post(self, request):
                 that.assertEqual(request.wechat.app.id, that.app.id)
                 that.assertEqual(request.wechat.appname, that.app.name)
                 return response.HttpResponse(status=204)
 
+            def _get_appname(self, request, *args, **kwargs):
+                return that.app.name
+
+        # 测试app_queryset
+        pass
+
         # 测试http method正确
-        viewset = ViewSet(WeChatSite())
-        view = viewset.wechat_view(viewset.test_view, methods=("POST",))
-        resp = view(self.rf().get("/"), self.app.name)
+        view = View.as_view()
+        resp = view(self.rf().get("/"))
         self.assertEqual(resp.status_code, 405)
-        resp = view(self.rf().post("/"), self.app.name)
+        resp = view(self.rf().post("/"))
         self.assertEqual(resp.status_code, 204)
 
-        # 测试原view经过wechat_view后request能拿到WeChatInfo对象
-        view = viewset.wechat_view(viewset.test_request_view)
-        resp = view(self.rf().get("/"), self.app.name)
-        self.assertEqual(resp.status_code, 204)
+        # 测试装饰器
+        pass
