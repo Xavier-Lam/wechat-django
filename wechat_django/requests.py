@@ -14,19 +14,19 @@ from django.http.request import HttpRequest
 class WeChatHttpRequest(HttpRequest):
     @property
     def wechat(self):
-        """:rtype: wechat_django.models.WeChatInfo"""
+        """:rtype: wechat_django.sites.wechat.WeChatInfo"""
         pass
 
 
 class WeChatMessageRequest(HttpRequest):
     @property
     def wechat(self):
-        """:rtype: wechat_django.models.WeChatMessageInfo"""
+        """:rtype: wechat_django.handler.WeChatMessageInfo"""
         pass
 
 
 class WeChatOAuthRequest(HttpRequest):
     @property
     def wechat(self):
-        """:rtype: wechat_django.models.WeChatOAuthInfo"""
+        """:rtype: wechat_django.oauth.WeChatOAuthInfo"""
         pass

@@ -11,6 +11,8 @@ breaking changes以:exclamation:开头标注
 - [0.1.0](#010)
 
 ## 0.3.2
+* 公众号迁移功能,可迁移一个公众号的自动回复,菜单,素材(不建议)至另一个公众号
+* :exclamation: 重构素材模型的方法
 * 重构站点,视图,全部继承django-rest-framework风格的APIView
 
 ## 0.3.1

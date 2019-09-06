@@ -63,7 +63,14 @@ class Menu(WeChatModel):
         从微信同步菜单数据
         :type app: wechat_django.models.WeChatApp
         """
-        resp = app.client.menu.get_menu_info()
+        return cls.migrate(app)
+
+    @appmethod("migrate_menus")
+    def migrate(cls, app, src=None):
+        """
+        从src迁移菜单到app
+        """
+        resp = (src or app).client.menu.get_menu_info()
         try:
             data = resp["selfmenu_info"]["button"]
         except KeyError:
@@ -75,7 +82,7 @@ class Menu(WeChatModel):
             # 移除同步菜单产生的message handler
             app.message_handlers.filter(
                 src=MessageHandler.Source.MENU).delete()
-            rv = [cls.json2menu(menu, app) for menu in data]
+            rv = [cls.json2menu(menu, app, src) for menu in data]
         app.ext_info["current_menus"] = cls.menus2json(app)
         app.save()
         return rv
@@ -105,7 +112,7 @@ class Menu(WeChatModel):
         return dict(button=[menu.to_json() for menu in menus])
 
     @classmethod
-    def json2menu(cls, data, app):
+    def json2menu(cls, data, app, src=None):
         """
         :type app: wechat_django.models.WeChatApp
         """
@@ -114,7 +121,7 @@ class Menu(WeChatModel):
         if not menu.type:
             menu.save()
             menu.sub_button.add(*[
-                cls.json2menu(sub, app) for sub in
+                cls.json2menu(sub, app, src) for sub in
                 (data.get("sub_button") or dict(list=[])).get("list")
             ])
         elif menu.type in (
@@ -126,7 +133,7 @@ class Menu(WeChatModel):
             # 生成一个唯一key
             key = md5(json.dumps(data).encode()).hexdigest()
             menu.content = dict(key=key)
-            MessageHandler.from_menu(menu, data)
+            MessageHandler.from_menu(menu, data, src)
         menu.save()
         return menu
 

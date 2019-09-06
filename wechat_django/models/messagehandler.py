@@ -35,6 +35,7 @@ class MessageHandler(WeChatModel):
         SELF = 0  # 自己的后台
         MENU = 1  # 菜单
         MP = 2  # 微信后台
+        MIGRATE = 3 # 迁移来的
 
     class ReplyStrategy(object):
         REPLYALL = "reply_all"
@@ -150,19 +151,24 @@ class MessageHandler(WeChatModel):
 
     @appmethod("sync_message_handlers")
     def sync(cls, app):
+        return cls.migrate(app)
+
+    @appmethod("migrate_message_handlers")
+    def migrate(cls, app, src=None):
+        handler_src = cls.Source.MIGRATE if src else cls.Source.MP
+
         from . import Reply, Rule
-        resp = app.client.message.get_autoreply_info()
+        resp = (src or app).client.message.get_autoreply_info()
 
         # 处理自动回复
         handlers = []
 
         # 成功后移除之前的自动回复并保存新加入的自动回复
         with transaction.atomic():
-            app.message_handlers.filter(
-                src=MessageHandler.Source.MP
-            ).delete()
+            app.message_handlers.filter(src=handler_src).delete()
 
-            if resp.get("message_default_autoreply_info"):
+            default_reply = resp.get("message_default_autoreply_info")
+            if default_reply:
                 # 自动回复
                 handler = app.message_handlers.create_handler(
                     name="微信配置自动回复",
@@ -170,22 +176,19 @@ class MessageHandler(WeChatModel):
                     enabled=bool(resp.get("is_autoreply_open")),
                     created_at=timezone.datetime.fromtimestamp(0),
                     rules=[Rule(type=Rule.Type.ALL)],
-                    replies=[
-                        Reply.from_mp(
-                            app, resp["message_default_autoreply_info"])
-                    ]
+                    replies=[Reply.from_mp(app, default_reply, src)]
                 )
                 handlers.append(handler)
 
-            if (resp.get("keyword_autoreply_info")
-                and resp["keyword_autoreply_info"].get("list")):
-                handlers_list = resp["keyword_autoreply_info"]["list"][::-1]
+            keyword_replies = resp.get("keyword_autoreply_info", {}).get("list")
+            if keyword_replies:
+                handlers_list = keyword_replies[::-1]
                 handlers.extend(
-                    MessageHandler.from_mp(app, handler)
-                    for handler in handlers_list
-                )
+                    MessageHandler.from_mp(app, handler, src)
+                    for handler in handlers_list)
 
-            if resp.get("add_friend_autoreply_info"):
+            subscribe_reply = resp.get("add_friend_autoreply_info")
+            if subscribe_reply:
                 # 关注回复
                 handler = app.message_handlers.create_handler(
                     name="微信配置关注回复",
@@ -194,18 +197,15 @@ class MessageHandler(WeChatModel):
                     created_at=timezone.datetime.fromtimestamp(0),
                     rules=[Rule(
                         type=Rule.Type.EVENT,
-                        event=cls.EventType.SUBSCRIBE
-                    )],
-                    replies=[
-                        Reply.from_mp(app, resp["add_friend_autoreply_info"])
-                    ]
+                        event=cls.EventType.SUBSCRIBE)],
+                    replies=[Reply.from_mp(app, subscribe_reply, src)]
                 )
                 handlers.append(handler)
 
             return handlers
 
     @classmethod
-    def from_mp(cls, app, handler):
+    def from_mp(cls, app, handler, src=None):
         from . import Reply, Rule
         return app.message_handlers.create_handler(
             name=handler["rule_name"],
@@ -217,13 +217,13 @@ class MessageHandler(WeChatModel):
                 for rule in handler["keyword_list_info"][::-1]
             ],
             replies=[
-                Reply.from_mp(app, reply)
+                Reply.from_mp(app, reply, src)
                 for reply in handler["reply_list_info"][::-1]
             ]
         )
 
     @classmethod
-    def from_menu(cls, menu, data):
+    def from_menu(cls, menu, data, src=None):
         """
         :type menu: wechat_django.models.Menu
         """
@@ -236,7 +236,7 @@ class MessageHandler(WeChatModel):
                 event=cls.EventType.CLICK,
                 key=menu.content["key"]
             )],
-            replies=[Reply.from_menu(menu, data)]
+            replies=[Reply.from_menu(menu, data, src)]
         )
 
     @classmethod

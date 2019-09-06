@@ -13,8 +13,7 @@ from wechatpy import replies
 
 from ..exceptions import MessageHandleError
 from ..utils.model import enum2choices, model_fields
-from . import (
-    Article, Material, MessageHandler, MsgType as BaseMsgType, WeChatModel)
+from . import Material, MessageHandler, MsgType as BaseMsgType, WeChatModel
 
 
 class Reply(WeChatModel):
@@ -188,7 +187,7 @@ class Reply(WeChatModel):
         return funcname, kwargs
 
     @classmethod
-    def from_mp(cls, app, data):
+    def from_mp(cls, app, data, src=None):
         type = data["type"]
         if type == "img":
             type = cls.MsgType.IMAGE
@@ -203,22 +202,24 @@ class Reply(WeChatModel):
             kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
             # 按照文档 是临时素材 需要转换为永久素材
-            media_id = app.as_permenant_material(data["content"], False)
+            media_id = app.as_permenant_material(data["content"], src=src,
+                                                 save=False)
             kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:
             media_id = data["content"]
             # 同步图文
-            Article.sync(app, media_id)
-            kwargs.update(
-                media_id=media_id,
-                content=data["news_info"]["list"]
-            )
+            if src:
+                media_id = app.migrate_articles(src, media_id).media_id
+            else:
+                app.sync_articles(media_id)
+            kwargs.update(media_id=media_id,
+                          content=data["news_info"]["list"])
         else:
             raise ValueError("unknown reply type {0}".format(type))
         return cls(**kwargs)
 
     @classmethod
-    def from_menu(cls, menu, data):
+    def from_menu(cls, menu, data, src=None):
         app = menu.app
         type = data["type"]
         if type == "img":
@@ -233,17 +234,18 @@ class Reply(WeChatModel):
         if type == cls.MsgType.TEXT:
             kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
-            media_id = app.as_permenant_material(data["value"], False) if app\
-                else data["value"]
+            media_id = app.as_permenant_material(
+                data["value"], save=False, src=src) if app else data["value"]
             kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:
             media_id = data["value"]
             # 同步图文
-            app.sync_articles(media_id)
-            kwargs.update(
-                media_id=media_id,
-                content=data["news_info"]["list"]
-            )
+            if src:
+                media_id = app.migrate_articles(src, media_id).media_id
+            else:
+                app.sync_articles(media_id)
+            kwargs.update(media_id=media_id,
+                          content=data["news_info"]["list"])
         else:
             raise ValueError("unknown menu reply type {0}".format(type))
         return cls(**kwargs)

@@ -3,9 +3,11 @@ from __future__ import unicode_literals
 
 import mimetypes
 import re
+import uuid
 
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
+import requests
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
@@ -56,17 +58,8 @@ class MaterialManager(m.Manager):
             # 移除所有article重新插入
             news.articles.all().delete()
 
-        articles = (kwargs.get("content") or kwargs)["news_item"]
-        fields = model_fields(Article)
-        news.articles.bulk_create([
-            Article(
-                index=idx,
-                material=news,
-                _thumb_url=article.get("thumb_url"),
-                **{k: v for k, v in article.items() if k in fields}
-            )
-            for idx, article in enumerate(articles)
-        ])
+        articles = Article.from_mp(kwargs, news)
+        news.articles.bulk_create(articles)
         return news
 
 
@@ -123,10 +116,20 @@ class Material(WeChatModel):
                     updated.extend(updates)
             return updated
 
+    @appmethod("migrate_materials")
+    def migrate(cls, app, src):
+        migrated = []
+        for type, _ in enum2choices(cls.Type):
+            if type != cls.Type.NEWS:  # 不建议迁移图文 一天只能调10次
+                with transaction.atomic():
+                    migrates = app.migrate_type_materials(type, src)
+                    migrated.extend(migrates)
+        return migrated
+
     @appmethod("sync_type_materials")
     def sync_type(cls, app, type):
         """同步某种类型的永久素材"""
-        updates = cls.get_all_materials(app, type)
+        updates = app.get_materials(type)
         # 删除被删除的 更新或新增获取的
         (app.materials.filter(type=type)
             .exclude(media_id__in=map(lambda o: o["media_id"], updates))
@@ -138,10 +141,23 @@ class Material(WeChatModel):
     @appmethod("migrate_type_materials")
     def migrate_type(cls, app, type, src):
         """从src公众号迁移某种类型的永久素材到app公众号"""
-        raise NotImplementedError()
+        materials = src.get_materials(type)
+        if type == Material.Type.NEWS:
+            return app.migrate_articles(app, src)
+        else:
+            migrated = []
+            for material in materials:
+                # TODO: 视频好像是down_url
+                url = material.get("url") or material.get("down_url")
+                resp = requests.get(url)
 
-    @classmethod
-    def get_all_materials(cls, app, type):
+                # 上传素材
+                record = app.upload_material(resp, permenant=True, save=True)
+                migrated.append(record)
+            return migrated
+
+    @appmethod("get_materials")
+    def get_all(cls, app, type):
         count = 20
         offset = 0
         rv = []
@@ -158,53 +174,62 @@ class Material(WeChatModel):
         return rv
 
     @appmethod("as_permenant_material")
-    def as_permenant(cls, app, media_id, save=True):
+    def as_permenant(cls, app, media_id, src=None, save=True):
         """将临时素材转换为永久素材"""
+        src = src or app
         # 下载临时素材
-        resp = app.client.media.download(media_id)
-
-        try:
-            content_type = resp.headers["Content-Type"]
-        except:
-            raise ValueError("missing Content-Type")
-        if content_type.startswith("image"):
-            type = cls.Type.IMAGE
-        elif content_type.startswith("video"):
-            type = cls.Type.VIDEO
-        elif content_type.startswith("audio"):
-            type = cls.Type.VOICE
-        else:
-            raise ValueError("unknown Content-Type")
-
-        # 找文件名
-        try:
-            disposition = resp.headers["Content-Disposition"]
-            filename = re.findall(r'filename="(.+?)"', disposition)[0]
-        except:
-            # 默认文件名
-            ext = mimetypes.guess_extension(content_type)
-            filename = (media_id + ext) if ext else media_id
+        resp = src.client.media.download(media_id)
 
         # 上载素材
-        return cls.upload_permenant(app, (filename, resp.content), type, save)
+        return app.upload_material(resp, permenant=True, save=save)
 
-    @appmethod("upload_permenant_material")
-    def upload_permenant(cls, app, file, type, save=True):
-        """上传永久素材"""
-        data = app.client.material.add(type, file)
-        media_id = data["media_id"]
-        if save:
-            return app.materials.create_material(
-                type=type, media_id=media_id, url=data.get("url"))
-        else:
-            return media_id
-
-    @appmethod("upload_temporary_material")
-    def upload_temporary(cls, app, file, type):
-        """上传临时素材
-        :param type: image|voice|video|thumb
+    @appmethod("upload_material")
+    def upload(cls, app, file, type=None, permenant=False, save=True):
         """
-        return app.client.media.upload(type, file)
+        上传素材
+        :param type: image|voice|video|thumb
+        :returns: media_id,如果保存返回Material实例
+        """
+        if isinstance(file, requests.Response):
+            fileinfo = cls.get_response_file_info(file, type)
+            filename = fileinfo.get("filename")
+            file = (filename, file.content)
+            if not type:
+                type = fileinfo.get("type")
+
+        assert type is not None
+
+        if type == Material.Type.NEWS:
+            permenant = True
+            data = app.client.material.add_articles(file)
+        elif permenant:
+            data = app.client.material.add(type, file)
+        else:
+            data = app.client.media.upload(type, file)
+        media_id = data["media_id"]
+
+        if permenant and save:
+            if type in (Material.Type.NEWS, Material.Type.VIDEO):
+                return app.sync_materials(media_id, type=type)
+            else:
+                return app.materials.create_material(
+                    type=type, media_id=media_id, url=data.get("url"))
+        return media_id
+
+    @appmethod("download_material")
+    def download(cls, app, media_id, permenant=True):
+        if permenant:
+            data = app.client.material.get_raw(media_id)
+            if isinstance(data, dict) and "down_url" in data:
+                # 视频
+                return requests.get(data["down_url"])
+            # elif isinstance(data, list):
+            #     # 图文
+            #     raise NotImplementedError("Cannot download an article")
+            # 其他素材直接响应内容了
+            return data
+        else:
+            return app.client.media.download(media_id)
 
     @property
     def articles_json(self):
@@ -229,6 +254,56 @@ class Material(WeChatModel):
         rv = super(Material, self).delete(*args, **kwargs)
         return rv
 
+    @staticmethod
+    def get_response_file_info(resp, type=None):
+        try:
+            content_type = resp.headers["Content-Type"]
+        except:
+            content_type = ""
+        if not type:
+            # 已知audio会变成text/html
+            if content_type == "text/html":
+                content_type = "audio/mp3"
+
+            if content_type.startswith("image"):
+                type = Material.Type.IMAGE
+            elif content_type.startswith("video"):
+                type = Material.Type.VIDEO
+            elif content_type.startswith("audio"):
+                type = Material.Type.VOICE
+
+        ext = mimetypes.guess_extension(content_type)
+        if ext == ".jpe":
+            ext = ".jpg"
+        # 没有ext根据type固定ext
+        if not ext:
+            if type == Material.Type.IMAGE:
+                ext = ".jpg"
+            elif type == Material.Type.VIDEO:
+                ext = ".mp4"
+            elif type == Material.Type.VOICE:
+                ext = ".mp3"
+
+        # 找文件名
+        try:
+            disposition = resp.headers["Content-Disposition"]
+            filename = re.findall(r'filename="(.+?)"', disposition)[0]
+            filename_tuple = filename.split(".")
+            if len(filename_tuple) == 1:
+                # 无扩展名
+                filename = filename + ext
+        except:
+            filename = str(uuid.uuid4()) + ext
+
+        return dict(
+            filename=filename,
+            ext=ext,
+            type=type,
+            content_type=content_type
+        )
+
     def __str__(self):
-        media = "{type}:{media_id}".format(type=self.type, media_id=self.media_id)
-        return "{0} ({1})".format(self.comment, media) if self.comment else media
+        media = "{type}:{media_id}".format(type=self.type,
+                                           media_id=self.media_id)
+        return "{0} ({1})".format(self.comment, media)\
+            if self.comment else media
