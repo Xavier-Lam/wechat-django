@@ -12,12 +12,10 @@ class ModelBaseTestCase(WeChatTestCase):
             class Meta(object):
                 abstract = True
 
-            @classmethod
             @appmethod
             def test(cls, app, *args, **kwargs):
                 return cls, app, args, kwargs
 
-            @classmethod
             @appmethod("another")
             def test1(cls, app, *args, **kwargs):
                 return cls, app, args, kwargs

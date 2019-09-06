@@ -63,7 +63,6 @@ class Article(WeChatModel):
     def thumb_url(self, value):
         self._thumb_url = value
 
-    @classmethod
     @appmethod("sync_articles")
     def sync(cls, app, id=None):
         if id:

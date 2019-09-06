@@ -40,7 +40,6 @@ class UserTag(WeChatModel):
         super(UserTag, self).__init__(*args, **kwargs)
         self._tag_local = tag_local
 
-    @classmethod
     @appmethod("sync_usertags")
     def sync(cls, app):
         rv = []

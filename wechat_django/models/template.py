@@ -36,7 +36,6 @@ class Template(WeChatModel):
 
         unique_together = (("app", "template_id"), ("app", "alias"))
 
-    @classmethod
     @appmethod("sync_templates")
     def sync(cls, app):
         """

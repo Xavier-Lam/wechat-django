@@ -106,7 +106,6 @@ class Material(WeChatModel):
         unique_together = (("app", "media_id"), ("app", "alias"))
         ordering = ("app", "-update_time")
 
-    @classmethod
     @appmethod("sync_materials")
     def sync(cls, app, id=None, type=None):
         """同步所有永久素材"""
@@ -124,7 +123,6 @@ class Material(WeChatModel):
                     updated.extend(updates)
             return updated
 
-    @classmethod
     @appmethod("sync_type_materials")
     def sync_type(cls, app, type):
         """同步某种类型的永久素材"""
@@ -137,7 +135,6 @@ class Material(WeChatModel):
             app.materials.create_material(type=type, **item)
             for item in updates]
 
-    @classmethod
     @appmethod("migrate_type_materials")
     def migrate_type(cls, app, type, src):
         """从src公众号迁移某种类型的永久素材到app公众号"""
@@ -160,8 +157,8 @@ class Material(WeChatModel):
             offset += count
         return rv
 
-    @classmethod
-    def as_permenant(cls, media_id, app, save=True):
+    @appmethod("as_permenant_material")
+    def as_permenant(cls, app, media_id, save=True):
         """将临时素材转换为永久素材"""
         # 下载临时素材
         resp = app.client.media.download(media_id)
@@ -191,7 +188,7 @@ class Material(WeChatModel):
         # 上载素材
         return cls.upload_permenant(app, (filename, resp.content), type, save)
 
-    @classmethod
+    @appmethod("upload_permenant_material")
     def upload_permenant(cls, app, file, type, save=True):
         """上传永久素材"""
         data = app.client.material.add(type, file)
@@ -202,7 +199,7 @@ class Material(WeChatModel):
         else:
             return media_id
 
-    @classmethod
+    @appmethod("upload_temporary_material")
     def upload_temporary(cls, app, file, type):
         """上传临时素材
         :param type: image|voice|video|thumb

@@ -13,13 +13,10 @@ from . import WeChatApp
 def create_shortcut(model):
     def method(func_or_name):
         def decorator(func):
-            @wraps(func)
-            def decorated_func(*args, **kwargs):
-                return func(*args, **kwargs)
-            decorated_func._shortcutmethod = name
-            decorated_func._model = model
+            func._shortcutmethod = name
+            func._model = model
 
-            return decorated_func
+            return classmethod(func)
 
         if callable(func_or_name):
             name = func_or_name.__name__
@@ -35,12 +32,10 @@ appmethod = create_shortcut(WeChatApp)
 """可以把方法注册到WeChatApp上的语法糖
 
     class SomeModel(WeChatModel):
-        @classmethod
         @appmethod
         def awesome_method(cls, app, *args, **kwargs):
             # ...
 
-        @classmethod
         @appmethod("another_method")
         def method(cls, app, *args, **kwargs):
             # ...

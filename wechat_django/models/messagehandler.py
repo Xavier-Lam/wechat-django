@@ -148,7 +148,6 @@ class MessageHandler(WeChatModel):
                 raise MessageHandleError("incorrect reply strategy")
         return reply and reply.reply(message_info)
 
-    @classmethod
     @appmethod("sync_message_handlers")
     def sync(cls, app):
         from . import Reply, Rule

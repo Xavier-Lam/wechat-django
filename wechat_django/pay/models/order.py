@@ -100,7 +100,6 @@ class UnifiedOrder(WeChatModel):
             return None
     trade_state.short_description = _("trade_state")
 
-    @classmethod
     @paymethod("create_order")
     def create(cls, pay, user=None, request=None, **kwargs):
         """

@@ -203,7 +203,7 @@ class Reply(WeChatModel):
             kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
             # 按照文档 是临时素材 需要转换为永久素材
-            media_id = Material.as_permenant(data["content"], app, False)
+            media_id = app.as_permenant_material(data["content"], False)
             kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:
             media_id = data["content"]
@@ -233,7 +233,7 @@ class Reply(WeChatModel):
         if type == cls.MsgType.TEXT:
             kwargs.update(content=data["content"])
         elif type in (cls.MsgType.IMAGE, cls.MsgType.VOICE):
-            media_id = Material.as_permenant(data["value"], app, False) if app\
+            media_id = app.as_permenant_material(data["value"], False) if app\
                 else data["value"]
             kwargs.update(media_id=media_id)
         elif type == cls.MsgType.NEWS:

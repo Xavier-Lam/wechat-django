@@ -108,7 +108,6 @@ class WeChatUser(WeChatModel):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
 
-    @classmethod
     @appmethod
     def user_by_openid(cls, app, openid, ignore_errors=False, sync_user=True):
         """根据用户openid拿到用户对象
@@ -134,7 +133,6 @@ class WeChatUser(WeChatModel):
                 raise
         return app.users.create(openid=openid)
 
-    @classmethod
     @appmethod("sync_users")
     def sync(cls, app, all=False, detail=True):
         """
@@ -156,7 +154,6 @@ class WeChatUser(WeChatModel):
             app.save()
         return users
 
-    @classmethod
     @appmethod
     def upsert_users(cls, app, openids, detail=True):
         if detail:
@@ -170,13 +167,11 @@ class WeChatUser(WeChatModel):
                     ), openids)
                 )
 
-    @classmethod
     @appmethod
     def fetch_user(cls, app, openid):
         # NotFound重新抛出40003异常
         return cls.fetch_users(app, [openid]).pop()
 
-    @classmethod
     @appmethod
     def fetch_users(cls, app, openids):
         fields = model_fields(cls)

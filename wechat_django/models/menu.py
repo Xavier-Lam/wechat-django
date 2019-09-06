@@ -57,7 +57,6 @@ class Menu(WeChatModel):
 
     objects = MenuManager()
 
-    @classmethod
     @appmethod("sync_menus")
     def sync(cls, app):
         """
@@ -81,7 +80,6 @@ class Menu(WeChatModel):
         app.save()
         return rv
 
-    @classmethod
     @appmethod("publish_menus")
     def publish(cls, app, menuid=None):
         """

@@ -17,11 +17,11 @@ class MenuTestCase(WeChatTestCase):
         # 微信官方菜单
         data = self.load_data("mp_menu_data")
         buttons = data["selfmenu_info"]["button"]
-        with mock.patch.object(Material, "as_permenant"),\
+        with mock.patch.object(WeChatApp, "as_permenant_material"),\
             mock.patch.object(WeChatApp, "sync_articles"),\
             mock.patch.object(WeChatMenu, "get_menu_info"):
 
-            Material.as_permenant.return_value = permenant_media
+            WeChatApp.as_permenant_material.return_value = permenant_media
             WeChatApp.sync_articles.return_value = None
             WeChatMenu.get_menu_info.return_value = data
 
