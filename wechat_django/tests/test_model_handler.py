@@ -116,3 +116,56 @@ class HandlerTestCase(WeChatTestCase):
         self.assertEqual(handler.post(request, self.app.name), "")
         user.refresh_from_db()
         self.assertTrue(user.subscribe)
+
+    @mock.patch.object(Handler, "_get_appname")
+    def test_first_subscribe(self, _get_appname):
+        """测试首次关注"""
+        _get_appname.return_value = self.app.name
+
+        url = reverse("wechat_django:handler",
+                      kwargs=dict(appname=self.app.name))
+        openid = "first_subscribe"
+        handler = Handler()
+
+        def create_subscribe_event(openid):
+            subscribe_event_text = """
+            <xml>
+            <ToUserName><![CDATA[ToUser]]></ToUserName>
+            <FromUserName><![CDATA[{0}]]></FromUserName>
+            <CreateTime>123456789</CreateTime>
+            <MsgType><![CDATA[event]]></MsgType>
+            <Event><![CDATA[subscribe]]></Event>
+            </xml>
+            """.format(openid)
+            request = self.rf().post(
+                url, subscribe_event_text, content_type="text/xml")
+            return handler.initialize_request(request)
+
+        request = create_subscribe_event()
+        self.assertEqual(handler.post(request, self.app.name), "")
+        self.assertTrue(request.wechat.local_user.first_subscribe)
+        self.assertTrue(request.wechat.user.first_subscribe)
+
+        request = create_subscribe_event()
+        self.assertEqual(handler.post(request, self.app.name), "")
+        self.assertFalse(request.wechat.local_user.first_subscribe)
+        self.assertFalse(request.wechat.user.first_subscribe)
+
+        unsubscribe_event_text = """
+        <xml>
+        <ToUserName><![CDATA[ToUser]]></ToUserName>
+        <FromUserName><![CDATA[{0}]]></FromUserName>
+        <CreateTime>123456789</CreateTime>
+        <MsgType><![CDATA[event]]></MsgType>
+        <Event><![CDATA[unsubscribe]]></Event>
+        </xml>
+        """.format(openid)
+        request = self.rf().post(
+            url, unsubscribe_event_text, content_type="text/xml")
+        request = handler.initialize_request(request)
+        self.assertEqual(handler.post(request, self.app.name), "")
+
+        request = create_subscribe_event()
+        self.assertEqual(handler.post(request, self.app.name), "")
+        self.assertFalse(request.wechat.local_user.first_subscribe)
+        self.assertFalse(request.wechat.user.first_subscribe)

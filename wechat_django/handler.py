@@ -39,9 +39,14 @@ class WeChatMessageInfo(WeChatInfo):
         """
         :rtype: wechat_django.models.WeChatUser
         """
+        local_user = None
+        if hasattr(self, "_local_user"):
+            local_user = self.local_user
         if not hasattr(self, "_user"):
             self._user = self.app.user_by_openid(
                 self.message.source, ignore_errors=True)
+            if hasattr(local_user, "first_subscribe"):
+                self._user.first_subscribe = local_user.first_subscribe
         return self._user
 
     @property
@@ -262,6 +267,9 @@ def handle_subscribe_events(sender, message_info, **kwargs):
     if isinstance(message, BaseEvent):
         # 关注事件
         if message.event in ("subscribe", "subscribe_scan"):
+            # 首次订阅
+            first_subscribe = message_info.local_user.subscribe is None
+            message_info.local_user.first_subscribe = first_subscribe
             message_info.local_user.subscribe = True
             message_info.local_user.subscribe_time = time.time()
             message_info.local_user.save()

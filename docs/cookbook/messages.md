@@ -23,25 +23,15 @@
 > 自定义处理规则应该是轻量并且无副作用的,抛出异常或不存在的自定义处理规则将被当作不匹配略过
 
 ### 首次订阅
-> 本项适用于v0.3.0及其之前版本,v0.3.1起,WeChat-Django会自动更新订阅状态.
-
-在开始使用本项目前,请先在后台或shell中同步关注app的所有用户.当接收到消息时,判断`message.local_user.subscribe`为非真值,再通过`message.user.update()`同步用户信息并写库,如果未认证,可以手动将`message.local_user.subscribe`置为`True`,并且保存.
-
-    import time
-    from wechat_django import message_handler
+从v0.3.3起,在监听订阅消息时,WeChat-Django会为用户附上first_subscribe属性,其中,首次订阅的用户,该值为真,否则为假
+> 注意,需要使用本功能,请先同步公众号所有关注用户,否则,公众号在被WeChat-Django托管以后,第一次触发关注事件时,会被认为是首次关注
 
     @message_handler
     def on_subscribe(message):
         user = message.local_user
-        if not user.subscribe:
-            if message.app.authed:
-                # 认证公众号 直接拉取用户信息
-                user.update()
-            else:
-                # 未认证公众号 手动更新信息
-                user.subscribe = True
-                user.subscribe_time = time.time()
-                user.save()
+        if user.first_subscribe:
+            # 首次关注
+            pass
 
 ## 模板消息
 ### 发送模板消息

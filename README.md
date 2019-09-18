@@ -7,7 +7,7 @@
 
 项目官方地址: https://github.com/Xavier-Lam/wechat-django
 
-本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11. WeChat-Django只是一个预览版本,可能存在较多bug并且有api及数据结构变更可能.
+本拓展基于[wechatpy](https://github.com/jxtech/wechatpy) ,支持的最低django版本为1.11. WeChat-Django只是一个预览版本,可能存在较多bug并且有api及数据结构变更可能,请密切关注[CHANGELOG](CHANGELOG.md)).
 
 目录
 ======
@@ -251,7 +251,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 * 后台表单验证
 
 ### 计划的功能
-* 公众号迁移
+* 命令行工具
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
 * 清理及保护永久素材
