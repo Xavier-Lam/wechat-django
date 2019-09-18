@@ -127,7 +127,7 @@ class HandlerTestCase(WeChatTestCase):
         openid = "first_subscribe"
         handler = Handler()
 
-        def create_subscribe_event(openid):
+        def create_subscribe_event():
             subscribe_event_text = """
             <xml>
             <ToUserName><![CDATA[ToUser]]></ToUserName>
