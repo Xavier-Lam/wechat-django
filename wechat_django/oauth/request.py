@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import six
 from six.moves.urllib.parse import urlparse
 
 from wechat_django.constants import WeChatSNSScope
@@ -18,6 +19,8 @@ class WeChatOAuthInfo(WeChatInfo):
         """
         if not getattr(self, "_scope", None):
             self._scope = (WeChatSNSScope.BASE,)
+        if isinstance(self._scope, six.text_type):
+            self._scope = (self._scope,)
         return self._scope
 
     _state = ""

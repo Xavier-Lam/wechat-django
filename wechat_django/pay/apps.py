@@ -12,6 +12,9 @@ class WeChatPayConfig(AppConfig):
     verbose_name_plural = _("WeChat Pay")
 
     def ready(self):
+        # 路由注册
+        from . import notify
+
         # 处理微信支付相关权限
         import wechat_django.models.permission as base_pm
         from .models.permisssion import permissions, permission_required
