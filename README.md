@@ -45,6 +45,7 @@
 * 模板消息模板的同步及发送
 * 永久素材,图文的同步及查看
 * 微信网页授权
+* [微信jsapi配置](docs/cookbook/web.md#jsapi)
 * 主动调用微信api封装
 * 微信支付api封装
 * 微信支付订单管理及信号
@@ -58,6 +59,7 @@
 2. 在settings.py的**INSTALLED_APPS中添加wechat_django**
 3. 运行**manage.py migrate wechat_django** 来更新数据库结构
 4. 在urls.py 中引入wechat_django.sites.wechat.urls, 将其配置到urlpatterns中
+5. 在settings.py中,设置`USE_TZ = True`
 
 至此,您已可以开始轻松使用wechat_django.项目尚未提供具体的使用文档,如需客制化需求,烦请先阅读代码
 
@@ -252,6 +254,7 @@ auth方法同样适用于网页授权,第二个参数填写网页授权的scope,
 
 ### 计划的功能
 * 命令行工具
+* 第三方平台接入
 * accesstoken开放给第三方并对接第三方accesstoken
 * 客服消息/对话
 * 清理及保护永久素材

@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
+import re
+import time
+
 from django.http import Http404, response
+from django.test.utils import override_settings
+from django.urls import reverse
+import six
+from six.moves.urllib.parse import urlencode
+from wechatpy.client.api import WeChatJSAPI
 
 from ..models import WeChatApp
 from ..sites.wechat import WeChatSite, WeChatView, wechat_view
@@ -69,6 +78,70 @@ class WeChatSiteTestCase(WeChatTestCase):
         self.assertEqual(resp.status_code, 405)
         resp = View.as_view()(self.rf().post("/"), self.app.name)
         self.assertEqual(resp.status_code, 204)
+
+    def test_jsapi(self):
+        """测试jsapi"""
+        with mock.patch.object(WeChatJSAPI, "get_jsapi_ticket"):
+            ticket = "ticket"
+            WeChatJSAPI.get_jsapi_ticket.return_value = "ticket"
+            jsapi_list = ["onMenuShareTimeline", "onMenuShareAppMessage"]
+
+            src = reverse("wechat_django:jsconfig",
+                          kwargs=dict(appname=self.app.name))
+            querystr = urlencode(dict(
+                jsApiList=",".join(jsapi_list)
+            ))
+            referrer = "https://baidu.com/abc"
+
+            resp = self.client.get(src + "?" + querystr,
+                                   HTTP_REFERER=referrer)
+            pattern = r"wx\.config\(JSON\.parse\('(.+)'\)\);"
+            match = re.match(pattern, resp.content.decode())
+            self.assertTrue(match)
+
+            json_str = match.group(1)
+            data = json.loads(json_str)
+
+            debug = data.get("debug")
+            appid = data["appId"]
+            timestamp = data["timestamp"]
+            noncestr = data["nonceStr"]
+            js_api_list = data["jsApiList"]
+            client = self.app.client
+            signature = client.jsapi.get_jsapi_signature(noncestr, ticket,
+                                                         timestamp, referrer)
+
+            self.assertFalse(debug)
+            self.assertEqual(appid, self.app.appid)
+            self.assertAlmostEqual(timestamp, time.time(), delta=3)
+            self.assertIsInstance(timestamp, int)
+            self.assertIsInstance(noncestr, six.string_types)
+            self.assertTrue(noncestr)
+            self.assertEqual(js_api_list, jsapi_list)
+            self.assertEqual(signature, data["signature"])
+
+            with override_settings(DEBUG=False):
+                querystr = urlencode(dict(
+                    debug=True
+                ))
+                resp = self.client.get(src + "?" + querystr,
+                                       HTTP_REFERER=referrer)
+                match = re.match(pattern, resp.content.decode())
+                self.assertTrue(match)
+                json_str = match.group(1)
+                data = json.loads(json_str)
+
+                self.assertFalse(data.get("debug"))
+
+            with override_settings(DEBUG=True):
+                resp = self.client.get(src + "?" + querystr,
+                                       HTTP_REFERER=referrer)
+                match = re.match(pattern, resp.content.decode())
+                self.assertTrue(match)
+                json_str = match.group(1)
+                data = json.loads(json_str)
+
+                self.assertTrue(data.get("debug"))
 
     def test_request(self):
         """测试请求响应正常,路由匹配正常"""

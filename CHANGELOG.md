@@ -1,6 +1,7 @@
 # ChangeLog
 
 breaking changes以:exclamation:开头标注
+- [0.3.4](#034)
 - [0.3.3](#033)
 - [0.3.2](#032)
 - [0.3.1](#031)
@@ -10,6 +11,10 @@ breaking changes以:exclamation:开头标注
 - [0.2.2](#022)
 - [0.2.0](#020)
 - [0.1.0](#010)
+
+## 0.3.4
+* [jssdk](docs/cookbook/web.md#jssdk)
+* :exclamation: 调整微信支付服务商数据库字段,app新增服务商类型
 
 ## 0.3.3
 * 给[首次关注](docs/cookbook/messages.md#首次订阅)用户加上属性

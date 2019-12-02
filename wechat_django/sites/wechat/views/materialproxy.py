@@ -6,9 +6,9 @@ import requests
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from .base import WeChatView
-from .permissions import StaffOnly
-from .sites import default_site
+from ..base import WeChatView
+from ..permissions import StaffOnly
+from ..sites import default_site
 
 
 @default_site.register
