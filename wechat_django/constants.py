@@ -4,9 +4,10 @@ from __future__ import unicode_literals
 
 class AppType(object):
     OTHER = 0
-    SERVICEAPP = 1
-    SUBSCRIBEAPP = 2
-    MINIPROGRAM = 4
+    SERVICEAPP = 0x01
+    SUBSCRIBEAPP = 0x02
+    MINIPROGRAM = 0x04
+    PAYPARTNER = 0x100  # 微信支付服务商
 
 
 class WeChatSNSScope(object):

@@ -98,6 +98,6 @@ class UserTagAdmin(RecursiveDeleteActionMixin, WeChatModelAdmin):
                 id__in=UserTag.SYS_TAGS).count() < 100
 
     def get_model_perms(self, request):
-        if request.app.type not in (AppType.SERVICEAPP, AppType.SUBSCRIBEAPP):
+        if not request.app.type & (AppType.SERVICEAPP | AppType.SUBSCRIBEAPP):
             return {}
         return super(UserTagAdmin, self).get_model_perms(request)

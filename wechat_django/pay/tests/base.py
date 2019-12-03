@@ -6,6 +6,7 @@ try:
 except ImportError:
     import mock
 
+from wechat_django.constants import AppType
 from wechat_django.models import WeChatApp
 from wechat_django.tests.base import WeChatTestCaseBase
 from ..models import WeChatPay
@@ -29,7 +30,7 @@ class WeChatPayTestCase(WeChatTestCaseBase):
 
         miniprogram = WeChatApp.objects.create(
             title="miniprogram", name="miniprogram", appid="miniprogram",
-            appsecret="secret", type=WeChatApp.Type.MINIPROGRAM)
+            appsecret="secret", type=AppType.MINIPROGRAM)
         pay = WeChatPay.objects.create(
             app=miniprogram, mch_id="mch_id", api_key="api_key",
             mch_cert=b"mch_cert", mch_key=b"mch_key")

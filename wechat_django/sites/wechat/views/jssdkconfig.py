@@ -11,6 +11,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
+from wechat_django.constants import AppType
 from wechat_django.exceptions import JSAPIError
 from ..base import WeChatView
 from ..sites import default_site
@@ -22,9 +23,7 @@ class JSSDKConfig(WeChatView):
     url_pattern = r"^wx.config.js"
 
     def initial(self, request, appname):
-        from wechat_django.models import WeChatApp
-
-        if request.wechat.app.type != WeChatApp.Type.SERVICEAPP:
+        if not request.wechat.app.type & AppType.SERVICEAPP:
             raise Http404
 
         url = request.META.get("HTTP_REFERER")

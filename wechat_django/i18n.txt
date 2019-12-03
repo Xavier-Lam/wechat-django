@@ -5,6 +5,7 @@
 {% trans "SERVICEAPP" %}
 {% trans "SUBSCRIBEAPP" %}
 {% trans "MINIPROGRAM" %}
+{% trans "PAYPARTNER" %}
 
 {% trans "TEXT" %}
 {% trans "IMAGE" %}

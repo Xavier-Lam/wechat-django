@@ -15,6 +15,7 @@ breaking changes以:exclamation:开头标注
 ## 0.3.4
 * [jssdk](docs/cookbook/web.md#jssdk)
 * :exclamation: 调整微信支付服务商数据库字段,app新增服务商类型
+* 更新django-object-tool依赖,对于python3以上版本,将jsonfield依赖改为jsonfield2依赖,以兼容高版本django
 
 ## 0.3.3
 * 给[首次关注](docs/cookbook/messages.md#首次订阅)用户加上属性

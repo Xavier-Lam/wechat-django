@@ -8,6 +8,7 @@ from django.template.defaultfilters import truncatechars
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from ..constants import AppType
 from ..models import MsgLogFlag, WeChatApp
 from ..models.permission import get_user_permissions
 from .base import has_wechat_permission
@@ -148,7 +149,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
             fields.remove("callback")
             fields.remove("created_at")
             fields.remove("updated_at")
-        if obj and obj.type == WeChatApp.Type.SUBSCRIBEAPP:
+        if obj and obj.type == AppType.SUBSCRIBEAPP:
             fields.remove("oauth_url")
         if obj and not obj.abilities.interactable:
             fields.remove("callback")

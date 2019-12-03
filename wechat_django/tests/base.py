@@ -10,6 +10,7 @@ except ImportError:
 
 from django.test import RequestFactory, TestCase
 
+from ..constants import AppType
 from ..models import WeChatApp
 
 
@@ -49,7 +50,7 @@ class WeChatTestCase(WeChatTestCaseBase):
             appid="appid1", appsecret="secret", token="token")
         WeChatApp.objects.create(title="miniprogram", name="miniprogram",
             appid="miniprogram", appsecret="secret",
-            type=WeChatApp.Type.MINIPROGRAM)
+            type=AppType.MINIPROGRAM)
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("test")

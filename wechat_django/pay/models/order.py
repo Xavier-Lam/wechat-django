@@ -46,8 +46,8 @@ class UnifiedOrder(WeChatModel):
     body = m.CharField(_("order body"), max_length=128)
     detail = m.TextField(_("order detail"), max_length=6000, null=True)
     out_trade_no = m.CharField(_("out_trade_no"), max_length=32)
-    fee_type = m.CharField(
-        _("fee_type"), max_length=16, null=True, default=FeeType.CNY)
+    fee_type = m.CharField(_("fee_type"), max_length=16, null=True,
+                           default=FeeType.CNY)
     total_fee = m.PositiveIntegerField(_("total_fee"))
     spbill_create_ip = m.CharField(_("spbill_create_ip"), max_length=64) # TODO: 生成时是否应该赋值?
     time_start = PayDateTimeField(_("time_start"), default=tz.now)
@@ -56,14 +56,13 @@ class UnifiedOrder(WeChatModel):
     trade_type = m.CharField(_("trade_type"), max_length=16,
                              choices=enum2choices(TradeType))
     product_id = m.CharField(_("product id"), max_length=32, null=True)
-    limit_pay = m.CharField(
-        _("limit_pay"), max_length=32, null=True, default=LimitPay.NONE,
-        choices=enum2choices(LimitPay))
+    limit_pay = m.CharField(_("limit_pay"), max_length=32, null=True,
+                            default=LimitPay.NONE,
+                            choices=enum2choices(LimitPay))
     openid = m.CharField(_("openid"), max_length=128, null=True)
     sub_openid = m.CharField(_("sub openid"), max_length=128, null=True)
-    receipt = m.CharField(
-        _("recept"), max_length=8, null=True, default=Receipt.NONE,
-        choices=enum2choices(Receipt))
+    receipt = m.CharField(_("recept"), max_length=8, null=True,
+                          default=Receipt.NONE, choices=enum2choices(Receipt))
     scene_info = JSONField(_("scene_info"), max_length=256, null=True)
 
     comment = m.TextField(_("comment"), blank=True)

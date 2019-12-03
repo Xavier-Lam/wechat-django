@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
+from ..constants import AppType
 from ..exceptions import WeChatAbilityError
 from ..utils.model import model_fields
 from . import appmethod, WeChatApp, WeChatModel
@@ -42,10 +43,10 @@ class Template(WeChatModel):
         同步微信模板
         :type app: wechat_django.models.WeChatApp
         """
-        if app.type == WeChatApp.Type.SERVICEAPP:
+        if app.type & AppType.SERVICEAPP:
             resp = app.client.template.get_all_private_template()
             templates = resp["template_list"]
-        elif app.type == WeChatApp.Type.MINIPROGRAM:
+        elif app.type & AppType.MINIPROGRAM:
             templates = list(cls._iter_wxa_templates(app))
         else:
             raise WeChatAbilityError(WeChatAbilityError.TEMPLATE)
@@ -92,9 +93,9 @@ class Template(WeChatModel):
                 for k, v in kwargs.items()
             }
 
-        if self.app.type == WeChatApp.Type.SERVICEAPP:
+        if self.app.type & AppType.SERVICEAPP:
             return self._send_service(openid, data, url, appid, pagepath)
-        elif self.app.type == WeChatApp.Type.MINIPROGRAM:
+        elif self.app.type & AppType.MINIPROGRAM:
             return self._send_miniprogram(
                 openid, data, form_id, pagepath, emphasis_keyword)
         else:

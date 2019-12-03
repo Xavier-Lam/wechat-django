@@ -15,12 +15,12 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from .. import settings
+from ..constants import AppType
 from ..exceptions import WeChatAbilityError
 from ..utils.func import Static
 from ..utils.model import enum2choices
 from . import MsgLogFlag
 from .ability import Abilities
-from ..constants import AppType
 
 
 class WeChatAppQuerySet(m.QuerySet):
@@ -107,11 +107,11 @@ class WeChatApp(m.Model):
 
     @property
     def type_name(self):
-        if self.type == WeChatApp.Type.MINIPROGRAM:
+        if self.type == AppType.MINIPROGRAM:
             return _("MINIPROGRAM")
-        elif self.type == WeChatApp.Type.SERVICEAPP:
+        elif self.type == AppType.SERVICEAPP:
             return _("SERVICEAPP")
-        elif self.type == WeChatApp.Type.SUBSCRIBEAPP:
+        elif self.type == AppType.SUBSCRIBEAPP:
             return _("SUBSCRIBEAPP")
         else:
             return _("unknown")
@@ -187,11 +187,11 @@ class WeChatApp(m.Model):
         if not self.abilities.api:
             raise WeChatAbilityError(WeChatAbilityError.API)
 
-        if self.type == WeChatApp.Type.SERVICEAPP:
+        if self.type & AppType.SERVICEAPP:
             if not self.abilities.oauth:
                 raise WeChatAbilityError(WeChatAbilityError.OAUTH)
             return self._auth_service(code, scope)
-        elif self.type == WeChatApp.Type.MINIPROGRAM:
+        elif self.type & AppType.MINIPROGRAM:
             return self._auth_miniprogram(code)
         else:
             raise WeChatClientException(WeChatErrorCode.UNAUTHORIZED_API)

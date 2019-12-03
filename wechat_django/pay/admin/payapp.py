@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.admin.base import has_wechat_permission
 from wechat_django.admin.wechatapp import WeChatAppAdmin
+from wechat_django.constants import AppType
 from wechat_django.models import WeChatApp
 from ..models import WeChatPay
 
@@ -102,15 +103,15 @@ class WeChatAppWithPayAdmin(WeChatAppAdmin):
     inlines = (WeChatPayInline,)
 
     def get_inline_instances(self, request, obj=None):
-        rv = super(WeChatAppWithPayAdmin, self).get_inline_instances(
-            request, obj)
-        if not obj or obj.type not in (
-            WeChatApp.Type.SERVICEAPP, WeChatApp.Type.MINIPROGRAM,
-            WeChatApp.Type.OTHER):
-            return []
-        # 支付权限
-        if not has_wechat_permission(request, obj, "pay", "manage"):
-            return []
+        rv = super(WeChatAppWithPayAdmin, self).get_inline_instances(request,
+                                                                     obj)
+        if not obj\
+           or not obj.type & (AppType.SERVICEAPP
+                              | AppType.MINIPROGRAM
+                              | AppType.PAYPARTNER)\
+           or not has_wechat_permission(request, obj, "pay", "manage"):
+            rv = tuple(filter(lambda o: not isinstance(o, WeChatPayInline),
+                              rv))
         return rv
 
     def get_deleted_objects(self, objs, request):
