@@ -76,14 +76,14 @@ class WeChatChangeList(ChangeList):
         self.request = request
 
     def url_for_result(self, result):
-        view = "admin:%s_%s_change" % (
-            self.opts.app_label, self.opts.model_name)
+        view = "admin:%s_%s_change" % (self.opts.app_label,
+                                       self.opts.model_name)
         kwargs = dict(
             object_id=getattr(result, self.pk_attname),
             wechat_app_id=self.request.app_id
         )
-        return reverse(
-            view, kwargs=kwargs, current_app=self.model_admin.admin_site.name)
+        return reverse(view, kwargs=kwargs,
+                       current_app=self.model_admin.admin_site.name)
 
 
 class WeChatModelAdminMetaClass(forms.MediaDefiningClass):
@@ -211,7 +211,7 @@ class DynamicChoiceForm(forms.ModelForm):
     def save(self, commit=True, *args, **kwargs):
         model = super(DynamicChoiceForm, self).save(False, *args, **kwargs)
         setattr(model, self.content_field,
-            self.cleaned_data[self.content_field])
+                self.cleaned_data[self.content_field])
         if commit:
             model.save()
         return model

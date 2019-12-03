@@ -13,6 +13,10 @@ class MessageHandleError(ValueError):
     pass
 
 
+class JSAPIError(ValueError):
+    pass
+
+
 class WeChatAbilityError(WeChatException):
     """当公众号尝试使用不具备的某一能力时抛出的异常"""
 

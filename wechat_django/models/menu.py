@@ -124,8 +124,8 @@ class Menu(WeChatModel):
                 cls.json2menu(sub, app, src) for sub in
                 (data.get("sub_button") or dict(list=[])).get("list")
             ])
-        elif menu.type in (
-            cls.Event.VIEW, cls.Event.CLICK, cls.Event.MINIPROGRAM):
+        elif menu.type in (cls.Event.VIEW, cls.Event.CLICK,
+                           cls.Event.MINIPROGRAM):
             menu.content = data
         else:
             # 要当作回复处理了

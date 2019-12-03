@@ -63,8 +63,8 @@ class WeChatApp(m.Model):
         choices=enum2choices(Type))
 
     token = m.CharField(max_length=32, null=True, blank=True)
-    encoding_aes_key = m.CharField(
-        _("EncodingAESKey"), max_length=43, null=True, blank=True)
+    encoding_aes_key = m.CharField(_("EncodingAESKey"), max_length=43,
+                                   null=True, blank=True)
     encoding_mode = m.PositiveSmallIntegerField(
         _("encoding mode"), default=EncodingMode.PLAIN,
         choices=enum2choices(EncodingMode))

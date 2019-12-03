@@ -11,29 +11,23 @@ from wechat_django.utils.func import Static
 
 
 class WeChatPay(m.Model):
-    app = m.ForeignKey(
-        WeChatApp, on_delete=m.CASCADE, related_name="pays")
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE, related_name="pays")
 
-    title = m.CharField(
-        _("title"), max_length=16, blank=True,
-        help_text=_("商户号标识,用于后台辨识商户号"))
-    name = m.CharField(
-        _("name"), max_length=16, null=False, default=_("default"),
-        help_text=_("商户号程序标识"))
+    title = m.CharField(_("title"), max_length=16, blank=True,
+                        help_text=_("商户号标识,用于后台辨识商户号"))
+    name = m.CharField(_("name"), max_length=16, null=False,
+                       default=_("default"), help_text=_("商户号程序标识"))
     weight = m.IntegerField(_("weight"), default=0, null=False)
 
-    mch_id = m.CharField(
-        _("mch_id"), max_length=32, help_text=_("微信支付分配的商户号"))
-    api_key = m.CharField(
-        _("WeChatPay api_key"), max_length=128, help_text=_("商户号key"))
+    mch_id = m.CharField(_("mch_id"), max_length=32,
+                         help_text=_("微信支付分配的商户号"))
+    api_key = m.CharField(_("WeChatPay api_key"), max_length=128,
+                          help_text=_("商户号key"))
 
-    sub_mch_id = m.CharField(
-        _("sub_mch_id"), max_length=32, blank=True, null=True,
-        help_text=_("子商户号，受理模式下填写"))
-    mch_app_id = m.CharField(
-        _("mch_app_id"), max_length=32,
-        help_text=_("微信分配的主商户号appid，受理模式下填写"),
-        blank=True, null=True)
+    sub_mch_id = m.CharField(_("sub_mch_id"), max_length=32, blank=True,
+                             null=True, help_text=_("子商户号，受理模式下填写"))
+    mch_app_id = m.CharField(_("mch_app_id"), max_length=32, blank=True,
+                             null=True, help_text=_("微信分配的主商户号appid，受理模式下填写"))
 
     mch_cert = m.BinaryField(_("mch_cert"), blank=True, null=True)
     mch_key = m.BinaryField(_("mch_key"), blank=True, null=True)

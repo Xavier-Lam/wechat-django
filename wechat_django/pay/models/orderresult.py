@@ -59,10 +59,9 @@ class UnifiedOrderResult(WeChatModel):
         # TODO: 支付成功后写入用户
         excludes = ("transaction_id",) if self.transaction_id else tuple()
         all_fields = model_fields(UnifiedOrderResult, excludes=excludes)
-        ignore_fields = (
-            "return_code", "return_msg", "appid", "mch_id", "device_info",
-            "nonce_str", "sign", "result_code", "openid", "trade_type",
-            "fee_type", "out_trade_no")
+        ignore_fields = ("return_code", "return_msg", "appid", "mch_id",
+                         "device_info", "nonce_str", "sign", "result_code",
+                         "openid", "trade_type", "fee_type", "out_trade_no")
         for k, v in result.items():
             if k not in ignore_fields:
                 if k in all_fields:

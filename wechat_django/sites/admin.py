@@ -8,7 +8,6 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.http import response
 from django.urls import NoReverseMatch, resolve, Resolver404, reverse
-from django.utils.translation import ugettext_lazy as _
 from object_tool import CustomObjectToolAdminSiteMixin
 from six.moves.urllib.parse import urlparse
 
@@ -162,7 +161,8 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
                 return {WeChatApp._meta.app_label: rv}
         else:
             with self._unregister_wechatadmins():
-                rv = super(WeChatAdminSiteMixin, self)._build_app_dict(request, label)
+                rv = super(WeChatAdminSiteMixin, self)._build_app_dict(
+                    request, label)
 
             # 首页, 增加app列表
             if not label:

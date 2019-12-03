@@ -23,14 +23,12 @@ class MenuAdmin(WeChatModelAdmin):
     change_form_template = "admin/wechat_django/menu/change_form.html"
     change_list_template = "admin/wechat_django/menu/change_list.html"
 
-    list_display = (
-        "operates", "id", "parent_id", "title", "type", "detail", "weight",
-        "updated_at")
+    list_display = ("operates", "id", "parent_id", "title", "type", "detail",
+                    "weight", "updated_at")
     list_display_links = ("title",)
     list_editable = ("weight", )
-    fields = (
-        "name", "type", "key", "url", "appid", "pagepath", "created_at",
-        "updated_at")
+    fields = ("name", "type", "key", "url", "appid", "pagepath", "created_at",
+              "updated_at")
 
     def title(self, obj):
         if obj.parent:
@@ -137,7 +135,7 @@ class MenuAdmin(WeChatModelAdmin):
             elif type == Menu.Event.CLICK:
                 fields = ("key", )
             elif type == Menu.Event.MINIPROGRAM:
-                fields = ("url", "appid", "apppath")
+                fields = ("url", "appid", "pagepath")
             else:
                 fields = tuple()
             return fields

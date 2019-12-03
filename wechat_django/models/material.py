@@ -134,9 +134,8 @@ class Material(WeChatModel):
         (app.materials.filter(type=type)
             .exclude(media_id__in=map(lambda o: o["media_id"], updates))
             .delete())
-        return [
-            app.materials.create_material(type=type, **item)
-            for item in updates]
+        return [app.materials.create_material(type=type, **item)
+                for item in updates]
 
     @appmethod("migrate_type_materials")
     def migrate_type(cls, app, type, src):

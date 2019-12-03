@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from functools import wraps
 
 from django.http import response as django_response
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from six import text_type
 

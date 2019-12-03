@@ -22,6 +22,9 @@
         from wechat_django.models import WeChatApp
 
         class CustomWeChatApp(WeChatApp):
+            class Meta:
+                proxy = True
+
             def _get_client(self):
                 return CustomWeChatClient(self)
 

@@ -223,8 +223,8 @@ class UnifiedOrder(WeChatModel):
         except AttributeError:
             from . import UnifiedOrderResult
             transaction_id = result.get("transaction_id") or None
-            obj = UnifiedOrderResult(
-                order=self, transaction_id=transaction_id)
+            obj = UnifiedOrderResult(order=self,
+                                     transaction_id=transaction_id)
             obj.update(result, signal=signal, verify=False)
 
     def verify(self, result):
