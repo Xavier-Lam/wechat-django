@@ -10,69 +10,35 @@ from django.utils.translation import ugettext_lazy as _
 
 from ..constants import AppType
 from ..models import MsgLogFlag, WeChatApp
+from ..models.apps.base import AppAdminProperty, InteractableApp
 from ..models.permission import get_user_permissions
+from ..utils.model import model_fields
 from .base import has_wechat_permission
 
 
-class WeChatAppForm(forms.ModelForm):
-    log_message = forms.BooleanField(
-        label=_("log messages"), initial=False, required=False)
+class WeChatAppFormMeta(object):
+    fields = "__all__"
+    widgets = dict(
+        appsecret=forms.PasswordInput(render_value=True),
+        token=forms.PasswordInput(render_value=True),
+        encoding_aes_key=forms.PasswordInput(render_value=True)
+    )
 
-    wechat_host = forms.CharField(
-        label=_("WeChat host"), required=False,
-        help_text=_("接收微信回调的域名"))
-    wechat_https = forms.BooleanField(
-        label=_("WeChat https"), required=False,
-        help_text=_("回调地址是否为https"))
 
-    accesstoken_url = forms.URLField(
-        label=_("accesstoken url"), required=False,
-        help_text=_("获取accesstoken的url,不填直接从微信取"))
-    oauth_url = forms.URLField(
-        label=_("oauth url"), required=False,
-        help_text=_("授权重定向的url,用于第三方网页授权换取code,默认直接微信授权"))
-
-    class Meta(object):
-        model = WeChatApp
-        fields = "__all__"
-        widgets = dict(
-            appsecret=forms.PasswordInput(render_value=True),
-            token=forms.PasswordInput(render_value=True),
-            encoding_aes_key=forms.PasswordInput(render_value=True)
-        )
-
+class WeChatAppForm(object):
     def __init__(self, *args, **kwargs):
-        inst = kwargs.get("instance")
-        if inst:
+        instance = kwargs.get("instance")
+        if instance:
+            cls = type(instance)
+            props = {
+                field: getattr(instance, field)
+                for field in self._meta.fields
+                if isinstance(getattr(cls, field, None), AppAdminProperty)
+            }
             initial = kwargs.get("initial", {})
-            initial["log_message"] = inst.log_message
-            initial["wechat_host"] = inst.site_host
-            initial["wechat_https"] = inst.site_https
-            initial["accesstoken_url"] = inst.configurations.get(
-                "ACCESSTOKEN_URL", "")
-            initial["oauth_url"] = inst.configurations.get("OAUTH_URL", "")
+            initial.update(**props)
             kwargs["initial"] = initial
         return super(WeChatAppForm, self).__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned_data = super(WeChatAppForm, self).clean()
-        if cleaned_data.get("log_message"):
-            cleaned_data["flags"] = MsgLogFlag.LOG_MESSAGE
-        else:
-            cleaned_data["flags"] = 0
-        return cleaned_data
-
-    def save(self, commit=True):
-        self.instance.flags = self.cleaned_data["flags"]
-        self.instance.configurations["SITE_HOST"] =\
-            self.cleaned_data.get("wechat_host", "")
-        self.instance.configurations["SITE_HTTPS"] =\
-            self.cleaned_data.get("wechat_https", None)
-        self.instance.configurations["ACCESSTOKEN_URL"] =\
-            self.cleaned_data.get("accesstoken_url", "")
-        self.instance.configurations["OAUTH_URL"] =\
-            self.cleaned_data.get("oauth_url", "")
-        return super(WeChatAppForm, self).save(commit)
 
 
 @admin.register(WeChatApp)
@@ -83,18 +49,17 @@ class WeChatAppAdmin(admin.ModelAdmin):
     object_history_template = "admin/object_history.html"
 
     actions = None
-    list_display = (
-        "title", "name", "type", "appid", "short_desc", "abilities",
-        "created_at", "updated_at")
+    list_display = ("title", "name", "type", "appid", "short_desc",
+                    "abilities", "created_at", "updated_at")
     search_fields = ("title", "name", "appid", "short_desc")
 
-    fields = (
-        "title", "name", "appid", "appsecret", "type", "abilities", "token",
-        "encoding_aes_key", "encoding_mode", "desc", "log_message",
-        "callback", "wechat_host", "wechat_https", "accesstoken_url",
-        "oauth_url", "created_at", "updated_at"
-    )
-    readonly_fields = ("abilities",)
+    fields = ("title", "name", "appid", "appsecret", "type", "abilities",
+              "mch_id", "api_key", "token", "encoding_aes_key",
+              "encoding_mode", "desc", "log_message", "callback", "site_host",
+              "site_https", "accesstoken_url", "oauth_url", "created_at",
+              "updated_at")
+    readonly_fields = ("name", "appid", "type", "abilities", "callback",
+                       "created_at", "updated_at")
 
     @mark_safe
     def abilities(self, obj):
@@ -144,25 +109,78 @@ class WeChatAppAdmin(admin.ModelAdmin):
         return urlpatterns
 
     def get_fields(self, request, obj=None):
-        fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
         if not obj:
+            return ("title", "name", "appid", "appsecret", "type", "desc")
+        
+        fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
+
+        if not isinstance(obj, InteractableApp):
+            fields.remove("token")
+            fields.remove("encoding_aes_key")
+            fields.remove("encoding_mode")
             fields.remove("callback")
-            fields.remove("created_at")
-            fields.remove("updated_at")
-        if obj and obj.type == AppType.SUBSCRIBEAPP:
-            fields.remove("oauth_url")
-        if obj and not obj.abilities.interactable:
-            fields.remove("callback")
-        return fields
+
+        allows = self._list_admin_properties(request, obj)
+        cls = type(obj)
+        allows += model_fields(cls)
+        allows += ["callback", "abilities"]
+
+        return tuple(field for field in fields if field in allows)
 
     def get_readonly_fields(self, request, obj=None):
-        rv = super(WeChatAppAdmin, self).get_readonly_fields(request, obj)
-        if obj:
-            rv = rv + (
-                "name", "appid", "callback", "created_at", "updated_at")
-            if obj.type != 0:
-                rv = rv + ("type",)
-        return rv
+        if not obj:
+            return tuple()
+
+        noneditable = super(WeChatAppAdmin, self).get_readonly_fields(
+            request, obj)
+        fields = self.get_fields(request, obj)
+        cls = type(obj)
+        readonlys = [
+            attr for attr in self._list_admin_properties(request, obj)
+            if (not getattr(cls, attr).fset  # 没有fset的
+                or getattr(getattr(cls, attr), "readonly", False)  # 或已设的
+                    and getattr(obj, attr))
+        ]
+        return set(noneditable).intersection(fields).union(readonlys)
+
+    def _list_admin_properties(self, request, obj=None):
+        """列举admin额外需要显示的属性"""
+        cls = type(obj)
+        return [
+            attr for attr in dir(cls)
+            if isinstance(getattr(cls, attr), AppAdminProperty)
+        ]
+
+    def get_form(self, request, obj=None, **kwargs):
+        if not obj:
+            return super(WeChatAppAdmin, self).get_form(request, obj,
+                                                        **kwargs)
+
+        meta = type(str("Meta"), (WeChatAppFormMeta,), {"model": type(obj)})
+
+        attrs = dict(Meta=meta)
+        for attr in self._list_admin_properties(request, obj):
+            prop = getattr(type(obj), attr)
+            field_type = prop.field_type
+
+            field_kwargs = dict(
+                label=_(attr),
+                help_text=_(prop.help_text)
+            )
+            if getattr(prop, "widget", None):
+                field_kwargs["widget"] = prop.widget
+            field_kwargs["required"] = getattr(prop, "required", False)
+
+            attrs[attr] = field_type(**field_kwargs)
+
+        origin_form = self.form
+        try:
+            self.form = type(str("WeChatAppForm"),
+                             (WeChatAppForm, forms.ModelForm), attrs)
+            return super(WeChatAppAdmin, self).get_form(request, obj,
+                                                        **kwargs)
+        finally:
+            self.form = origin_form
 
     def get_queryset(self, request):
         self.request = request
@@ -205,5 +223,3 @@ class WeChatAppAdmin(admin.ModelAdmin):
             WeChatUser._meta.verbose_name, UnifiedOrder._meta.verbose_name)
         perms_needed = perms_needed.difference(ignored_models)
         return deleted_objects, model_count, perms_needed, protected
-
-    form = WeChatAppForm

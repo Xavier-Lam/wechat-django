@@ -5,3 +5,4 @@ from __future__ import unicode_literals
 from .app import WeChatPay
 from .order import UnifiedOrder
 from .orderresult import UnifiedOrderResult
+from .paypartner import PayPartnerApp

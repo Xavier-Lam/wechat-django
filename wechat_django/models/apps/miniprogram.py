@@ -10,9 +10,6 @@ from .base import ApiClientApp, InteractableApp, WeChatApp
 class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
     """小程序"""
 
-    class Meta(object):
-        proxy = True
-
     def auth(self, code):
         """用code进行微信授权
         :rtype: (wechat_django.models.WeChatUser, dict)
@@ -41,3 +38,6 @@ class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
     @property
     def client(self):
         return super(MiniProgramApp, self).client.wxa
+
+    class Meta(object):
+        proxy = True

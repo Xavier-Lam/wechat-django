@@ -8,7 +8,7 @@ from wechatpy.client.api import WeChatWxa
 
 from ..constants import AppType
 from ..models import apps, WeChatApp
-from ..models.apps.base import configuration_prop
+from ..models.apps.base import ConfigurationProperty
 from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
@@ -123,10 +123,10 @@ class AppTestCase(WeChatTestCase):
         settings.SITE_HOST = settings_host
         settings.SITE_HTTPS = True
         
-        WeChatApp.site_https = configuration_prop("SITE_HTTPS",
-                                                  default=settings.SITE_HTTPS)
-        WeChatApp.site_host = configuration_prop("SITE_HOST",
-                                                  default=settings.SITE_HOST)
+        WeChatApp.site_https = ConfigurationProperty("SITE_HTTPS",
+                                                     default=settings.SITE_HTTPS)
+        WeChatApp.site_host = ConfigurationProperty("SITE_HOST",
+                                                    default=settings.SITE_HOST)
         # app中未设置site host 取设置里的site host
         assertUrlCorrect(settings_host, url_name, req, secure=True)
 

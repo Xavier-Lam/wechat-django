@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import logging
 
+from django import forms
 from django.apps import apps
 from django.db import models as m
 from django.urls import reverse
@@ -33,16 +34,46 @@ class WeChatAppQuerySet(m.QuerySet):
         return obj
 
 
-def configuration_prop(key, default=None, doc=None, readonly=False):
-    kwargs = dict(
-        fget=lambda self: self.configurations.get(
-            key, default(self) if callable(default) else default),
-        fdel=lambda self: self.configurations.pop(key, None),
-        doc=doc
-    )
-    if not readonly:
-        kwargs["fset"] = lambda self, v: self.configurations.update({key: v})
-    return property(**kwargs)
+class AppAdminProperty(property):
+    field_type = forms.CharField
+
+
+class ConfigurationProperty(AppAdminProperty):
+    def __init__(self, key, default=None, doc="", **kw):
+        kwargs = dict(
+            fget=lambda self: self.configurations.get(
+                key, default(self) if callable(default) else default),
+            fset=lambda self, v: self.configurations.update({key: v}),
+            fdel=lambda self: self.configurations.pop(key, None),
+            doc=doc
+        )
+        kw["help_text"] = doc
+        super(ConfigurationProperty, self).__init__(**kwargs)
+
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+
+class FlagProperty(AppAdminProperty):
+    field_type = forms.BooleanField
+
+    def __init__(self, flag, default=None, doc="", **kw):
+        def fset(self, value):
+            self.flags = self.flags | flag
+            if not value:
+                self.flags ^= flag
+
+        kwargs = dict(
+            fget=lambda self: bool(self.flags & flag),
+            fset=fset,
+            fdel=lambda self: (self.flags | flag) ^ flag,
+            doc=doc
+        )
+        kw["help_text"] = doc
+        super(FlagProperty, self).__init__(**kwargs)
+
+        for k, v in kw.items():
+            setattr(self, k, v)
 
 
 class WeChatApp(m.Model):
@@ -106,10 +137,12 @@ class WeChatApp(m.Model):
             raise AttributeError
         return Static("{appname}".format(appname=self.name))
 
-    site_https = configuration_prop("SITE_HTTPS", default=settings.SITE_HTTPS,
-                                    doc=_("回调地址是否为https"))
-    site_host = configuration_prop("SITE_HOST", default=settings.SITE_HOST,
-                                    doc=_("接收微信回调的域名"))
+    site_https = ConfigurationProperty("SITE_HTTPS",
+                                       default=settings.SITE_HTTPS,
+                                       doc="回调地址是否为https",
+                                       field_type=forms.BooleanField)
+    site_host = ConfigurationProperty("SITE_HOST", default=settings.SITE_HOST,
+                                      doc="接收微信回调的域名")
 
     class Meta(object):
         verbose_name = _("WeChat app")
@@ -216,8 +249,10 @@ class ApiClientApp(WeChatApp):
     class Meta(object):
         proxy = True
 
-    accesstoken_url = configuration_prop("ACCESSTOKEN_URL",
-                                         doc="获取accesstoken的url,不填直接从微信取")
+    accesstoken_url = ConfigurationProperty("ACCESSTOKEN_URL",
+                                            widget=forms.URLInput,
+                                            doc="获取accesstoken的url,不填直"
+                                                "接从微信取")
 
     @property
     def client(self):
@@ -246,13 +281,9 @@ class InteractableApp(WeChatApp):
     class Meta(object):
         proxy = True
 
-    @property
-    def log_message(self):
-        return bool(self.flags & MsgLogFlag.LOG_MESSAGE)
-
-    @property
-    def log_reply(self):
-        return bool(self.flags & MsgLogFlag.LOG_REPLY)
+    log_message = FlagProperty(MsgLogFlag.LOG_MESSAGE, False,
+                               doc="log messages")
+    log_reply = FlagProperty(MsgLogFlag.LOG_REPLY, False, doc="log reply")
 
     @property
     def crypto(self):
@@ -276,9 +307,11 @@ class OAuthApp(WeChatApp):
         proxy = True
 
 
-    oauth_url = configuration_prop("OAUTH_URL",
-                                   default=lambda self: self.OAUTH_URL,
-                                   doc="授权重定向的url,用于第三方网页授权换取code,默认直接微信授权")
+    oauth_url = ConfigurationProperty("OAUTH_URL",
+                                      default=lambda self: self.OAUTH_URL,
+                                      widget=forms.URLInput,
+                                      doc="授权重定向的url,用于第三方网页授权"
+                                          "换取code,默认直接微信授权")
 
     @property
     def oauth(self):
