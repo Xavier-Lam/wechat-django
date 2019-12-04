@@ -49,10 +49,9 @@ class WeChatClient(_Client):
         if callable(session):
             session = session(app)
         self.app = app
-        if app.configurations.get("ACCESSTOKEN_URL"):
-            self.ACCESSTOKEN_URL = app.configurations["ACCESSTOKEN_URL"]
-        super(WeChatClient, self).__init__(
-            app.appid, app.appsecret, session=session)
+        self.ACCESSTOKEN_URL = app.accesstoken_url
+        super(WeChatClient, self).__init__(app.appid, app.appsecret,
+                                           session=session)
 
     def _fetch_access_token(self, url, params):
         """自定义accesstoken url"""

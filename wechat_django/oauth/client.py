@@ -8,12 +8,8 @@ from wechat_django.constants import WeChatSNSScope
 
 
 class WeChatOAuthClient(WeChatOAuth):
-    OAUTH_URL = "https://open.weixin.qq.com/connect/oauth2/authorize"
-    QRCONNECT_URL = "https://open.weixin.qq.com/connect/qrconnect"
-
     def __init__(self, app):
-        if app.configurations.get("OAUTH_URL"):
-            self.OAUTH_URL = app.configurations["OAUTH_URL"]
+        self.OAUTH_URL = app.oauth_url
         super(WeChatOAuthClient, self).__init__(app.appid, app.appsecret, "")
 
     def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
@@ -26,7 +22,7 @@ class WeChatOAuthClient(WeChatOAuth):
         )) + "#wechat_redirect"
 
     def qrconnect_url(self, redirect_uri, state=""):
-        return self.QRCONNECT_URL + "?" + urlencode(dict(
+        return self.OAUTH_URL + "?" + urlencode(dict(
             appid=self.app_id,
             redirect_uri=redirect_uri,
             response_type="code",

@@ -8,6 +8,7 @@ class AppType(object):
     SUBSCRIBEAPP = 0x02
     MINIPROGRAM = 0x04
     PAYPARTNER = 0x100  # 微信支付服务商
+    WEBAPP = 0x1000  # 网站应用
 
 
 class WeChatSNSScope(object):

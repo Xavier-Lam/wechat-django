@@ -1,7 +1,7 @@
 # ChangeLog
 
 breaking changes以:exclamation:开头标注
-- [0.3.4](#034)
+- [0.4.0](#040)
 - [0.3.3](#033)
 - [0.3.2](#032)
 - [0.3.1](#031)
@@ -12,7 +12,9 @@ breaking changes以:exclamation:开头标注
 - [0.2.0](#020)
 - [0.1.0](#010)
 
-## 0.3.4
+## 0.4.0
+* 重构app部分代码
+* 开放平台网站应用功能(待单元测试及cookbook)
 * [jssdk](docs/cookbook/web.md#jssdk)
 * :exclamation: 调整微信支付服务商数据库字段,app新增服务商类型
 * 更新django-object-tool依赖,对于python3以上版本,将jsonfield依赖改为jsonfield2依赖,以兼容高版本django

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.contrib.sessions.middleware import SessionMiddleware
 from wechatpy.oauth import WeChatOAuthException
 
-from ..models import WeChatApp, WeChatUser
+from ..models import ServiceApp, WeChatUser
 from wechat_django.oauth import (WeChatAuthenticated, WeChatOAuthClient,
                                  WeChatOAuthSessionAuthentication,
                                  WeChatOAuthView, WeChatSNSScope)
@@ -33,8 +33,8 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
         code = "123456"
         request = self._create_request(path + "?code=" + code)
         request = view.initialize_request(request)
-        with mock.patch.object(WeChatApp, "auth"):
-            WeChatApp.auth.return_value = wechat_user, user_dict
+        with mock.patch.object(ServiceApp, "auth"):
+            ServiceApp.auth.return_value = wechat_user, user_dict
             user, authed_openid = auth.authenticate(request)
             self.assertTrue(user.id)
             self.assertEqual(user.openid, openid)
@@ -42,13 +42,13 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
             self.assertEqual(request.session[request.wechat.session_key],
                              openid)
             self.assertEqual(request.wechat.user.openid, openid)
-            self.assertEquals(WeChatApp.auth.call_args[0][0], code)
+            self.assertEquals(ServiceApp.auth.call_args[0][0], code)
 
         # session认证用户返回True
         request = self._create_request(path + "?code=" + code)
         request = view.initialize_request(request)
         request.session[request.wechat.session_key] = openid
-        with mock.patch.object(WeChatApp, "auth"):
+        with mock.patch.object(ServiceApp, "auth"):
             user, authed_openid = auth.authenticate(request)
             self.assertEqual(user.openid, openid)
             self.assertEqual(authed_openid, openid)
@@ -56,14 +56,14 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
                              openid)
             self.assertEqual(request.wechat.user.openid, openid)
             # session认证用户不调用code认证代码
-            self.assertFalse(WeChatApp.auth.called)
+            self.assertFalse(ServiceApp.auth.called)
 
         # 认证异常用户返回False
         # 假code
         request = self._create_request(path + "?code=" + code)
         request = view.initialize_request(request)
-        with mock.patch.object(WeChatApp, "auth"):
-            WeChatApp.auth.side_effect = WeChatOAuthException(0, "")
+        with mock.patch.object(ServiceApp, "auth"):
+            ServiceApp.auth.side_effect = WeChatOAuthException(0, "")
             self.assertIsNone(auth.authenticate(request))
             self.assertTrue(auth.authenticate_header(request))
 

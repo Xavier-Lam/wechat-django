@@ -134,9 +134,9 @@ def get_perms_by_codenames(codenames):
         .all())
 
 
-@receiver(m.signals.post_save, sender=WeChatApp)
+@receiver(m.signals.post_save)
 def create_app_perms(sender, instance, created, *args, **kwargs):
-    if created:
+    if created and issubclass(sender, WeChatApp):
         # 添加
         content_type = ContentType.objects.get_for_model(WeChatApp)
         Permission.objects.bulk_create(
@@ -149,13 +149,14 @@ def create_app_perms(sender, instance, created, *args, **kwargs):
         )
 
 
-@receiver(m.signals.post_delete, sender=WeChatApp)
+@receiver(m.signals.post_delete)
 def delete_app_perms(sender, instance, *args, **kwargs):
-    content_type = ContentType.objects.get_for_model(WeChatApp)
-    Permission.objects.filter(
-        content_type=content_type,
-        codename__in=list_perm_names(instance)
-    ).delete()
+    if issubclass(sender, WeChatApp):
+        content_type = ContentType.objects.get_for_model(WeChatApp)
+        Permission.objects.filter(
+            content_type=content_type,
+            codename__in=list_perm_names(instance)
+        ).delete()
 
 
 @receiver(m.signals.m2m_changed, sender=Group.permissions.through)

@@ -6,7 +6,9 @@ from django.urls import reverse
 from wechatpy.client import WeChatClient as _Client
 from wechatpy.client.api import WeChatWxa
 
-from ..models import WeChatApp
+from ..constants import AppType
+from ..models import apps, WeChatApp
+from ..models.apps.base import configuration_prop
 from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
@@ -120,11 +122,37 @@ class AppTestCase(WeChatTestCase):
 
         settings.SITE_HOST = settings_host
         settings.SITE_HTTPS = True
-
+        
+        WeChatApp.site_https = configuration_prop("SITE_HTTPS",
+                                                  default=settings.SITE_HTTPS)
+        WeChatApp.site_host = configuration_prop("SITE_HOST",
+                                                  default=settings.SITE_HOST)
         # app中未设置site host 取设置里的site host
         assertUrlCorrect(settings_host, url_name, req, secure=True)
-        
+
         # app中设置取app设置
-        self.app.configurations["SITE_HTTPS"] = False
-        self.app.configurations["SITE_HOST"] = configure_host
+        self.app.site_https = False
+        self.app.site_host   = configure_host
         assertUrlCorrect(configure_host, url_name, req, secure=False)
+
+    def test_from_db(self):
+        """测试queryset取数据能取到正确类型"""
+        subscribe = apps.SubscribeApp.objects.create(title="subscribe",
+                                                     name="subscribe",
+                                                     appid="subscribe")
+
+        self.assertIsInstance(subscribe, apps.SubscribeApp)
+        self.assertTrue(hasattr(subscribe, "log_message"))
+        self.assertEqual(subscribe.type, AppType.SUBSCRIBEAPP)
+        subscribe = WeChatApp.objects.get_by_name("subscribe")
+        self.assertIsInstance(subscribe, apps.SubscribeApp)
+
+        self.assertIsInstance(self.app, apps.ServiceApp)
+        service = WeChatApp.objects.get_by_name(self.app.name)
+        self.assertEqual(service.type, AppType.SERVICEAPP)
+        self.assertIsInstance(service, apps.ServiceApp)
+
+        self.assertIsInstance(self.miniprogram, apps.MiniProgramApp)
+        miniprogram = WeChatApp.objects.get_by_name(self.miniprogram.name)
+        self.assertEqual(miniprogram.type, AppType.MINIPROGRAM)
+        self.assertIsInstance(miniprogram, apps.MiniProgramApp)

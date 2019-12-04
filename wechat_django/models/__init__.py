@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 
 from .constants import MsgLogFlag, MsgType
 
-from .app import WeChatApp
+from .apps import (MiniProgramApp, PayPartnerApp, ServiceApp, SubscribeApp,
+                   WeChatApp)
+
 from .permission import permissions
 from .base import WeChatModel, appmethod
 from .template import Template
