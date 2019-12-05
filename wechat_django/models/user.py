@@ -93,8 +93,8 @@ class WeChatUser(WeChatModel):
         verbose_name_plural = _("users")
 
         ordering = ("app", "-created_at")
-        unique_together = (
-            ("app", "openid"), ("unionid", "app"), ("app", "alias"))
+        unique_together = (("app", "openid"), ("unionid", "app"),
+                           ("app", "alias"))
 
     @property
     def group(self):

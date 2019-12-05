@@ -23,9 +23,9 @@ class OrderTestCase(WeChatPayTestCase):
         minimal = self.minimal_example
         body = minimal["body"]
         total_fee = minimal["total_fee"]
-        user_main = self.app.users.create(openid=openid)
+        user = self.app.users.create(openid=openid)
         request = self.rf().get("/")
-        order = self.app.pay.create_order(user_main, request, **minimal)
+        order = self.app.pay.create_order(user, request, **minimal)
         # 默认值
         self.assertEqual(order.trade_type, UnifiedOrder.TradeType.JSAPI)
         self.assertEqual(order.fee_type, UnifiedOrder.FeeType.CNY)
@@ -40,13 +40,13 @@ class OrderTestCase(WeChatPayTestCase):
         self.assertEqual(order.total_fee, total_fee)
 
         # 子商户订单
-        user_sub = self.app_sub.users.create(openid=openid)
-        order = self.app_sub.pay.create_order(
-            user_sub, request, **self.minimal_example)
+        order = self.app_sub.pay.create_order(user, request,
+                                              **self.minimal_example)
         self.assertIsNone(order.openid)
-        self.assertEqual(order.sub_openid, user_sub.openid)
-        order = self.app_sub.pay.create_order(
-            user_main, request, **self.minimal_example)
+        self.assertEqual(order.sub_openid, user.openid)
+        user_main = self.app_sub.users.create(openid=openid)
+        order = self.app_sub.pay.create_order(user_main, request,
+                                              **self.minimal_example)
         self.assertIsNone(order.sub_openid)
         self.assertEqual(order.openid, user_main.openid)
 

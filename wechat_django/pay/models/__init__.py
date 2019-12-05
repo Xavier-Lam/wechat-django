@@ -2,7 +2,7 @@
 # flake8: noqa
 from __future__ import unicode_literals
 
-from .app import WeChatPay
+from .paypartner import PayPartnerApp
+from .app import WeChatPay, WeChatSubPay
 from .order import UnifiedOrder
 from .orderresult import UnifiedOrderResult
-from .paypartner import PayPartnerApp

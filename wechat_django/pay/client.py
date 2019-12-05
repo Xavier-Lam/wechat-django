@@ -41,14 +41,17 @@ def load_cert(self):
 class WeChatPayClient(_Pay):
     def __init__(self, pay):
         """:type pay: wechat_django.models.WeChatPay"""
+        from wechat_django.pay.models import WeChatSubPay
+
         self.pay = pay
         kwargs = dict(
             appid=pay.appid,
             api_key=pay.api_key,
             mch_id=pay.mch_id,
-            sub_mch_id=pay.sub_mch_id
+            sub_appid=pay.sub_appid
         )
-        if pay.mch_app_id:
+        if isinstance(pay, WeChatSubPay):
+            kwargs["sub_mch_id"] = pay.sub_mch_id
             kwargs["sub_appid"] = pay.sub_appid
 
         super(WeChatPayClient, self).__init__(**kwargs)

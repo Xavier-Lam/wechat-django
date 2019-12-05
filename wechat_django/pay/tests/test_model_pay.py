@@ -15,28 +15,23 @@ class PayTestCase(WeChatPayTestCase):
         pay = self.app.pay
         sub_pay = self.app_sub.pay
 
-        mch_id = pay.mch_id
-        api_key = pay.api_key
-        sub_mch_id = sub_pay.sub_mch_id
-        mch_app_id = sub_pay.mch_app_id
-
         with mock.patch.object(WeChatPayBaseClient, "__init__"):
             pay.client
             self.assertCallArgsEqual(
                 WeChatPayBaseClient.__init__, kwargs=dict(
-                    mch_id=mch_id,
-                    api_key=api_key,
+                    mch_id=pay.mch_id,
+                    api_key=pay.api_key,
                     appid=pay.app.appid
                 ))
 
             sub_pay.client
             self.assertCallArgsEqual(
                 WeChatPayBaseClient.__init__, kwargs=dict(
-                    mch_id=mch_id,
-                    api_key=api_key,
-                    appid=mch_app_id,
-                    sub_appid=sub_pay.app.appid,
-                    sub_mch_id=sub_mch_id
+                    mch_id=sub_pay.mch_id,
+                    api_key=sub_pay.api_key,
+                    appid=sub_pay.appid,
+                    sub_appid=sub_pay.sub_appid,
+                    sub_mch_id=sub_pay.sub_mch_id
                 ))
 
     def test_client_cert(self):

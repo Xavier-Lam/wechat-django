@@ -13,7 +13,7 @@ class WeChatPayConfig(AppConfig):
 
     def ready(self):
         # 路由注册
-        from . import notify
+        from . import notify  # noqa
 
         # 处理微信支付相关权限
         import wechat_django.models.permission as base_pm

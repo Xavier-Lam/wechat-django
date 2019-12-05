@@ -5,7 +5,9 @@ import logging
 
 from django import forms
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.db import models as m
+from django.db.models.manager import BaseManager
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
@@ -33,6 +35,12 @@ class WeChatAppQuerySet(m.QuerySet):
         # create 返回子代理类
         obj.__class__ = self.model.get_apptype_cls(obj.type)
         return obj
+
+
+class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
+    def get_queryset(self):
+        queryset = super(WeChatAppManager, self).get_queryset()
+        return queryset.filter(parent__isnull=True)
 
 
 class AppAdminProperty(property):
@@ -97,7 +105,6 @@ class WeChatApp(m.Model):
     title = m.CharField(_("title"), max_length=16, null=False,
                         help_text=_("公众号名称,用于后台辨识公众号"))
     name = m.CharField(_("name"), max_length=16, blank=False, null=False,
-                       unique=True,
                        help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,"
                                    "用于程序辨识"))
     desc = m.TextField(_("description"), default="", blank=True)
@@ -107,6 +114,10 @@ class WeChatApp(m.Model):
                             null=True)
     type = m.PositiveSmallIntegerField(_("type"), default=AppType.SERVICEAPP,
                                        choices=enum2choices(AppType))
+
+    parent = m.ForeignKey("self", verbose_name=_("parent"),
+                          on_delete=m.CASCADE, related_name="children",
+                          null=True, default=None)
 
     token = m.CharField(max_length=32, null=True, blank=True)
     encoding_aes_key = m.CharField(_("EncodingAESKey"), max_length=43,
@@ -123,7 +134,7 @@ class WeChatApp(m.Model):
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
 
-    objects = WeChatAppQuerySet.as_manager()
+    objects = WeChatAppManager()
 
     abilities = Abilities()
 
@@ -193,6 +204,13 @@ class WeChatApp(m.Model):
         model_cls = cls.get_apptype_cls(app_type)
         return m.Model.from_db.__func__(model_cls, db, field_names, values)
 
+    def validate_unique(self, exclude=None):
+        # 验证无parent app的name唯一性
+        q = type(self).objects.exclude(id=self.id).filter(name=self.name)
+        if self.parent is None and q.exists():
+            raise ValidationError(_("Duplicate name"))
+        return super(WeChatApp, self).validate_unique(exclude)
+
     @property
     def type_name(self):
         if self.type == AppType.MINIPROGRAM:
@@ -246,11 +264,12 @@ class WeChatApp(m.Model):
         return rv
 
     class Meta(object):
+        unique_together = (("parent", "name"),)
         verbose_name = _("WeChat app")
         verbose_name_plural = _("WeChat apps")
 
 
-class ApiClientApp(WeChatApp):
+class ApiClientApp(object):
     """可以调用api"""
 
     accesstoken_url = ConfigurationProperty("ACCESSTOKEN_URL",
@@ -277,11 +296,8 @@ class ApiClientApp(WeChatApp):
         """
         return WeChatClient(self)
 
-    class Meta(object):
-        proxy = True
 
-
-class InteractableApp(WeChatApp):
+class InteractableApp(object):
     """可以进行消息交互"""
 
     log_message = FlagProperty(MsgLogFlag.LOG_MESSAGE, False,
@@ -302,11 +318,8 @@ class InteractableApp(WeChatApp):
             )
         return self._crypto
 
-    class Meta(object):
-        proxy = True
 
-
-class OAuthApp(WeChatApp):
+class OAuthApp(object):
     """可以进行OAuth授权的app"""
 
     oauth_url = ConfigurationProperty("OAUTH_URL",
@@ -345,6 +358,3 @@ class OAuthApp(WeChatApp):
         :rtype: wechat_django.WeChatOAuthClient
         """
         return WeChatOAuthClient(self)
-
-    class Meta(object):
-        proxy = True

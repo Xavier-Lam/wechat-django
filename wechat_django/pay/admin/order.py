@@ -3,23 +3,23 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-import object_tool
 
-from ..models import UnifiedOrder, UnifiedOrderResult
+from wechat_django.pay.models import (PayPartnerApp, UnifiedOrder,
+                                      UnifiedOrderResult)
 from .base import WeChatPayModelAdmin
 
 
 class OrderResultAdmin(admin.StackedInline):
     model = UnifiedOrderResult
 
-    fields = (
-        "transaction_id", "trade_state", "time_end", "settlement_total_fee",
-        "cash_fee", "cash_fee_type", "coupon_fee", "bank_type", "detail",
-        "is_subscribe", "sub_is_subscribe", "created_at", "updated_at")
+    fields = ("transaction_id", "trade_state", "time_end",
+              "settlement_total_fee", "cash_fee", "cash_fee_type",
+              "coupon_fee", "bank_type", "detail", "is_subscribe",
+              "sub_is_subscribe", "created_at", "updated_at")
 
     def get_fields(self, request, obj=None):
         rv = super(OrderResultAdmin, self).get_fields(request, obj)
-        if not request.app.pay.sub_mch_id:
+        if not isinstance(request.app, PayPartnerApp):
             rv = list(rv)
             rv.remove("sub_is_subscribe")
         return rv
@@ -56,14 +56,14 @@ class OrderAdmin(WeChatPayModelAdmin):
 
     def get_list_display(self, request):
         rv = super(OrderAdmin, self).get_list_display(request)
-        if not request.app.pay.sub_mch_id:
+        if not isinstance(request.app, PayPartnerApp):
             rv = list(rv)
             rv.remove("sub_openid")
         return rv
 
     def get_fields(self, request, obj=None):
         rv = super(OrderAdmin, self).get_fields(request, obj)
-        if not request.app.pay.sub_mch_id:
+        if not isinstance(request.app, PayPartnerApp):
             rv = list(rv)
             rv.remove("sub_openid")
         return rv

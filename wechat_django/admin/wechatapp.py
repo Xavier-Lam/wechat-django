@@ -24,7 +24,7 @@ class WeChatAppFormMeta(object):
     )
 
 
-class WeChatAppForm(object):
+class WeChatAppForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         instance = kwargs.get("instance")
         if instance:
@@ -67,10 +67,10 @@ class WeChatAppAdmin(admin.ModelAdmin):
     search_fields = ("title", "name", "appid", "short_desc")
 
     fields = ("title", "name", "appid", "appsecret", "type", "abilities",
-              "desc", "mch_id", "api_key", "token", "encoding_aes_key",
+              "desc", "created_at", "updated_at", "token", "encoding_aes_key",
               "encoding_mode", "site_host", "site_https", "callback",
-              "log_message", "accesstoken_url", "oauth_url", "created_at",
-              "updated_at")
+              "log_message", "accesstoken_url", "oauth_url")
+    form = WeChatAppForm
     readonly_fields = ("name", "appid", "abilities", "callback", "created_at",
                        "updated_at")
 
@@ -154,12 +154,13 @@ class WeChatAppAdmin(admin.ModelAdmin):
             return tuple()
 
         fields = self.get_fields(request, obj)
+        # TODO: readonly会抛出Unable to lookup异常,只能先不做处理
         readonlys = [
-            attr
-            for attr, prop in self._list_admin_properties(request, obj, True)
-            if (not prop.fset  # 没有fset的
-                # 或已设的
-                or getattr(prop, "readonly", False) and getattr(obj, attr))
+        # attr
+        # for attr, prop in self._list_admin_properties(request, obj, True)
+        # if (not prop.fset  # 没有fset的
+        #     # 或已设的
+        #     or getattr(prop, "readonly", False) and getattr(obj, attr))
         ]
         obj.type and readonlys.append("type")
         return set(self.readonly_fields).intersection(fields).union(readonlys)
@@ -196,8 +197,7 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
         origin_form = self.form
         try:
-            self.form = type(str("WeChatAppForm"),
-                             (WeChatAppForm, forms.ModelForm), attrs)
+            self.form = type(str("WeChatAppForm"), (origin_form, ), attrs)
             return parent.get_form(request, obj, **kwargs)
         finally:
             self.form = origin_form

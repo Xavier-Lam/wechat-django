@@ -9,7 +9,7 @@ except ImportError:
 from wechat_django.constants import AppType
 from wechat_django.models import WeChatApp
 from wechat_django.tests.base import WeChatTestCaseBase
-from ..models import WeChatPay
+from ..models import WeChatPay, WeChatSubPay
 
 
 class WeChatPayTestCase(WeChatTestCaseBase):
@@ -35,13 +35,14 @@ class WeChatPayTestCase(WeChatTestCaseBase):
             app=miniprogram, mch_id="mch_id", api_key="api_key",
             mch_cert=b"mch_cert", mch_key=b"mch_key")
 
-        app_sub = WeChatApp.objects.create(
-            title="pay_sub", name="pay_sub", appid="pay_sub_appid",
-            appsecret="secret")
-        pay = WeChatPay.objects.create(
-            app=app_sub, mch_id="mch_id", api_key="api_key",
-            sub_mch_id="sub_mch_id", mch_app_id=app.appid,
-            mch_cert=b"mch_cert", mch_key=b"mch_key")
+        app_sub = WeChatApp.objects.create(title="pay_sub", name="pay_sub",
+                                           appid="pay_sub_appid",
+                                           type=AppType.PAYPARTNER)
+        app_sub.mch_id = "mch_id"
+        app_sub.api_key = "api_key"
+        app_sub.save()
+        WeChatSubPay.objects.create(app=app_sub, sub_mch_id="sub_mch_id",
+                                    sub_appid=app.appid)
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("pay")

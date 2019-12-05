@@ -7,7 +7,7 @@ from wechatpy.client import WeChatClient as _Client
 from wechatpy.client.api import WeChatWxa
 
 from ..constants import AppType
-from ..models import apps, WeChatApp
+from ..models import apps, WeChatApp, WeChatUser
 from ..models.apps.base import ConfigurationProperty, FlagProperty
 from .. import settings
 from .base import mock, WeChatTestCase
@@ -153,6 +153,12 @@ class AppTestCase(WeChatTestCase):
         miniprogram = WeChatApp.objects.get_by_name(self.miniprogram.name)
         self.assertEqual(miniprogram.type, AppType.MINIPROGRAM)
         self.assertIsInstance(miniprogram, apps.MiniProgramApp)
+
+        # 反向获取
+        user = WeChatUser.objects.create(app=self.app, openid="openid")
+        self.assertIsInstance(user.app, apps.ServiceApp)
+        user = WeChatUser.objects.get(openid="openid")
+        self.assertIsInstance(user.app, apps.ServiceApp)
 
     def test_appadmin_property(self):
         """测试app属性功能"""

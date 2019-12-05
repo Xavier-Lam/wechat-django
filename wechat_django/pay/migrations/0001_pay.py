@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(default='default', help_text='商户号程序标识', max_length=16, verbose_name='name')),
                 ('weight', models.IntegerField(default=0, verbose_name='weight')),
                 ('mch_id', models.CharField(help_text='微信支付分配的商户号', max_length=32, verbose_name='mch_id')),
-                ('api_key', models.CharField(help_text='商户号key', max_length=128, verbose_name='WeChatPay api_key')),
+                ('api_key', models.CharField(blank=True, help_text='商户号key', max_length=128, verbose_name='WeChatPay api_key')),
                 ('sub_mch_id', models.CharField(blank=True, help_text='子商户号，受理模式下填写', max_length=32, null=True, verbose_name='sub_mch_id')),
                 ('mch_app_id', models.CharField(blank=True, help_text='微信分配的主商户号appid，受理模式下填写', max_length=32, null=True, verbose_name='mch_app_id')),
                 ('mch_cert', models.BinaryField(blank=True, null=True, verbose_name='mch_cert')),
