@@ -14,3 +14,7 @@ class AppType(object):
 class WeChatSNSScope(object):
     BASE = "snsapi_base"
     USERINFO = "snsapi_userinfo"
+
+
+class WeChatWebAppScope(object):
+    LOGIN = "snsapi_login"

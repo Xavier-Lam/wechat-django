@@ -8,7 +8,7 @@ from wechatpy.client.api import WeChatWxa
 
 from ..constants import AppType
 from ..models import apps, WeChatApp
-from ..models.apps.base import ConfigurationProperty
+from ..models.apps.base import ConfigurationProperty, FlagProperty
 from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
@@ -96,16 +96,17 @@ class AppTestCase(WeChatTestCase):
         def assertUrlCorrect(hostname, urlname, request=None, secure=False, kwargs=None):
             kwargs_copy = (kwargs or dict()).copy()
             kwargs_copy["appname"] = self.app.name
-            location = reverse(
-                "wechat_django:{0}".format(urlname), kwargs=kwargs_copy)
-            self.assertEqual(
-                location, self.app.build_url(urlname, kwargs, absolute=False))
+            location = reverse("wechat_django:{0}".format(urlname),
+                               kwargs=kwargs_copy)
+            # 验证相对路径
+            built_url = self.app.build_url(urlname, kwargs, absolute=False)
+            self.assertEqual(location, built_url)
 
+            # 验证绝对路径
+            built_url = self.app.build_url(urlname, kwargs, request=request,
+                                           absolute=True)
             protocol = "https://" if secure else "http://"
-            self.assertEqual(
-                protocol + hostname + location,
-                self.app.build_url(
-                    urlname, kwargs, request=request, absolute=True))
+            self.assertEqual(protocol + hostname + location, built_url)
 
         url_name = "handler"
         allowed_host = "example.com"
@@ -122,11 +123,7 @@ class AppTestCase(WeChatTestCase):
 
         settings.SITE_HOST = settings_host
         settings.SITE_HTTPS = True
-        
-        WeChatApp.site_https = ConfigurationProperty("SITE_HTTPS",
-                                                     default=settings.SITE_HTTPS)
-        WeChatApp.site_host = ConfigurationProperty("SITE_HOST",
-                                                    default=settings.SITE_HOST)
+
         # app中未设置site host 取设置里的site host
         assertUrlCorrect(settings_host, url_name, req, secure=True)
 
@@ -156,3 +153,45 @@ class AppTestCase(WeChatTestCase):
         miniprogram = WeChatApp.objects.get_by_name(self.miniprogram.name)
         self.assertEqual(miniprogram.type, AppType.MINIPROGRAM)
         self.assertIsInstance(miniprogram, apps.MiniProgramApp)
+
+    def test_appadmin_property(self):
+        """测试app属性功能"""
+
+        config_prop_key = "config_prop_key"
+
+        flag = 0x1000
+
+        class AppProxy(WeChatApp):
+
+            config_prop = ConfigurationProperty(config_prop_key)
+            flag_prop = FlagProperty(flag)
+
+            class Meta(object):
+                proxy = True
+
+        app = AppProxy.objects.get_by_name(self.app.name)
+        
+        self.assertIsNone(app.config_prop)
+        self.assertNotIn(config_prop_key, app.configurations)
+        app.config_prop = flag
+        self.assertEqual(app.config_prop, flag)
+        self.assertEqual(app.configurations[config_prop_key], flag)
+        app.config_prop = config_prop_key
+        self.assertEqual(app.config_prop, config_prop_key)
+        self.assertEqual(app.configurations[config_prop_key], config_prop_key)
+        del app.config_prop
+        self.assertIsNone(app.config_prop)
+        self.assertNotIn(config_prop_key, app.configurations)
+
+        self.assertFalse(app.flag_prop)
+        self.assertFalse(app.flags & flag)
+        app.flag_prop = True
+        self.assertTrue(app.flag_prop)
+        self.assertTrue(app.flags & flag)
+        app.flag_prop = False
+        self.assertFalse(app.flag_prop)
+        self.assertFalse(app.flags & flag)
+        app.flag_prop = True
+        del app.flag_prop
+        self.assertFalse(app.flag_prop)
+        self.assertFalse(app.flags & flag)

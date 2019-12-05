@@ -106,11 +106,15 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
     @contextmanager
     def _unregister_wechatadmins(self):
         """暂时取消注册wechat-django相关的modeladmin以进行一些操作"""
+        unregistered = []
         for model, model_admin in registered_admins:
-            self.unregister(model)
+            if model in self._registry:
+                self.unregister(model)
+                unregistered.append(model)
         yield
         for model, model_admin in registered_admins:
-            self.register(model, model_admin)
+            if model in unregistered:
+                self.register(model, model_admin)
 
     def _iter_wechatadmins(self):
         """枚举所有的wechat-django modeladmin实例"""

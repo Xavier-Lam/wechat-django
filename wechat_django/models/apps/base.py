@@ -14,7 +14,8 @@ import six
 from wechatpy.crypto import WeChatCrypto
 
 from wechat_django import settings
-from wechat_django.constants import AppType, WeChatSNSScope
+from wechat_django.client import WeChatClient
+from wechat_django.constants import AppType, WeChatSNSScope, WeChatWebAppScope
 from wechat_django.exceptions import WeChatAbilityError
 from wechat_django.models import MsgLogFlag
 from wechat_django.oauth import WeChatOAuthClient
@@ -66,7 +67,7 @@ class FlagProperty(AppAdminProperty):
         kwargs = dict(
             fget=lambda self: bool(self.flags & flag),
             fset=fset,
-            fdel=lambda self: (self.flags | flag) ^ flag,
+            fdel=lambda self: fset(self, False),
             doc=doc
         )
         kw["help_text"] = doc
@@ -97,7 +98,8 @@ class WeChatApp(m.Model):
                         help_text=_("公众号名称,用于后台辨识公众号"))
     name = m.CharField(_("name"), max_length=16, blank=False, null=False,
                        unique=True,
-                       help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,用于程序辨识"))
+                       help_text=_("公众号唯一标识,可采用微信号,设定后不可修改,"
+                                   "用于程序辨识"))
     desc = m.TextField(_("description"), default="", blank=True)
 
     appid = m.CharField(_("AppId"), max_length=32, null=False)
@@ -109,9 +111,9 @@ class WeChatApp(m.Model):
     token = m.CharField(max_length=32, null=True, blank=True)
     encoding_aes_key = m.CharField(_("EncodingAESKey"), max_length=43,
                                    null=True, blank=True)
-    encoding_mode = m.PositiveSmallIntegerField(_("encoding mode"),
-                                                default=EncodingMode.PLAIN,
-                                                choices=enum2choices(EncodingMode))
+    encoding_mode = m.PositiveSmallIntegerField(
+        _("encoding mode"), default=EncodingMode.PLAIN,
+        choices=enum2choices(EncodingMode))
 
     flags = m.IntegerField(_("flags"), default=0)
 
@@ -138,15 +140,12 @@ class WeChatApp(m.Model):
         return Static("{appname}".format(appname=self.name))
 
     site_https = ConfigurationProperty("SITE_HTTPS",
-                                       default=settings.SITE_HTTPS,
-                                       doc="回调地址是否为https",
-                                       field_type=forms.BooleanField)
-    site_host = ConfigurationProperty("SITE_HOST", default=settings.SITE_HOST,
-                                      doc="接收微信回调的域名")
-
-    class Meta(object):
-        verbose_name = _("WeChat app")
-        verbose_name_plural = _("WeChat apps")
+                                       doc="回调地址是否为https,不填则根据"
+                                           "配置或当前请求协议",
+                                       field_type=forms.NullBooleanField)
+    site_host = ConfigurationProperty("SITE_HOST",
+                                      doc="接收微信回调的域名,不填则根据"
+                                          "配置或当前请求host")
 
     def __init__(self, *args, **kwargs):
         super(WeChatApp, self).__init__(*args, **kwargs)
@@ -168,7 +167,7 @@ class WeChatApp(m.Model):
         try:
             sub_model = cls._registered_type_cls[apptype]
         except KeyError:
-            raise RuntimeError(_("You didn't register this app type!"))
+            sub_model = cls
 
         if cls is WeChatApp:
             model_cls = sub_model
@@ -177,7 +176,10 @@ class WeChatApp(m.Model):
             model_cls = cls
         else:
             # 用户设置的普通代理类,优先采用用户设置的属性及方法
-            model_cls = type(cls.__name__, (cls, sub_model), dict())
+            meta_data = dict(proxy=True, abstract=True)
+            meta = type(str("Meta"), (object,), meta_data)
+            attrs = dict(Meta=meta, __module__=cls.__module__)
+            model_cls = type(cls.__name__, (cls, sub_model), attrs)
 
         return model_cls
 
@@ -185,7 +187,7 @@ class WeChatApp(m.Model):
     def from_db(cls, db, field_names, values):
         app_type = dict(zip(field_names, values)).get("type")
 
-        if not app_type:
+        if app_type is None:
             raise ValueError(_("You must select `type` field!"))
 
         model_cls = cls.get_apptype_cls(app_type)
@@ -201,7 +203,7 @@ class WeChatApp(m.Model):
             return _("SUBSCRIBEAPP")
         elif self.type == AppType.PAYPARTNER:
             return _("PAYPARTNER")
-        elif self.type == AppType.WEB:
+        elif self.type == AppType.WEBAPP:
             return _("WEBAPP")
         else:
             return _("unknown")
@@ -214,40 +216,42 @@ class WeChatApp(m.Model):
         if not absolute:
             return location
 
-        if request and not self.site_host:
-            baseurl = "{}://{}".format(
-                "https" if self.site_https else request.scheme,
-                request.get_host())
+        is_https = self.site_https if self.site_https is not None else (
+            settings.SITE_HTTPS or request.scheme == "https")
+        host = self.site_host or settings.SITE_HOST
+
+        if request and not host:
+            baseurl = "{}://{}".format("https" if is_https else "http",
+                                       request.get_host())
         else:
-            protocol = "https://" if self.site_https else "http://"
-            if self.site_host:
-                host = self.site_host
-            else:
+            if not host:
                 allowed_hosts = settings.settings.ALLOWED_HOSTS
                 if not allowed_hosts:
                     raise RuntimeError("You need setup a WECHAT_SITE_HOST "
                                        "when build absolute url.")
                 host = allowed_hosts[0]
-            baseurl = protocol + host
+            baseurl = "{}://{}".format("https" if is_https else "http", host)
+
         return baseurl + location
 
     def logger(self, name):
-        return logging.getLogger(
-            "wechat.{name}.{app}".format(name=name, app=self.name))
+        logger = "wechat.{name}.{app}".format(name=name, app=self.name)
+        return logging.getLogger(logger)
 
     def __str__(self):
-        rv = "{title} ({name}) - {type}".format(
-            title=self.title, name=self.name, type=self.type_name)
+        tpl = "{title} ({name}) - {type}"
+        rv = tpl.format(title=self.title, name=self.name, type=self.type_name)
         if six.PY2:
             rv = rv.encode("utf-8")
         return rv
 
+    class Meta(object):
+        verbose_name = _("WeChat app")
+        verbose_name_plural = _("WeChat apps")
+
 
 class ApiClientApp(WeChatApp):
     """可以调用api"""
-
-    class Meta(object):
-        proxy = True
 
     accesstoken_url = ConfigurationProperty("ACCESSTOKEN_URL",
                                             widget=forms.URLInput,
@@ -271,15 +275,14 @@ class ApiClientApp(WeChatApp):
         :rtype: wechat_django.client.WeChatClient
                 or wechatpy.client.api.wxa.WeChatWxa
         """
-        from wechat_django.client import WeChatClient
         return WeChatClient(self)
+
+    class Meta(object):
+        proxy = True
 
 
 class InteractableApp(WeChatApp):
     """可以进行消息交互"""
-
-    class Meta(object):
-        proxy = True
 
     log_message = FlagProperty(MsgLogFlag.LOG_MESSAGE, False,
                                doc="log messages")
@@ -299,16 +302,14 @@ class InteractableApp(WeChatApp):
             )
         return self._crypto
 
-
-class OAuthApp(WeChatApp):
-    """可以进行OAuth授权的app"""
-
     class Meta(object):
         proxy = True
 
 
+class OAuthApp(WeChatApp):
+    """可以进行OAuth授权的app"""
+
     oauth_url = ConfigurationProperty("OAUTH_URL",
-                                      default=lambda self: self.OAUTH_URL,
                                       widget=forms.URLInput,
                                       doc="授权重定向的url,用于第三方网页授权"
                                           "换取code,默认直接微信授权")
@@ -332,7 +333,8 @@ class OAuthApp(WeChatApp):
         if isinstance(scope, six.text_type):
             scope = (scope,)
         data = self.oauth.fetch_access_token(code)
-        if scope and WeChatSNSScope.USERINFO in scope:
+        userinfo_scopes = (WeChatSNSScope.USERINFO, WeChatWebAppScope.LOGIN)
+        if scope and set(userinfo_scopes).intersection(scope):
             # TODO: 优化授权流程 记录accesstoken及refreshtoken 延迟取userinfo
             user_info = self.oauth.get_user_info()
             data.update(user_info)
@@ -343,3 +345,6 @@ class OAuthApp(WeChatApp):
         :rtype: wechat_django.WeChatOAuthClient
         """
         return WeChatOAuthClient(self)
+
+    class Meta(object):
+        proxy = True

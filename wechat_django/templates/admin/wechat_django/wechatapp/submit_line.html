@@ -1,0 +1,12 @@
+{% extends 'admin/submit_line.html' %}
+
+{% load i18n admin_urls %}
+<div class="submit-row">
+{% block submit-row %}
+{% if add  %}
+{% if show_save_and_continue %}<input type="submit" value="{% if can_change %}{% trans 'Save and continue editing' %}{% else %}{% trans 'Save and view' %}{% endif %}" class="default" name="_continue">{% endif %}
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
+</div>

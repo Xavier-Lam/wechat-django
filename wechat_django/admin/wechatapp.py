@@ -8,8 +8,7 @@ from django.template.defaultfilters import truncatechars
 from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-from ..constants import AppType
-from ..models import MsgLogFlag, WeChatApp
+from ..models import WeChatApp
 from ..models.apps.base import AppAdminProperty, InteractableApp
 from ..models.permission import get_user_permissions
 from ..utils.model import model_fields
@@ -29,16 +28,30 @@ class WeChatAppForm(object):
     def __init__(self, *args, **kwargs):
         instance = kwargs.get("instance")
         if instance:
-            cls = type(instance)
-            props = {
-                field: getattr(instance, field)
-                for field in self._meta.fields
-                if isinstance(getattr(cls, field, None), AppAdminProperty)
-            }
+            # 读取表单上的属性
+            props = self._get_props(instance)
             initial = kwargs.get("initial", {})
             initial.update(**props)
             kwargs["initial"] = initial
+
         return super(WeChatAppForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        props = self._get_props(self.instance)
+        # 设置表单上的属性
+        for prop in props:
+            if prop in self.changed_data:
+                setattr(self.instance, prop, self.cleaned_data[prop])
+        return super(WeChatAppForm, self).save(commit)
+
+    def _get_props(self, instance):
+        """获取展示在表单上的属性"""
+        cls = type(instance)
+        return {
+            field: getattr(instance, field)
+            for field in self._meta.fields
+            if isinstance(getattr(cls, field, None), AppAdminProperty)
+        }
 
 
 @admin.register(WeChatApp)
@@ -54,12 +67,12 @@ class WeChatAppAdmin(admin.ModelAdmin):
     search_fields = ("title", "name", "appid", "short_desc")
 
     fields = ("title", "name", "appid", "appsecret", "type", "abilities",
-              "mch_id", "api_key", "token", "encoding_aes_key",
-              "encoding_mode", "desc", "log_message", "callback", "site_host",
-              "site_https", "accesstoken_url", "oauth_url", "created_at",
+              "desc", "mch_id", "api_key", "token", "encoding_aes_key",
+              "encoding_mode", "site_host", "site_https", "callback",
+              "log_message", "accesstoken_url", "oauth_url", "created_at",
               "updated_at")
-    readonly_fields = ("name", "appid", "type", "abilities", "callback",
-                       "created_at", "updated_at")
+    readonly_fields = ("name", "appid", "abilities", "callback", "created_at",
+                       "updated_at")
 
     @mark_safe
     def abilities(self, obj):
@@ -94,10 +107,17 @@ class WeChatAppAdmin(admin.ModelAdmin):
             "handler", request=self.request, absolute=True)
     callback.short_description = _("message callback url")
 
+    def add_view(self, request, *args, **kwargs):
+        extra_context = kwargs.pop("extra_context", None) or {}
+        extra_context["show_save"] = False
+        extra_context["save_as"] = True
+        kwargs["extra_context"] = extra_context
+        return super(WeChatAppAdmin, self).add_view(request, *args, **kwargs)
+
     def delete_view(self, request, object_id, *args, **kwargs):
         request.app = WeChatApp.objects.get(id=object_id)
-        return super(WeChatAppAdmin, self).delete_view(
-            request, object_id, *args, **kwargs)
+        return super(WeChatAppAdmin, self).delete_view(request, object_id,
+                                                       *args, **kwargs)
 
     def get_urls(self):
         urlpatterns = super(WeChatAppAdmin, self).get_urls()
@@ -111,18 +131,20 @@ class WeChatAppAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if not obj:
             return ("title", "name", "appid", "appsecret", "type", "desc")
-        
+
         fields = list(super(WeChatAppAdmin, self).get_fields(request, obj))
 
         if not isinstance(obj, InteractableApp):
+            # 移除消息交互app才需要的字段
             fields.remove("token")
             fields.remove("encoding_aes_key")
             fields.remove("encoding_mode")
+            fields.remove("site_host")
+            fields.remove("site_https")
             fields.remove("callback")
 
         allows = self._list_admin_properties(request, obj)
-        cls = type(obj)
-        allows += model_fields(cls)
+        allows += model_fields(type(obj))
         allows += ["callback", "abilities"]
 
         return tuple(field for field in fields if field in allows)
@@ -131,38 +153,37 @@ class WeChatAppAdmin(admin.ModelAdmin):
         if not obj:
             return tuple()
 
-        noneditable = super(WeChatAppAdmin, self).get_readonly_fields(
-            request, obj)
         fields = self.get_fields(request, obj)
-        cls = type(obj)
         readonlys = [
-            attr for attr in self._list_admin_properties(request, obj)
-            if (not getattr(cls, attr).fset  # 没有fset的
-                or getattr(getattr(cls, attr), "readonly", False)  # 或已设的
-                    and getattr(obj, attr))
+            attr
+            for attr, prop in self._list_admin_properties(request, obj, True)
+            if (not prop.fset  # 没有fset的
+                # 或已设的
+                or getattr(prop, "readonly", False) and getattr(obj, attr))
         ]
-        return set(noneditable).intersection(fields).union(readonlys)
+        obj.type and readonlys.append("type")
+        return set(self.readonly_fields).intersection(fields).union(readonlys)
 
-    def _list_admin_properties(self, request, obj=None):
+    def _list_admin_properties(self, request, obj, items=False):
         """列举admin额外需要显示的属性"""
         cls = type(obj)
         return [
-            attr for attr in dir(cls)
+            (attr, getattr(cls, attr)) if items else attr
+            for attr in dir(cls)
             if isinstance(getattr(cls, attr), AppAdminProperty)
         ]
 
     def get_form(self, request, obj=None, **kwargs):
+        """生成app表单"""
+        parent = super(WeChatAppAdmin, self)
         if not obj:
-            return super(WeChatAppAdmin, self).get_form(request, obj,
-                                                        **kwargs)
+            return parent.get_form(request, obj, **kwargs)
 
         meta = type(str("Meta"), (WeChatAppFormMeta,), {"model": type(obj)})
 
+        # 设置属性
         attrs = dict(Meta=meta)
-        for attr in self._list_admin_properties(request, obj):
-            prop = getattr(type(obj), attr)
-            field_type = prop.field_type
-
+        for attr, prop in self._list_admin_properties(request, obj, True):
             field_kwargs = dict(
                 label=_(attr),
                 help_text=_(prop.help_text)
@@ -171,14 +192,13 @@ class WeChatAppAdmin(admin.ModelAdmin):
                 field_kwargs["widget"] = prop.widget
             field_kwargs["required"] = getattr(prop, "required", False)
 
-            attrs[attr] = field_type(**field_kwargs)
+            attrs[attr] = prop.field_type(**field_kwargs)
 
         origin_form = self.form
         try:
             self.form = type(str("WeChatAppForm"),
                              (WeChatAppForm, forms.ModelForm), attrs)
-            return super(WeChatAppAdmin, self).get_form(request, obj,
-                                                        **kwargs)
+            return parent.get_form(request, obj, **kwargs)
         finally:
             self.form = origin_form
 
@@ -212,14 +232,15 @@ class WeChatAppAdmin(admin.ModelAdmin):
 
     def get_model_perms(self, request):
         return ({} if getattr(request, "app_id", None)
-            else super(WeChatAppAdmin, self).get_model_perms(request))
+                else super(WeChatAppAdmin, self).get_model_perms(request))
 
     def get_deleted_objects(self, objs, request):
         from ..models import WeChatUser
         from ..pay.models import UnifiedOrder
         deleted_objects, model_count, perms_needed, protected =\
             super(WeChatAppAdmin, self).get_deleted_objects(objs, request)
-        ignored_models = (
-            WeChatUser._meta.verbose_name, UnifiedOrder._meta.verbose_name)
+        # 忽略对用户及统一订单的操作权限,可移除app
+        ignored_models = (WeChatUser._meta.verbose_name,
+                          UnifiedOrder._meta.verbose_name)
         perms_needed = perms_needed.difference(ignored_models)
         return deleted_objects, model_count, perms_needed, protected

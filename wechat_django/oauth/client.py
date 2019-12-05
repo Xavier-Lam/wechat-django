@@ -4,12 +4,12 @@ from __future__ import unicode_literals
 from django.utils.http import urlencode
 from wechatpy import WeChatOAuth
 
-from wechat_django.constants import WeChatSNSScope
+from wechat_django.constants import WeChatSNSScope, WeChatWebAppScope
 
 
 class WeChatOAuthClient(WeChatOAuth):
     def __init__(self, app):
-        self.OAUTH_URL = app.oauth_url
+        self.OAUTH_URL = app.oauth_url or app.OAUTH_URL
         super(WeChatOAuthClient, self).__init__(app.appid, app.appsecret, "")
 
     def authorize_url(self, redirect_uri, scope=WeChatSNSScope.BASE, state=""):
@@ -26,6 +26,6 @@ class WeChatOAuthClient(WeChatOAuth):
             appid=self.app_id,
             redirect_uri=redirect_uri,
             response_type="code",
-            scope="snsapi_login",
+            scope=WeChatWebAppScope.LOGIN,
             state=state
         )) + "#wechat_redirect"

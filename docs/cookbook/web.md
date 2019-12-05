@@ -1,7 +1,19 @@
 # 网页开发
 
-## jssdk
+## 开放平台网站应用
+在后台配置网站应用后
 
+    app = WeChatApp.objects.get_by_name("your webapp name")
+    url = app.oauth.qrconnect_url("https://www.zhihu.com/oauth/callback/wechat?action=login&from=", 1234567)
+
+用户授权成功回调以后,将在回调页面拿到code和state,可通过`app.oauth`拿到用户对象及接口响应
+
+    def index(request):
+        code = request.GET["code"]
+        state = request.GET["state"]
+        user, data = app.oauth(code)
+
+## jssdk
 首先你需要自行引入微信的js文件
 
     <script src="//res.wx.qq.com/open/js/jweixin-1.4.0.js"></script>
