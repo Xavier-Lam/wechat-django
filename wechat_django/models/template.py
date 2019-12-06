@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from ..constants import AppType
 from ..exceptions import WeChatAbilityError
 from ..utils.model import model_fields
-from . import appmethod, WeChatApp, WeChatModel
+from . import WeChatApp, WeChatModel
 
 
 class Template(WeChatModel):
@@ -37,7 +37,7 @@ class Template(WeChatModel):
 
         unique_together = (("app", "template_id"), ("app", "alias"))
 
-    @appmethod("sync_templates")
+    @WeChatApp.shortcut("sync_templates")
     def sync(cls, app):
         """
         同步微信模板

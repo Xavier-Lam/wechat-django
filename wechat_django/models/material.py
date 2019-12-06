@@ -12,7 +12,7 @@ from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
 from ..utils.model import enum2choices, model_fields
-from . import appmethod, WeChatApp, WeChatModel
+from . import PublicApp, WeChatApp, WeChatModel
 
 
 class MaterialManager(m.Manager):
@@ -99,7 +99,7 @@ class Material(WeChatModel):
         unique_together = (("app", "media_id"), ("app", "alias"))
         ordering = ("app", "-update_time")
 
-    @appmethod("sync_materials")
+    @PublicApp.shortcut("sync_materials")
     def sync(cls, app, id=None, type=None):
         """同步所有永久素材"""
         if id:
@@ -116,7 +116,7 @@ class Material(WeChatModel):
                     updated.extend(updates)
             return updated
 
-    @appmethod("migrate_materials")
+    @PublicApp.shortcut("migrate_materials")
     def migrate(cls, app, src):
         migrated = []
         for type, _ in enum2choices(cls.Type):
@@ -126,7 +126,7 @@ class Material(WeChatModel):
                     migrated.extend(migrates)
         return migrated
 
-    @appmethod("sync_type_materials")
+    @PublicApp.shortcut("sync_type_materials")
     def sync_type(cls, app, type):
         """同步某种类型的永久素材"""
         updates = app.get_materials(type)
@@ -137,7 +137,7 @@ class Material(WeChatModel):
         return [app.materials.create_material(type=type, **item)
                 for item in updates]
 
-    @appmethod("migrate_type_materials")
+    @PublicApp.shortcut("migrate_type_materials")
     def migrate_type(cls, app, type, src):
         """从src公众号迁移某种类型的永久素材到app公众号"""
         materials = src.get_materials(type)
@@ -155,7 +155,7 @@ class Material(WeChatModel):
                 migrated.append(record)
             return migrated
 
-    @appmethod("get_materials")
+    @PublicApp.shortcut("get_materials")
     def get_all(cls, app, type):
         count = 20
         offset = 0
@@ -172,7 +172,7 @@ class Material(WeChatModel):
             offset += count
         return rv
 
-    @appmethod("as_permenant_material")
+    @PublicApp.shortcut("as_permenant_material")
     def as_permenant(cls, app, media_id, src=None, save=True):
         """将临时素材转换为永久素材"""
         src = src or app
@@ -182,7 +182,7 @@ class Material(WeChatModel):
         # 上载素材
         return app.upload_material(resp, permenant=True, save=save)
 
-    @appmethod("upload_material")
+    @PublicApp.shortcut("upload_material")
     def upload(cls, app, file, type=None, permenant=False, save=True):
         """
         上传素材
@@ -215,7 +215,7 @@ class Material(WeChatModel):
                     type=type, media_id=media_id, url=data.get("url"))
         return media_id
 
-    @appmethod("download_material")
+    @PublicApp.shortcut("download_material")
     def download(cls, app, media_id, permenant=True):
         if permenant:
             data = app.client.material.get_raw(media_id)

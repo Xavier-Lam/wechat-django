@@ -5,7 +5,7 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from ..utils.model import model_fields
-from . import appmethod, Material, WeChatModel
+from . import Material, PublicApp, WeChatModel
 
 
 class Article(WeChatModel):
@@ -64,7 +64,7 @@ class Article(WeChatModel):
     def thumb_url(self, value):
         self._thumb_url = value
 
-    @appmethod("sync_articles")
+    @PublicApp.shortcut("sync_articles")
     def sync(cls, app, id=None):
         if id:
             return app.sync_materials(id, Material.Type.NEWS)
@@ -72,7 +72,7 @@ class Article(WeChatModel):
             with transaction.atomic():
                 return app.sync_type_materials(Material.Type.NEWS)
 
-    @appmethod("migrate_articles")
+    @PublicApp.shortcut("migrate_articles")
     def migrate(cls, app, src, media_id=None):
         """
         从src迁移图文到app

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.model import enum2choices
-from . import appmethod, MessageHandler, WeChatApp, WeChatModel
+from . import MessageHandler, PublicApp, WeChatApp, WeChatModel
 
 
 class MenuManager(m.Manager):
@@ -57,7 +57,7 @@ class Menu(WeChatModel):
 
     objects = MenuManager()
 
-    @appmethod("sync_menus")
+    @PublicApp.shortcut("sync_menus")
     def sync(cls, app):
         """
         从微信同步菜单数据
@@ -65,7 +65,7 @@ class Menu(WeChatModel):
         """
         return cls.migrate(app)
 
-    @appmethod("migrate_menus")
+    @PublicApp.shortcut("migrate_menus")
     def migrate(cls, app, src=None):
         """
         从src迁移菜单到app
@@ -87,7 +87,7 @@ class Menu(WeChatModel):
         app.save()
         return rv
 
-    @appmethod("publish_menus")
+    @PublicApp.shortcut("publish_menus")
     def publish(cls, app, menuid=None):
         """
         发布菜单

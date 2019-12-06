@@ -14,7 +14,7 @@ from wechat_django.models import WeChatModel
 from wechat_django.utils.model import enum2choices, model_fields
 from wechat_django.utils.web import get_ip
 from . import WeChatPay
-from .base import PayDateTimeField, paymethod
+from .base import PayDateTimeField
 
 
 class UnifiedOrder(WeChatModel):
@@ -99,7 +99,7 @@ class UnifiedOrder(WeChatModel):
             return None
     trade_state.short_description = _("trade_state")
 
-    @paymethod("create_order")
+    @WeChatPay.shortcut("create_order")
     def create(cls, pay, user=None, request=None, **kwargs):
         """
         :type pay: wechat_django.pay.models.WeChatPay

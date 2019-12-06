@@ -12,7 +12,7 @@ from wechatpy.exceptions import WeChatClientException
 
 from ..utils.model import enum2choices, model_fields
 from ..utils.func import next_chunk
-from . import appmethod, WeChatApp, WeChatModel
+from . import WeChatApp, WeChatModel
 
 
 class WeChatUserManager(m.Manager):
@@ -108,7 +108,7 @@ class WeChatUser(WeChatModel):
         assert size in (0, 46, 64, 96, 132)
         return self.headimgurl and re.sub(r"\d+$", str(size), self.headimgurl)
 
-    @appmethod
+    @WeChatApp.shortcut
     def user_by_openid(cls, app, openid, ignore_errors=False, sync_user=True):
         """根据用户openid拿到用户对象
         :param ignore_errors: 当库中未找到用户或接口返回失败时还是强行插入user
@@ -133,7 +133,7 @@ class WeChatUser(WeChatModel):
                 raise
         return app.users.create(openid=openid)
 
-    @appmethod("sync_users")
+    @WeChatApp.shortcut("sync_users")
     def sync(cls, app, all=False, detail=True):
         """
         :type app: wechat_django.models.WeChatApp
@@ -154,7 +154,7 @@ class WeChatUser(WeChatModel):
             app.save()
         return users
 
-    @appmethod
+    @WeChatApp.shortcut
     def upsert_users(cls, app, openids, detail=True):
         if detail:
             return cls.fetch_users(app, openids)
@@ -167,12 +167,12 @@ class WeChatUser(WeChatModel):
                     ), openids)
                 )
 
-    @appmethod
+    @WeChatApp.shortcut
     def fetch_user(cls, app, openid):
         # NotFound重新抛出40003异常
         return cls.fetch_users(app, [openid]).pop()
 
-    @appmethod
+    @WeChatApp.shortcut
     def fetch_users(cls, app, openids):
         fields = model_fields(cls)
         # TODO: 根据当前语言拉取用户数据

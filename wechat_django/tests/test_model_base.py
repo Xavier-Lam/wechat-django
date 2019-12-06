@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from ..models import appmethod, WeChatModel
+from ..models import PublicApp, WeChatApp
+from ..models.base import ShortcutBound, WeChatModel
 from .base import WeChatTestCase
 
 
 class ModelBaseTestCase(WeChatTestCase):
-    def test_appmethod(self):
-        """测试appmethod"""
+    def test_shortcut(self):
+        """测试shortcut"""
         class DebugModel(WeChatModel):
             class Meta(object):
                 abstract = True
 
-            @appmethod
+            @WeChatApp.shortcut
             def test(cls, app, *args, **kwargs):
                 return cls, app, args, kwargs
 
-            @appmethod("another")
+            @WeChatApp.shortcut("another")
             def test1(cls, app, *args, **kwargs):
+                return cls, app, args, kwargs
+
+            @PublicApp.shortcut
+            def public_only(cls, app, *args, **kwargs):
                 return cls, app, args, kwargs
 
         def assertAppMethodEqual(func, app, funcname):
@@ -37,3 +42,5 @@ class ModelBaseTestCase(WeChatTestCase):
         assertAppMethodEqual(self.another_app.test, self.another_app, "test")
         assertAppMethodEqual(
             self.another_app.another, self.another_app, "another")
+        self.assertTrue(hasattr(PublicApp, "public_only"))
+        self.assertFalse(hasattr(WeChatApp, "public_only"))

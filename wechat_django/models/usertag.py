@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from ..utils.func import next_chunk
-from . import appmethod, WeChatApp, WeChatModel, WeChatUser
+from . import PublicApp, WeChatApp, WeChatModel, WeChatUser
 
 
 class UserTag(WeChatModel):
@@ -40,7 +40,7 @@ class UserTag(WeChatModel):
         super(UserTag, self).__init__(*args, **kwargs)
         self._tag_local = tag_local
 
-    @appmethod("sync_usertags")
+    @PublicApp.shortcut("sync_usertags")
     def sync(cls, app):
         rv = []
         with transaction.atomic():

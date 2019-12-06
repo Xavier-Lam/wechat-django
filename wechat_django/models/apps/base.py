@@ -20,6 +20,7 @@ from wechat_django.client import WeChatClient
 from wechat_django.constants import AppType, WeChatSNSScope, WeChatWebAppScope
 from wechat_django.exceptions import WeChatAbilityError
 from wechat_django.models import MsgLogFlag
+from wechat_django.models.base import ShortcutBound
 from wechat_django.oauth import WeChatOAuthClient
 from wechat_django.utils.func import Static
 from wechat_django.utils.model import enum2choices
@@ -85,7 +86,7 @@ class FlagProperty(AppAdminProperty):
             setattr(self, k, v)
 
 
-class WeChatApp(m.Model):
+class WeChatApp(m.Model, ShortcutBound):
     _registered_type_cls = dict()
 
     @staticmethod
@@ -269,7 +270,7 @@ class WeChatApp(m.Model):
         verbose_name_plural = _("WeChat apps")
 
 
-class ApiClientApp(object):
+class ApiClientApp(ShortcutBound):
     """可以调用api"""
 
     accesstoken_url = ConfigurationProperty("ACCESSTOKEN_URL",
@@ -297,7 +298,7 @@ class ApiClientApp(object):
         return WeChatClient(self)
 
 
-class InteractableApp(object):
+class InteractableApp(ShortcutBound):
     """可以进行消息交互"""
 
     log_message = FlagProperty(MsgLogFlag.LOG_MESSAGE, False,
@@ -319,7 +320,7 @@ class InteractableApp(object):
         return self._crypto
 
 
-class OAuthApp(object):
+class OAuthApp(ShortcutBound):
     """可以进行OAuth授权的app"""
 
     oauth_url = ConfigurationProperty("OAUTH_URL",
@@ -358,3 +359,8 @@ class OAuthApp(object):
         :rtype: wechat_django.WeChatOAuthClient
         """
         return WeChatOAuthClient(self)
+
+
+class PublicApp(ApiClientApp, InteractableApp):
+    """公众号"""
+    pass

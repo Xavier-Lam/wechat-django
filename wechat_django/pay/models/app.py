@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.models import WeChatApp
+from wechat_django.models.base import ShortcutBound
 from wechat_django.utils.func import Static
 from wechat_django.pay.client import WeChatPayClient
 
@@ -25,7 +26,7 @@ class WeChatPayManager(m.Manager):
         return queryset.prefetch_related("app")
 
 
-class WeChatPay(m.Model):
+class WeChatPay(m.Model, ShortcutBound):
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE, related_name="pays")
 
     title = m.CharField(_("title"), max_length=16, blank=True,

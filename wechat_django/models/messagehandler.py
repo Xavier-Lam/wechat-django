@@ -12,7 +12,7 @@ from wechatpy.exceptions import WeChatClientException
 from ..exceptions import MessageHandleError
 from ..utils.model import enum2choices
 from ..utils.web import get_ip
-from . import appmethod, MsgLogFlag, WeChatApp, WeChatModel
+from . import MsgLogFlag, PublicApp, WeChatApp, WeChatModel
 
 
 class MessageHandlerManager(m.Manager):
@@ -149,11 +149,11 @@ class MessageHandler(WeChatModel):
                 raise MessageHandleError("incorrect reply strategy")
         return reply and reply.reply(message_info)
 
-    @appmethod("sync_message_handlers")
+    @PublicApp.shortcut("sync_message_handlers")
     def sync(cls, app):
         return cls.migrate(app)
 
-    @appmethod("migrate_message_handlers")
+    @PublicApp.shortcut("migrate_message_handlers")
     def migrate(cls, app, src=None):
         handler_src = cls.Source.MIGRATE if src else cls.Source.MP
 
