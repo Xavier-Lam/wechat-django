@@ -30,7 +30,7 @@ if sys.version_info.major == 2:
 else:
     # 将python3的依赖替换为jsonfield2,以解决与高版本django兼容性问题
     requirements.remove("jsonfield>=2.0.2")
-    requirements.append("jsonfield2>=3.0.0")
+    requirements.append("jsonfield2==3.0.3")
 
 setup(
     name=package["__title__"],

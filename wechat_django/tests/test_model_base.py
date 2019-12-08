@@ -44,3 +44,11 @@ class ModelBaseTestCase(WeChatTestCase):
             self.another_app.another, self.another_app, "another")
         self.assertTrue(hasattr(PublicApp, "public_only"))
         self.assertFalse(hasattr(WeChatApp, "public_only"))
+
+    def test_related_manager(self):
+        self.assertEqual(self.app.users.app, self.app)
+        self.assertEqual(self.app.users.all().app, self.app)
+        self.assertEqual(self.app.materials.app, self.app)
+        self.assertEqual(self.app.materials.all().app, self.app)
+        self.assertEqual(self.app.templates.app, self.app)
+        self.assertEqual(self.app.templates.all().app, self.app)

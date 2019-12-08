@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 import re
 
 from django.db import models as m, transaction
-from django.db.models.manager import BaseManager
 from django.utils.translation import ugettext_lazy as _
 
-from wechat_django.models import WeChatApp, WeChatModel
+from wechat_django.models import WeChatApp
+from wechat_django.models.base import (WeChatManager, WeChatModel,
+                                       WeChatQuerySet)
 from wechat_django.utils.model import enum2choices, model_fields
 
 
@@ -20,14 +21,13 @@ class ProxyField(property):
         super(ProxyField, self).__init__(fget, fset, fdel, doc)
 
 
-class WeChatUserQuerySet(m.QuerySet):
+class WeChatUserQuerySet(WeChatQuerySet):
     def upsert(self, openid, **kwargs):
-        app_id = self.current_app_id
         updates = {
             k: v for k, v in kwargs.items()
             if k in model_fields(self.model)
         }
-        return self.update_or_create(openid=openid, app_id=app_id,
+        return self.update_or_create(app=self.app, openid=openid,
                                      defaults=updates)
 
     def bulk_upsert(self, dicts):
@@ -40,12 +40,8 @@ class WeChatUserQuerySet(m.QuerySet):
         with transaction.atomic():
             return [o[0] for o in map(upsert, dicts)]
 
-    @property
-    def current_app_id(self):
-        return self.query.where.children[0].rhs
 
-
-class WeChatUserManager(BaseManager.from_queryset(WeChatUserQuerySet)):
+class WeChatUserManager(WeChatManager.from_queryset(WeChatUserQuerySet)):
     pass
 
 

@@ -10,9 +10,10 @@ from jsonfield import JSONField
 
 from ..utils.model import enum2choices
 from . import MessageHandler, PublicApp, WeChatApp, WeChatModel
+from .base import WeChatManager
 
 
-class MenuManager(m.Manager):
+class MenuManager(WeChatManager):
     def get_queryset(self):
         return (super(MenuManager, self).get_queryset()
             .prefetch_related("sub_button"))

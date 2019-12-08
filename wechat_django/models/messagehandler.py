@@ -13,9 +13,10 @@ from ..exceptions import MessageHandleError
 from ..utils.model import enum2choices
 from ..utils.web import get_ip
 from . import MsgLogFlag, PublicApp, WeChatApp, WeChatModel
+from .base import WeChatManager
 
 
-class MessageHandlerManager(m.Manager):
+class MessageHandlerManager(WeChatManager):
     def create_handler(self, rules=None, replies=None, **kwargs):
         """:rtype: wechat_django.models.MessageHandler"""
         handler = self.create(**kwargs)

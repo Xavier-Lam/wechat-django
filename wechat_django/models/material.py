@@ -13,9 +13,10 @@ from wechatpy.exceptions import WeChatClientException
 
 from ..utils.model import enum2choices, model_fields
 from . import PublicApp, WeChatApp, WeChatModel
+from .base import WeChatManager
 
 
-class MaterialManager(m.Manager):
+class MaterialManager(WeChatManager):
     def create_material(self, **kwargs):
         """创建永久素材"""
         app = kwargs.pop("app", self.instance)

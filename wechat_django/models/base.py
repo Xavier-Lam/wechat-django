@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from functools import update_wrapper, wraps
 
 from django.db import models as m
+from django.db.models.manager import BaseManager
 from django.utils.encoding import force_bytes
 import six
 
@@ -55,6 +56,18 @@ class ShortcutBound(object):
             return shortcuted
 
 
+class WeChatQuerySet(m.QuerySet):
+    @property
+    def app(self):
+        return self._hints.get("instance")
+
+
+class WeChatManager(BaseManager.from_queryset(WeChatQuerySet)):
+    @property
+    def app(self):
+        return self.core_filters["app"]
+
+
 class WeChatModelMetaClass(m.base.ModelBase):
     def __new__(meta, name, bases, attrs):
         # python2.7 __str__必须返回bytestring
@@ -74,5 +87,7 @@ class WeChatModelMetaClass(m.base.ModelBase):
 
 
 class WeChatModel(six.with_metaclass(WeChatModelMetaClass, m.Model)):
+    objects = WeChatManager()
+
     class Meta(object):
         abstract = True

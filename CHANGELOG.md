@@ -13,7 +13,7 @@ breaking changes以:exclamation:开头标注
 - [0.1.0](#010)
 
 ## 0.4.0
-* 重构app部分代码
+* 重构app,user模型代码
 * [jssdk](docs/cookbook/web.md#jssdk)
 * [开放平台网站应用功能](docs/cookbook/web.md#开放平台网站应用)(待单元测试)
 * :exclamation: 调整微信支付服务商数据库字段,app新增服务商类型
