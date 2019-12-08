@@ -10,8 +10,7 @@ from .apps import (MiniProgramApp, PublicApp, ServiceApp, SubscribeApp,
 from .permission import permissions
 from .base import WeChatModel
 from .template import Template
-from .user import WeChatUser
-from .usertag import UserTag
+from .users import MiniProgramUser, PublicUser, UserTag, WeChatUser
 from .material import Material
 from .article import Article
 from .messagehandler import MessageHandler

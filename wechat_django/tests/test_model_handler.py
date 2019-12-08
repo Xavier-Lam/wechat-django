@@ -62,7 +62,7 @@ class HandlerTestCase(WeChatTestCase):
         url = reverse("wechat_django:handler",
                       kwargs=dict(appname=self.app.name))
         openid = "test_subscribe_events"
-        user = WeChatUser.objects.upsert_by_dict(dict(openid=openid), self.app)
+        user = self.app.users.upsert(openid=openid)[0]
         self.assertIsNone(user.subscribe)
 
         handler = Handler()

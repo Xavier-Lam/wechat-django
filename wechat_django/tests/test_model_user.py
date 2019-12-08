@@ -5,7 +5,7 @@ import json
 
 from wechatpy.exceptions import InvalidSignatureException
 
-from ..models import Session, WeChatUser
+from ..models import MiniProgramUser, PublicApp, Session, WeChatUser
 from .base import mock, WeChatTestCase
 
 
@@ -20,17 +20,57 @@ class UserTestCase(WeChatTestCase):
 
     def test_upsert_users(self):
         """测试插入或更新用户"""
-        pass
+        # 插入openid
+        openids = ["openid1", "openid2", "openid3"]
+        users = self.app.users.bulk_upsert(openids)
+        user_openids = [u.openid for u in users]
+        self.assertEqual(openids, user_openids)
+        for u in users:
+            self.assertTrue(u.id)
+
+        # 单个
+        openid = "openid4"
+        user, created = self.app.users.upsert(openid=openid)
+        id = user.id
+        self.assertTrue(id)
+        self.assertEqual(user.openid, openid)
+        self.assertTrue(created)
+        nickname = "nickname"
+        user, created = self.app.users.upsert(openid=openid,
+                                              nickname=nickname)
+        self.assertFalse(created)
+        self.assertEqual(user.id, id)
+        self.assertEqual(user.nickname, nickname)
+
+        # 多个更新字典
+        data = [
+            dict(openid="openid1", nickname="nickname1"),
+            dict(openid="openid2", nickname="nickname2"),
+            dict(openid="openid3", nickname="nickname3"),
+            dict(openid="openid5", nickname="nickname5")
+        ]
+        users = self.app.users.bulk_upsert(data)
+        user_openids = [u.openid for u in users]
+        user_nicknames = [u.nickname for u in users]
+        self.assertEqual([o["openid"] for o in data], user_openids)
+        self.assertEqual([o["nickname"] for o in data], user_nicknames)
+        for u in users:
+            self.assertTrue(u.id)
 
     def test_update(self):
         """测试更新用户"""
-        pass
+        # 测试公众号用户不传user_dict调用接口更新
+        openid = "openid"
+        user, created = self.app.users.upsert(openid=openid)
+        with mock.patch.object(PublicApp, "fetch_user"):
+            user.update()
+            self.assertEqual(PublicApp.fetch_user.call_args[0][0], openid)
 
     def test_miniprogram_messages(self):
         """测试小程序消息解析"""
         self.app.appid = "wx4f4bc4dec97d474b"
         session_key = "HyVFkGl5F5OQWJZZaNzBBg=="
-        user = WeChatUser.objects.create(openid="openid", app=self.app)
+        user = MiniProgramUser.objects.create(openid="openid", app=self.app)
         session = Session(
             user=user,
             type=Session.Type.MINIPROGRAM,
@@ -70,7 +110,7 @@ class UserTestCase(WeChatTestCase):
     def test_update_by_user_dict(self):
         """小程序用户数据更新"""
         openid = "openid"
-        user = WeChatUser.objects.create(app=self.app, openid=openid)
+        user = MiniProgramUser.objects.create(app=self.app, openid=openid)
         origin_dict = {
             "nickName": "Band",
             "gender": 1,
@@ -89,3 +129,5 @@ class UserTestCase(WeChatTestCase):
         self.assertEqual(user.province, origin_dict["province"])
         self.assertEqual(user.country, origin_dict["country"])
         self.assertEqual(user.headimgurl, origin_dict["avatarUrl"])
+        self.assertEqual(user.avatar, origin_dict["avatarUrl"])
+        self.assertEqual(user.avatar(132), "http://wx.qlogo.cn/mmopen/vi_32/1vZvI39NWFQ9XM4LtQpFrQJ1xlgZxx3w7bQxKARol6503Iuswjjn6nIGBiaycAjAtpujxyzYsrztuuICqIM5ibXQ/132")

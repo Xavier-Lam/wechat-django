@@ -5,8 +5,9 @@ from django.db import models as m, transaction
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
-from ..utils.func import next_chunk
-from . import PublicApp, WeChatApp, WeChatModel, WeChatUser
+from wechat_django.utils.func import next_chunk
+from wechat_django.models import PublicApp, WeChatApp, WeChatModel
+from . import WeChatUser
 
 
 class UserTag(WeChatModel):
@@ -72,11 +73,14 @@ class UserTag(WeChatModel):
         """同步该标签下的所有用户
         :param detail: 是否同步用户详情
         """
-        rv = []
+        users = []
         iterator = self.app.client.tag.iter_tag_users(self.id)
         for openids in next_chunk(iterator):
-            users = WeChatUser.upsert_users(self.app, openids, detail)
-            rv.extend(users)
+            if detail:
+                users_chunk = self.app.fetch_users(openids)
+            else:
+                users_chunk = self.app.users.bulk_upsert(openids)
+            users.extend(users_chunk)
         return users
 
     def save(self, *args, **kwargs):
@@ -130,7 +134,6 @@ def user_tag_changed(sender, instance, action, *args, **kwargs):
     """给某个用户添加多个标签"""
     if kwargs["reverse"] and not getattr(instance, "_tag_local", False):
         tags = UserTag.objects.filter(_id__in=kwargs["pk_set"]).all()
-        tag_ids = [tag.id for tag in tags]
         client = instance.app.client.tag
         for tag in tags:
             if action == "pre_add":

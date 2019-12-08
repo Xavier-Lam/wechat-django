@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.utils import timezone as tz
+
 from wechat_django.constants import AppType
 from wechat_django.exceptions import WeChatAbilityError
 from .base import ApiClientApp, InteractableApp, WeChatApp
@@ -9,6 +11,14 @@ from .base import ApiClientApp, InteractableApp, WeChatApp
 @WeChatApp.register_apptype_cls(AppType.MINIPROGRAM)
 class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
     """小程序"""
+
+    @property
+    def users(self):
+        from wechat_django.models.users import MiniProgramUser
+
+        queryset = super(MiniProgramApp, self).users
+        queryset.model = MiniProgramUser
+        return queryset
 
     def auth(self, code):
         """用code进行微信授权
@@ -20,7 +30,7 @@ class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
             raise WeChatAbilityError(WeChatAbilityError.API)
 
         data = self.client.code_to_session(code)
-        user = self.users.upsert_by_dict(data)
+        user = self.users.upsert(synced_at=tz.now(), **data)[0]
         # 持久化session_key
         Session = user.sessions.model
         user.sessions.all().delete()
@@ -35,9 +45,8 @@ class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
             pass
         return user, data
 
-    @property
-    def client(self):
-        return super(MiniProgramApp, self).client.wxa
+    def _get_client(self):
+        return super(MiniProgramApp, self)._get_client().wxa
 
     class Meta(object):
         proxy = True

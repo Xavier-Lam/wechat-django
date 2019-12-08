@@ -41,15 +41,14 @@ class UserTestCase(WeChatTestCase):
 
     def test_sync_users(self):
         """测试同步标签下的用户"""
-        with mock.patch.object(WeChatTag, "iter_tag_users"),\
-            mock.patch.object(WeChatUser, "upsert_users"):
-
-            WeChatTag.iter_tag_users.return_value = ["openid1", "openid2"]
-            WeChatUser.upsert_users.return_value = ["openid1", "openid2"]
-            tag = UserTag.objects.create(
-                app=self.app, name="tag", id=101, _tag_local=True)
+        with mock.patch.object(WeChatTag, "iter_tag_users"):
+            users = ["openid1", "openid2"]
+            WeChatTag.iter_tag_users.return_value = users
+            tag = UserTag.objects.create(app=self.app, name="tag", id=101,
+                                         _tag_local=True)
             del tag._tag_local
-            self.assertEqual(tag.sync_users(False), ["openid1", "openid2"])
+            synced_users = tag.sync_users(False)
+            self.assertEqual([u.openid for u in synced_users], users)
 
     def test_change_user_tags(self):
         """测试用户标签变更"""

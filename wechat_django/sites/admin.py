@@ -53,6 +53,10 @@ def wechat_admin_view(view, site):
                 return response.HttpResponseNotFound()
 
             url_kwargs.update(wechat_app_id=app_id)
+            # 对于django-object-tool 模块,可能会发生url_kwargs为None的情况
+            # 此处做排除,否则会发生url重定向错误,并报403
+            if "object_id" in url_kwargs and url_kwargs["object_id"] is None:
+                del url_kwargs["object_id"]
             resp = response.HttpResponseRedirect(
                 reverse("admin:" + url_name, kwargs=url_kwargs)
             )

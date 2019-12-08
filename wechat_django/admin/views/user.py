@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 import object_tool
 
-from ...models import UserTag, WeChatUser
+from ...models import PublicUser, UserTag, WeChatUser
 from ..base import WeChatModelAdmin
 
 
@@ -47,7 +47,7 @@ class WeChatUserAdmin(WeChatModelAdmin):
         "avatar", "nickname", "openid", "unionid", "alias", "sex", "city",
         "province", "country", "language", "subscribe", "subscribetime",
         "subscribe_scene", "qr_scene", "qr_scene_str", "remark", "comment",
-        "tags", "group", "created_at", "updated_at")
+        "tags", "created_at", "updated_at")  # TODO: 改造中,暂时移除group
 
     @mark_safe
     def avatar(self, obj):
@@ -64,7 +64,7 @@ class WeChatUserAdmin(WeChatModelAdmin):
         kwargs = kwargs or dict()
         # 可能抛出48001 没有api权限
         def action():
-            users = getattr(WeChatUser, method)(request.app, **kwargs)
+            users = getattr(PublicUser, method)(request.app, **kwargs)
             msg = _("%(count)d users successfully synchronized")
             return msg % dict(count=len(users))
 

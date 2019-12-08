@@ -20,7 +20,7 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
 
         auth = WeChatOAuthSessionAuthentication()
         user_dict = dict(openid=openid)
-        wechat_user = WeChatUser.objects.upsert_by_dict(user_dict, self.app)
+        wechat_user = self.app.users.upsert(**user_dict)[0]
 
         # 未认证用户返回False header返回非空
         request = self._create_request(path)
@@ -108,7 +108,7 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
 
         permission = WeChatAuthenticated()
         user_dict = dict(openid=openid)
-        WeChatUser.objects.upsert_by_dict(user_dict, self.app)
+        self.app.users.upsert(**user_dict)[0]
 
         # 未认证用户返回False
         request = self._create_request(path)

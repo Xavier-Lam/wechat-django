@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import models as m
 from django.db.models.manager import BaseManager
 from django.urls import reverse
+from django.utils import timezone as tz
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
@@ -25,23 +26,6 @@ from wechat_django.oauth import WeChatOAuthClient
 from wechat_django.utils.func import Static
 from wechat_django.utils.model import enum2choices
 from .ability import Abilities
-
-
-class WeChatAppQuerySet(m.QuerySet):
-    def get_by_name(self, name):
-        return self.get(name=name)
-
-    def create(self, **kwargs):
-        obj = super(WeChatAppQuerySet, self).create(**kwargs)
-        # create 返回子代理类
-        obj.__class__ = self.model.get_apptype_cls(obj.type)
-        return obj
-
-
-class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
-    def get_queryset(self):
-        queryset = super(WeChatAppManager, self).get_queryset()
-        return queryset.filter(parent__isnull=True)
 
 
 class AppAdminProperty(property):
@@ -84,6 +68,23 @@ class FlagProperty(AppAdminProperty):
 
         for k, v in kw.items():
             setattr(self, k, v)
+
+
+class WeChatAppQuerySet(m.QuerySet):
+    def get_by_name(self, name):
+        return self.get(name=name)
+
+    def create(self, **kwargs):
+        obj = super(WeChatAppQuerySet, self).create(**kwargs)
+        # create 返回子代理类
+        obj.__class__ = self.model.get_apptype_cls(obj.type)
+        return obj
+
+
+class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
+    def get_queryset(self):
+        queryset = super(WeChatAppManager, self).get_queryset()
+        return queryset.filter(parent__isnull=True)
 
 
 class WeChatApp(m.Model, ShortcutBound):
@@ -246,8 +247,8 @@ class WeChatApp(m.Model, ShortcutBound):
             if not host:
                 allowed_hosts = settings.settings.ALLOWED_HOSTS
                 if not allowed_hosts:
-                    raise RuntimeError("You need setup a WECHAT_SITE_HOST "
-                                       "when build absolute url.")
+                    raise RuntimeError(_("You need setup a WECHAT_SITE_HOST "
+                                         "when build absolute url."))
                 host = allowed_hosts[0]
             baseurl = "{}://{}".format("https" if is_https else "http", host)
 
@@ -352,7 +353,7 @@ class OAuthApp(ShortcutBound):
             # TODO: 优化授权流程 记录accesstoken及refreshtoken 延迟取userinfo
             user_info = self.oauth.get_user_info()
             data.update(user_info)
-        return self.users.upsert_by_dict(data), data
+        return self.users.upsert(synced_at=tz.now(), **data)[0], data
 
     def _get_oauth(self):
         """
@@ -363,4 +364,11 @@ class OAuthApp(ShortcutBound):
 
 class PublicApp(ApiClientApp, InteractableApp):
     """公众号"""
-    pass
+
+    @property
+    def users(self):
+        from wechat_django.models.users import PublicUser
+
+        queryset = super(PublicApp, self).users
+        queryset.model = PublicUser
+        return queryset

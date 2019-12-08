@@ -232,8 +232,7 @@ class OAuthTestCase(WeChatTestCase):
     def test_decorator(self):
         """测试class based view与decorator是否一致"""
         openid = "test_decorator"
-        user = WeChatUser.objects.upsert_by_dict(
-            dict(openid=openid), app=self.app)
+        user = self.app.users.upsert(openid=openid)[0]
         session_key = "wechat_{0}_user".format(self.app.name)
 
         view = lambda request: request
