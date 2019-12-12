@@ -59,12 +59,14 @@ class ShortcutBound(object):
 class WeChatQuerySet(m.QuerySet):
     @property
     def app(self):
+        # TODO: 可能存在related非app的情况
         return self._hints.get("instance")
 
 
 class WeChatManager(BaseManager.from_queryset(WeChatQuerySet)):
     @property
     def app(self):
+        # TODO: 可能存在core_filters不存在的情况,即不是related_manager
         return self.core_filters["app"]
 
 
@@ -88,6 +90,12 @@ class WeChatModelMetaClass(m.base.ModelBase):
 
 class WeChatModel(six.with_metaclass(WeChatModelMetaClass, m.Model)):
     objects = WeChatManager()
+
+    @classmethod
+    def get_base_cls(cls):
+        """获取WeChatModel代理Model的基类"""
+        mro = cls.mro()
+        return mro[mro.index(WeChatModel) - 1]
 
     class Meta(object):
         abstract = True

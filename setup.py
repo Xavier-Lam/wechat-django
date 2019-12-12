@@ -22,6 +22,9 @@ with open("README.md", "rb") as f:
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 
+with open("requirements.test.txt") as f:
+    test_requirements = [l for l in f.read().splitlines() if l]
+
 keywords = ["WeChat", "weixin", "wx", "WeChatPay", "micromessenger", "django",
             "微信", "微信支付"]
 if sys.version_info.major == 2:
@@ -45,7 +48,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=requirements,
     include_package_data=True,
-    tests_require=requirements + ["cryptography>=2.5", "httmock==1.2.6"],
+    tests_require=requirements + test_requirements,
     test_suite="runtests.main",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

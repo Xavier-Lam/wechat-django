@@ -14,7 +14,7 @@ class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
 
     @property
     def users(self):
-        from wechat_django.models.users import MiniProgramUser
+        from wechat_django.models.user import MiniProgramUser
 
         queryset = super(MiniProgramApp, self).users
         queryset.model = MiniProgramUser
@@ -32,10 +32,8 @@ class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
         data = self.client.code_to_session(code)
         user = self.users.upsert(synced_at=tz.now(), **data)[0]
         # 持久化session_key
-        Session = user.sessions.model
         user.sessions.all().delete()
-        user.sessions.add(Session(
-            type=Session.Type.MINIPROGRAM,
+        user.sessions.add(user.sessions.model(
             auth=dict(session_key=data["session_key"])
         ), bulk=False)
         # 移除session缓存

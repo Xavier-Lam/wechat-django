@@ -1,7 +1,18 @@
 # 进阶开发
 
+- [django-rest-framework](#django-rest-framework)
 - [使用自定义请求客户端](#%e4%bd%bf%e7%94%a8%e8%87%aa%e5%ae%9a%e4%b9%89%e8%af%b7%e6%b1%82%e5%ae%a2%e6%88%b7%e7%ab%af)
 - [使用WeChatUser作为用户登录](#%e4%bd%bf%e7%94%a8wechatuser%e4%bd%9c%e4%b8%ba%e7%94%a8%e6%88%b7%e7%99%bb%e5%bd%95)
+
+## django-rest-framework
+本项目class-based OAuth授权兼容django-rest-framework.
+
+  1. 构造一个继承`wechat_django.oauth.WeChatOAuthViewMixin`的视图类;
+  2. 在视图类中定义`appname`属性;
+  3. 根据需要,定义`permission_classes`(如若资源必须授权才可访问,请在permission_classes中添加`wechat_django.oauth.WeChatAuthenticated`);
+  4. 根据需要,自行处理异常,在`handle_exception`方法中捕获`rest_framework.exceptions.NotAuthenticated`,自行处理.
+
+可以参见示例项目的[rest.py](/sample/wechat/rest.py)文件.
 
 ## 使用自定义请求客户端
 在开发过程中,默认的请求客户端可能不能满足开发需求(诸如对接的微信api非微信官方api,而是第三方微信api),需要修改model中默认的请求客户端.这种情况下,我们通过代理模型来实现.

@@ -22,11 +22,14 @@ def wechat_admin_view(view, site):
     在请求上附上WeChatApp实例
     并在响应的模板上附上app,app_id等context
     """
-    def correct_url(request, object_id):
-        """修正请求url"""
+
+    def fix_url(request, object_id):
+        """修正请求url
+
+        因为某些特殊原因(比如说第三方模块),导致访问地址错误,尽可能修正错误
+        """
         resolved_url = resolve(request.path_info)
-        url_name = resolved_url.url_name
-        url_kwargs = resolved_url.kwargs
+        kwargs = resolved_url.kwargs
 
         if object_id:
             # 对于只有object_id没有app_id的 重定向到有app_id的url
@@ -34,15 +37,8 @@ def wechat_admin_view(view, site):
             try:
                 obj = modeladmin.model.objects.get(pk=object_id)
             except modeladmin.model.DoesNotExist:
-                return response.HttpResponseBadRequest()
-
-            url_kwargs.update(
-                wechat_app_id=obj.app_id,
-                object_id=object_id
-            )
-            return response.HttpResponseRedirect(
-                reverse("admin:" + url_name, kwargs=url_kwargs), status=307
-            )
+                return response.HttpResponseNotFound()
+            app_id = obj.app_id
         else:
             # 对于没有app_id的listview请求 优先取referrer的app_id
             referrer = request.META.get("HTTP_REFERER", "")
@@ -51,28 +47,26 @@ def wechat_admin_view(view, site):
                 app_id = resolve(path_info).kwargs["wechat_app_id"]
             except (KeyError, Resolver404):
                 return response.HttpResponseNotFound()
+            # 可能会发生url_kwargs中object_id为None的情况
+            # 此处做排除,否则可能会发生重定向错误
+            if "object_id" in kwargs and kwargs["object_id"] is None:
+                del kwargs["object_id"]
 
-            url_kwargs.update(wechat_app_id=app_id)
-            # 对于django-object-tool 模块,可能会发生url_kwargs为None的情况
-            # 此处做排除,否则会发生url重定向错误,并报403
-            if "object_id" in url_kwargs and url_kwargs["object_id"] is None:
-                del url_kwargs["object_id"]
-            resp = response.HttpResponseRedirect(
-                reverse("admin:" + url_name, kwargs=url_kwargs)
-            )
-            resp.status_code = 307
-            return resp
+        kwargs.update(wechat_app_id=app_id)
+        fixed_url = reverse("admin:" + resolved_url.url_name, kwargs=kwargs)
+        return response.HttpResponseRedirect(fixed_url, status=307)
 
     @wraps(view)
     def decorated_func(request, *args, **kwargs):
+        """给request及context带上app和appid"""
         app_id = kwargs.pop("wechat_app_id", None)
         object_id = kwargs.get("object_id", None)
         if not app_id:
-            return correct_url(request, object_id)
+            return fix_url(request, object_id)
 
         extra_context = kwargs.pop("extra_context", None) or {}
         try:
-            app = site.wechat_site.get_app_queryset().get(id=app_id)
+            app = site.wechat_site.app_queryset.get(id=app_id)
         except WeChatApp.DoesNotExist:
             return response.HttpResponseNotFound()
 
@@ -120,7 +114,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             if model in unregistered:
                 self.register(model, model_admin)
 
-    def _iter_wechatadmins(self):
+    def _iter_wechatadmins(self, app=None):
         """枚举所有的wechat-django modeladmin实例"""
         for model, model_admin in registered_admins:
             yield model, self._registry[model]
@@ -135,10 +129,11 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         return super(WeChatAdminSiteMixin, self).admin_view(view, cacheable)
 
     def get_urls(self):
+        # 不注册WeChatModel的url
         with self._unregister_wechatadmins():
             urlpatterns = super(WeChatAdminSiteMixin, self).get_urls()
 
-        # 重新注册wechat_django相关的modeladmin
+        # 注册WeChatModel的url,这些url是依赖不同WeChatApp的
         for model, model_admin in self._iter_wechatadmins():
             info = model._meta.app_label, model._meta.model_name
             urlpatterns += [
@@ -148,6 +143,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
                 ),
             ]
 
+        # 注册某个WeChatApp后台管理首页
         urlpatterns += [
             url(
                 r"(?P<app_label>wechat_django)/apps/(?P<wechat_app_id>\d+)/$",
@@ -161,16 +157,16 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
     def _build_app_dict(self, request, label=None):
         app_id = getattr(request, "app_id", None)
         if app_id:
-            # 微信相关模块
+            # 某WeChatApp下的菜单
             rv = self._build_wechat_func_dict(request)
 
             if not label:
-                # 我也不记得为啥要加这个了..
                 return {WeChatApp._meta.app_label: rv}
         else:
+            # 首页或其他模块菜单 不注册WeChatModel的后台
             with self._unregister_wechatadmins():
-                rv = super(WeChatAdminSiteMixin, self)._build_app_dict(
-                    request, label)
+                parent = super(WeChatAdminSiteMixin, self)
+                rv = parent._build_app_dict(request, label)
 
             # 首页, 增加app列表
             if not label:
@@ -185,7 +181,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         app_label = WeChatApp._meta.app_label
 
         # 过滤有权限的app
-        query = self.wechat_site.get_app_queryset()
+        query = self.wechat_site.app_queryset
         if not request.user.is_superuser:
             perms = get_user_permissions(request.user)
             allowed_apps = {
@@ -209,7 +205,9 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
                         wechat_app_id=app.id,
                         app_label=app_label
                     )
-                )
+                ),
+                add_url=None,
+                view_only=False  # TODO: 改为去编辑app页面
             )
             for app in apps
         ]
@@ -223,8 +221,9 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
 
     def _build_wechat_func_dict(self, request):
         """构建某一公众号下功能列表"""
-        has_module_perms = get_user_permissions(
-            request.user, request.app, exclude_manage=True, exclude_sub=True)
+        has_module_perms = get_user_permissions(request.user, request.app,
+                                                exclude_manage=True,
+                                                exclude_sub=True)
         if not has_module_perms:
             return None
 
@@ -245,16 +244,20 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             models=[]
         )
 
-        for model, model_admin in self._iter_wechatadmins():
+        for model, model_admin in self._iter_wechatadmins(request.app):
+            # 构建每个app下的功能菜单
             info = (model._meta.app_label, model._meta.model_name)
             perms = model_admin.get_model_perms(request)
             if not perms:
                 continue
-            model_dict = {
-                "name": model._meta.verbose_name_plural,
-                "object_name": model._meta.object_name,
-                "perms": perms,
-            }
+            model_dict = dict(
+                name=model._meta.verbose_name_plural,
+                object_name=model._meta.object_name,
+                perms=perms,
+                admin_url=None,
+                add_url=None,
+                view_only=False
+            )
             if perms.get("change"):
                 try:
                     model_dict["admin_url"] = reverse(
@@ -266,7 +269,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
                     pass
             if perms.get("add"):
                 try:
-                    model_dict['add_url'] = reverse(
+                    model_dict["add_url"] = reverse(
                         "admin:%s_%s_add" % info,
                         current_app=self.name,
                         kwargs=dict(wechat_app_id=app_id)
@@ -278,9 +281,9 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         return rv
 
     def wechat_index(self, request, *args, **kwargs):
-        """某个公众号后台管理首页"""
-        return super(WeChatAdminSiteMixin, self).app_index(
-            request, *args, **kwargs)
+        """某个WeChatApp后台管理首页"""
+        return super(WeChatAdminSiteMixin, self).app_index(request, *args,
+                                                           **kwargs)
 
 
 class WeChatAdminSite(WeChatAdminSiteMixin, admin.AdminSite):

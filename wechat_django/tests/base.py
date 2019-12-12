@@ -48,14 +48,22 @@ class WeChatTestCase(WeChatTestCaseBase):
             appid="appid", appsecret="secret", token="token")
         WeChatApp.objects.create(title="test1", name="test1",
             appid="appid1", appsecret="secret", token="token")
+        WeChatApp.objects.create(title="subscribe", name="subscribe",
+            appid="subscribe", appsecret="secret", token="token",
+            type=AppType.SUBSCRIBEAPP)
         WeChatApp.objects.create(title="miniprogram", name="miniprogram",
             appid="miniprogram", appsecret="secret",
             type=AppType.MINIPROGRAM)
+        WeChatApp.objects.create(title="webapp", name="webapp",
+            appid="webapp", appsecret="secret", token="token",
+            type=AppType.WEBAPP)
 
     def setUp(self):
         self.app = WeChatApp.objects.get_by_name("test")
         self.another_app = WeChatApp.objects.get_by_name("test1")
+        self.subscribe = WeChatApp.objects.get_by_name("subscribe")
         self.miniprogram = WeChatApp.objects.get_by_name("miniprogram")
+        self.webapp = WeChatApp.objects.get_by_name("webapp")
 
     #region utils
     def _create_handler(self, rules=None, name="", replies=None, app=None,

@@ -1,12 +1,29 @@
-# 被动消息
+# 消息交互
 
 - [被动消息](#%e8%a2%ab%e5%8a%a8%e6%b6%88%e6%81%af)
+  - [自定义微信回复](#%e8%87%aa%e5%ae%9a%e4%b9%89%e5%be%ae%e4%bf%a1%e5%9b%9e%e5%a4%8d)
   - [自定义处理规则](#%e8%87%aa%e5%ae%9a%e4%b9%89%e5%a4%84%e7%90%86%e8%a7%84%e5%88%99)
   - [首次订阅](#%e9%a6%96%e6%ac%a1%e8%ae%a2%e9%98%85)
 - [模板消息](#%e6%a8%a1%e6%9d%bf%e6%b6%88%e6%81%af)
   - [发送模板消息](#%e5%8f%91%e9%80%81%e6%a8%a1%e6%9d%bf%e6%b6%88%e6%81%af)
 
 ## 被动消息
+### 自定义微信回复
+在后台配置自定义回复,填写自定义回复处理代码的路径,代码须由 `wechat_django.handler.message_handler` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回字符串或一个 [`wechatpy.replies.BaseReply`](https://wechatpy.readthedocs.io/zh_CN/master/replies.html) 对象
+
+    from wechat_django import message_handler
+
+    @message_handler
+    def custom_business(message):
+        """
+        :type message: wechat_django.models.WeChatMessageInfo
+        """
+        user = message.user
+        msg = message.message
+        text = "hello, {0}! we received a {1} message.".format(
+            user, msg.type)
+        return TextReply(content=text.encode())
+
 ### 自定义处理规则
 在后台配置自定义规则,填写自定义回复处理代码的路径,代码须由 `wechat_django.handler.message_rule` 装饰对应的方法接收一个 `wechat_django.models.WeChatMessageInfo` 对象,返回一个bool值,真值代表规则匹配
 

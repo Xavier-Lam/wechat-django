@@ -1,0 +1,3 @@
+cryptography>=2.5
+httmock==1.2.6
+django-fake-model==0.1.4

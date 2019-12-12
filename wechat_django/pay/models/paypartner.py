@@ -7,8 +7,8 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.constants import AppType
-from wechat_django.models.apps.base import (AppAdminProperty,
-                                            ConfigurationProperty, WeChatApp)
+from wechat_django.models.app.base import (AppAdminProperty,
+                                           ConfigurationProperty, WeChatApp)
 
 
 class PayPartnerCertProperty(AppAdminProperty):

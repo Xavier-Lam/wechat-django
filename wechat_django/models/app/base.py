@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from collections import defaultdict
 import logging
 
 from django import forms
@@ -89,6 +90,7 @@ class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
 
 class WeChatApp(m.Model, ShortcutBound):
     _registered_type_cls = dict()
+    _registered_models = dict()
 
     @staticmethod
     def __new__(cls, *args, **kwargs):
@@ -114,8 +116,8 @@ class WeChatApp(m.Model, ShortcutBound):
     appid = m.CharField(_("AppId"), max_length=32, null=False)
     appsecret = m.CharField(_("AppSecret"), max_length=64, blank=True,
                             null=True)
-    type = m.PositiveSmallIntegerField(_("type"), default=AppType.SERVICEAPP,
-                                       choices=enum2choices(AppType))
+    type = m.PositiveIntegerField(_("type"), default=AppType.SERVICEAPP,
+                                  choices=enum2choices(AppType))
 
     parent = m.ForeignKey("self", verbose_name=_("parent"),
                           on_delete=m.CASCADE, related_name="children",
@@ -197,7 +199,30 @@ class WeChatApp(m.Model, ShortcutBound):
         return model_cls
 
     @classmethod
+    def register_model(cls, model_cls):
+        """将某个WeChatModel注册为某种WeChatApp的专有model"""
+        # 获取WeChatModel的基类
+        base_cls = model_cls.get_base_cls()
+
+        # 默认会取到基类
+        if base_cls not in cls._registered_models:
+            cls._registered_models[base_cls] = defaultdict(lambda: base_cls)
+
+        cls._registered_models[base_cls][cls] = model_cls
+        return model_cls
+
+    @classmethod
+    def get_registered_model(cls, base_cls):
+        """获取本类型app某一关联WeChatModel类型"""
+        if base_cls not in cls._registered_models:
+            return base_cls
+
+        # TODO: 考虑base_cls继承情况
+        return cls._registered_models[base_cls][cls]
+
+    @classmethod
     def from_db(cls, db, field_names, values):
+        """根据type不同,返回不同类型的WeChatApp实例"""
         app_type = dict(zip(field_names, values)).get("type")
 
         if app_type is None:
@@ -367,7 +392,7 @@ class PublicApp(ApiClientApp, InteractableApp):
 
     @property
     def users(self):
-        from wechat_django.models.users import PublicUser
+        from wechat_django.models.user import PublicUser
 
         queryset = super(PublicApp, self).users
         queryset.model = PublicUser

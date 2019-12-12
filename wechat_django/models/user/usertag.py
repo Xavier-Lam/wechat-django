@@ -15,9 +15,8 @@ class UserTag(WeChatModel):
 
     _id = m.AutoField(primary_key=True)
 
-    app = m.ForeignKey(
-        WeChatApp, related_name="user_tags", null=False, editable=False,
-        on_delete=m.CASCADE)
+    app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE,
+                       related_name="user_tags", null=False, editable=False)
     id = m.IntegerField(_("tag id"))
     name = m.CharField(_("tag name"), max_length=30)
     users = m.ManyToManyField(WeChatUser, related_name="tags")
@@ -50,17 +49,16 @@ class UserTag(WeChatModel):
             tags = app.client.group.get()
 
             # 处理已经移除的tags
-            deleted_tag_ids = db_tag_ids.difference(
-                {tag["id"] for tag in tags})
-            app.user_tags.filter(id__in=deleted_tag_ids).delete()
+            deleted_ids = db_tag_ids.difference({tag["id"] for tag in tags})
+            app.user_tags.filter(id__in=deleted_ids).delete()
 
             for tag in tags:
                 data = dict(id=tag["id"], name=tag["name"])
                 if tag["id"] not in db_tag_ids:
                     db_tag = app.user_tags.create(_tag_local=True, **data)
                 else:
-                    db_tag = (app.user_tags.filter(id=tag["id"])
-                        .update(name=tag["name"]))
+                    db_tag = app.user_tags.filter(id=tag["id"])\
+                                .update(name=tag["name"])
                 rv.append(db_tag)
             # 存在一个问题
             # 如果先同步了用户 id 101的tag名为a 假设u用户被打了tag a

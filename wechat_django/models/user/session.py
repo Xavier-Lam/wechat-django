@@ -10,16 +10,14 @@ from jsonfield import JSONField
 from wechatpy.crypto import WeChatWxaCrypto
 from wechatpy.exceptions import InvalidSignatureException
 
-from . import WeChatModel, WeChatUser
+from wechat_django.models import WeChatModel
+from . import WeChatUser
 
 
 class Session(WeChatModel):
-    class Type(object):
-        MINIPROGRAM = 1
-
-    user = m.ForeignKey(
-        WeChatUser, on_delete=m.CASCADE, related_name="sessions", null=False)
-    type = m.PositiveSmallIntegerField()
+    user = m.ForeignKey(WeChatUser, on_delete=m.CASCADE,
+                        related_name="sessions", null=False)
+    type = m.PositiveSmallIntegerField(default=0)  # TODO: 这个字段将废弃
     auth = JSONField(default={})
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
@@ -32,6 +30,10 @@ class Session(WeChatModel):
     @property
     def app_id(self):
         return self.user.app_id
+
+
+class MiniProgramSession(Session):
+    """小程序会话"""
 
     @property
     def session_key(self):
@@ -56,3 +58,25 @@ class Session(WeChatModel):
 
     def __str__(self):
         return "session_key: {0}".format(self.session_key)
+
+    class Meta(object):
+        proxy = True
+
+
+class SNSOAuthSession(Session):
+    """服务号网页授权或网站应用会话"""
+
+    @property
+    def access_token(self):
+        return self.auth.get("access_token")
+
+    @property
+    def refresh_token(self):
+        return self.auth.get("refresh_token")
+
+    @property
+    def scope(self):
+        return self.auth.get("scope")
+
+    class Meta(object):
+        proxy = True

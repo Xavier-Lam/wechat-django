@@ -3,7 +3,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import wechat_django.models.apps.base
+import wechat_django.models.app.base
 
 
 class Migration(migrations.Migration):
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 'proxy': True,
                 'indexes': []
             },
-            bases=(wechat_django.models.apps.base.ApiClientApp, wechat_django.models.apps.base.InteractableApp, 'wechat_django.wechatapp'),
+            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, 'wechat_django.wechatapp'),
         ),
         migrations.CreateModel(
             name='ServiceApp',
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 'proxy': True,
                 'indexes': []
             },
-            bases=(wechat_django.models.apps.base.ApiClientApp, wechat_django.models.apps.base.InteractableApp, wechat_django.models.apps.base.OAuthApp, 'wechat_django.wechatapp'),
+            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, wechat_django.models.app.base.OAuthApp, 'wechat_django.wechatapp'),
         ),
         migrations.CreateModel(
             name='SubscribeApp',
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 'proxy': True,
                 'indexes': []
             },
-            bases=(wechat_django.models.apps.base.ApiClientApp, wechat_django.models.apps.base.InteractableApp, 'wechat_django.wechatapp'),
+            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, 'wechat_django.wechatapp'),
         ),
         migrations.CreateModel(
             name='WebApp',
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 'proxy': True,
                 'indexes': []
             },
-            bases=(wechat_django.models.apps.base.OAuthApp, 'wechat_django.wechatapp'),
+            bases=(wechat_django.models.app.base.OAuthApp, 'wechat_django.wechatapp'),
         ),
         migrations.AddField(
             model_name='wechatapp',

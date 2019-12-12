@@ -43,11 +43,8 @@ class WeChatViewMixin(object):
 
     @classmethod
     def as_view(cls, **initKwargs):
-        from wechat_django.models import WeChatApp
-
-        initKwargs["app_queryset"] = initKwargs.get("app_queryset")\
-            or cls.app_queryset\
-            or WeChatApp.objects
+        if cls.app_queryset:
+            initKwargs["app_queryset"] = cls.app_queryset
         view = super(WeChatViewMixin, cls).as_view(**initKwargs)
         return csrf_exempt(view)
 

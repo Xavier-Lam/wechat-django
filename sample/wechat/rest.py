@@ -21,7 +21,6 @@ class TestAPIView(WeChatOAuthViewMixin, generics.RetrieveAPIView,
     appname = settings.SAMPLEAPPNAME
 
     permission_classes = (WeChatAuthenticated,)
-    queryset = WeChatUser.objects
     serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
@@ -29,6 +28,9 @@ class TestAPIView(WeChatOAuthViewMixin, generics.RetrieveAPIView,
 
     def get_object(self):
         return self.request.wechat.user
+
+    def get_queryset(self):
+        return self.request.wechat.app.users.objects
 
     def handle_exception(self, exc):
         if isinstance(exc, exceptions.NotAuthenticated):

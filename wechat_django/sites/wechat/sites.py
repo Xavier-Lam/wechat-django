@@ -11,8 +11,6 @@ class WeChatSite(object):
 
     _registered_views = []
 
-    app_queryset = None
-
     def register(self, cls):
         self._registered_views.append(cls)
         return cls
@@ -36,14 +34,16 @@ class WeChatSite(object):
     def urls(self):
         return self.get_urls(), "wechat_django", self.name
 
+    @property
+    def app_queryset(self):
+        if not hasattr(self, "_app_queryset"):
+            self._app_queryset = self.get_app_queryset()
+        return self._app_queryset
+
     def get_app_queryset(self):
         """取用WeChatApp实例时的默认查询集合,可重载为其他代理类查询集合"""
-        if not self.app_queryset:
-            from wechat_django.models import WeChatApp
-
-            return WeChatApp.objects
-
-        return self.app_queryset
+        from wechat_django.models import WeChatApp
+        return WeChatApp.objects
 
     def _create_view(self, cls):
         return cls.as_view(app_queryset=self.app_queryset)

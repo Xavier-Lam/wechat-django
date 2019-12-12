@@ -6,24 +6,23 @@ from django.utils import timezone as tz
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from wechat_django.models import PublicApp
+from wechat_django.models import PublicApp, ServiceApp, SubscribeApp
 from wechat_django.utils.func import next_chunk
-from wechat_django.utils.model import model_fields
 from .base import WeChatUser
 
 
+@ServiceApp.register_model
+@SubscribeApp.register_model
 class PublicUser(WeChatUser):
     """公众号用户"""
 
     @property
     def group(self):
-        from . import UserTag
         try:
             return self.app.user_tags.get(id=self.groupid).name
-        except UserTag.DoesNotExist:
+        except self.tags.model.DoesNotExist:
             return None
 
-    # TODO: 移到根类
     @PublicApp.shortcut
     def user_by_openid(cls, app, openid, ignore_errors=False, sync_user=True):
         """根据用户openid拿到用户对象
@@ -31,7 +30,8 @@ class PublicUser(WeChatUser):
         :param sync_user: 从服务器拿用户数据
         """
         try:
-            return app.users.get(openid=openid)
+            return super(PublicUser, cls).user_by_openid(app, openid,
+                                                         ignore_errors=False)
         except WeChatUser.DoesNotExist:
             if sync_user:
                 try:
@@ -81,36 +81,26 @@ class PublicUser(WeChatUser):
 
     @PublicApp.shortcut
     def fetch_users(cls, app, openids):
-        fields = model_fields(cls)
         # TODO: 根据当前语言拉取用户数据
         user_dicts = app.client.user.get_batch(openids)
-        update_dicts = map(
-            lambda o: {k: v for k, v in o.items() if k in fields},
-            user_dicts
-        )
         rv = []
         with transaction.atomic():
             tags = list(app.user_tags.all())
 
             for user_dict in user_dicts:
-                defaults = {k: v for k, v in user_dict.items() if k in fields}
-                defaults["synced_at"] = tz.now()
-                user = cls.objects.update_or_create(
-                    defaults=defaults,
-                    app=app,
-                    openid=defaults["openid"]
-                )[0]
+                user_dict["synced_at"] = tz.now()
+                user = app.users.upsert(**user_dict)[0]
 
                 # 拉取标签数据
-                tagid_list = user_dict.get("tagid_list")
-                if tagid_list:
+                tagids = user_dict.get("tagid_list")
+                if tagids:
                     user._tag_local = True
-                    user_tags = list(filter(lambda o: o.id in tagid_list, tags))
+                    user_tags = list(filter(lambda o: o.id in tagids, tags))
 
-                    if len(user_tags) != len(tagid_list):
+                    if len(user_tags) != len(tagids):
                         # 标签没有完全同步
                         tags = app.sync_usertags()
-                        user_tags = list(filter(lambda o: o.id in tagid_list, tags))
+                        user_tags = list(filter(lambda o: o.id in tagids, tags))
 
                     user.tags.set(user_tags, clear=False)
                     user.save()
@@ -118,6 +108,7 @@ class PublicUser(WeChatUser):
                     user._tag_local = False
 
                 rv.append(user)
+
             return rv
 
     def update(self, user_dict=None):

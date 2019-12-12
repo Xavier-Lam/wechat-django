@@ -34,7 +34,7 @@ def foreignkey(field_name):
     def _linkify(obj):
         app_label = obj._meta.app_label
         linked_obj = getattr(obj, field_name)
-        model_name = linked_obj._meta.model_name
+        model_name = type(linked_obj).get_base_cls()._meta.model_name
         view_name = "admin:{app_label}_{model_name}_change".format(
             app_label=app_label,
             model_name=model_name

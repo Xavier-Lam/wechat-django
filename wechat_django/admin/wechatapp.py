@@ -9,7 +9,7 @@ from django.utils.html import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from ..models import WeChatApp
-from ..models.apps.base import AppAdminProperty, InteractableApp
+from ..models.app.base import AppAdminProperty, InteractableApp
 from ..models.permission import get_user_permissions
 from ..utils.model import model_fields
 from .base import has_wechat_permission

@@ -21,7 +21,17 @@ class ProxyField(property):
         super(ProxyField, self).__init__(fget, fset, fdel, doc)
 
 
-class WeChatUserQuerySet(WeChatQuerySet):
+class WeChatUserIterable(m.query.ModelIterable):
+    """根据不同类型的WeChatApp,生成不同类型的WeChatUser实例"""
+
+    def __iter__(self):
+        for obj in super(WeChatUserIterable, self).__iter__():
+            base_cls = type(obj).get_base_cls()
+            obj.__class__ = type(obj.app).get_registered_model(base_cls)
+            yield obj
+
+
+class WeChatUserQuerySet(WeChatQuerySet):  # TODO: from_db或create时能返回正确实例
     def upsert(self, openid, **kwargs):
         updates = {
             k: v for k, v in kwargs.items()
@@ -40,9 +50,21 @@ class WeChatUserQuerySet(WeChatQuerySet):
         with transaction.atomic():
             return [o[0] for o in map(upsert, dicts)]
 
+    def create(self, **kwargs):
+        obj = super(WeChatUserQuerySet, self).create(**kwargs)
+        # create 返回子代理类
+        cls = type(obj.app).get_registered_model(self.model)
+        if cls is not obj.__class__:
+            obj.__class__ = cls
+        return obj
+
 
 class WeChatUserManager(WeChatManager.from_queryset(WeChatUserQuerySet)):
-    pass
+
+    def get_queryset(self):
+        queryset = super(WeChatUserManager, self).get_queryset()
+        queryset._iterable_class = WeChatUserIterable
+        return queryset.select_related("app")
 
 
 class WeChatUser(WeChatModel):
@@ -104,14 +126,6 @@ class WeChatUser(WeChatModel):
     is_anonymous = False
     is_authenticated = True
 
-    class Meta(object):
-        verbose_name = _("user")
-        verbose_name_plural = _("users")
-
-        ordering = ("app", "-created_at")
-        unique_together = (("app", "openid"), ("unionid", "app"),
-                           ("app", "alias"))
-
     @property
     def avatar(self):
         """头像
@@ -130,6 +144,18 @@ class WeChatUser(WeChatModel):
         self.headimgurl = value
 
     gender = ProxyField("sex")
+
+    @WeChatApp.shortcut
+    def user_by_openid(cls, app, openid, ignore_errors=False):
+        """根据用户openid拿到用户对象
+        :param ignore_errors: 当库中未找到用户或接口返回失败时还是强行插入user
+        """
+        try:
+            return app.users.get(openid=openid)
+        except WeChatUser.DoesNotExist:
+            if not ignore_errors:
+                raise
+        return app.users.create(openid=openid)
 
     def update(self, user_dict=None):
         """重新同步用户数据"""
@@ -152,3 +178,12 @@ class WeChatUser(WeChatModel):
     def __str__(self):
         return "{nickname}({openid})".format(nickname=self.nickname or "",
                                              openid=self.openid)
+
+    class Meta(object):
+        base_manager_name = "objects"
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
+
+        ordering = ("app", "-created_at")
+        unique_together = (("app", "openid"), ("unionid", "app"),
+                           ("app", "alias"))

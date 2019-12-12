@@ -3,13 +3,31 @@ from __future__ import unicode_literals
 
 import json
 
+import django
+from django.db import models as m
+from django.db.backends.sqlite3 import schema
+from django_fake_model.models import FakeModel
 from wechatpy.exceptions import InvalidSignatureException
 
-from ..models import MiniProgramUser, PublicApp, Session, WeChatUser
+from ..models import (MiniProgramUser, PublicApp, PublicUser, Session,
+                      WeChatUser)
 from .base import mock, WeChatTestCase
 
 
+class FakeUserForeignKeyModel(FakeModel):
+    user = m.ForeignKey(WeChatUser, on_delete=m.CASCADE, null=False,
+                        related_name="fakes")
+
+
 class UserTestCase(WeChatTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(UserTestCase, cls).setUpClass()
+        if django.VERSION[0] >= 2:
+            schema.DatabaseSchemaEditor.__enter__ = \
+                schema.BaseDatabaseSchemaEditor.__enter__
+
     def test_sync(self):
         """测试同步用户"""
         pass
@@ -71,11 +89,11 @@ class UserTestCase(WeChatTestCase):
         self.app.appid = "wx4f4bc4dec97d474b"
         session_key = "HyVFkGl5F5OQWJZZaNzBBg=="
         user = MiniProgramUser.objects.create(openid="openid", app=self.app)
-        session = Session(
+        Session.objects.create(
             user=user,
-            type=Session.Type.MINIPROGRAM,
             auth=dict(session_key=session_key)
         )
+        session = user.session
 
         # 验证签名
         raw_data = '{"nickName":"Band","gender":1,"language":"zh_CN","city":"Guangzhou","province":"Guangdong","country":"CN","avatarUrl":"http://wx.qlogo.cn/mmopen/vi_32/1vZvI39NWFQ9XM4LtQpFrQJ1xlgZxx3w7bQxKARol6503Iuswjjn6nIGBiaycAjAtpujxyzYsrztuuICqIM5ibXQ/0"}' # noqa
@@ -110,7 +128,8 @@ class UserTestCase(WeChatTestCase):
     def test_update_by_user_dict(self):
         """小程序用户数据更新"""
         openid = "openid"
-        user = MiniProgramUser.objects.create(app=self.app, openid=openid)
+        user = MiniProgramUser.objects.create(app=self.miniprogram,
+                                              openid=openid)
         origin_dict = {
             "nickName": "Band",
             "gender": 1,
@@ -131,3 +150,49 @@ class UserTestCase(WeChatTestCase):
         self.assertEqual(user.headimgurl, origin_dict["avatarUrl"])
         self.assertEqual(user.avatar, origin_dict["avatarUrl"])
         self.assertEqual(user.avatar(132), "http://wx.qlogo.cn/mmopen/vi_32/1vZvI39NWFQ9XM4LtQpFrQJ1xlgZxx3w7bQxKARol6503Iuswjjn6nIGBiaycAjAtpujxyzYsrztuuICqIM5ibXQ/132")
+
+    def test_queryset(self):
+        """测试关联queryset"""
+
+        self.assertEqual(self.app.users.model, PublicUser)
+        self.assertEqual(self.subscribe.users.model, PublicUser)
+        self.assertEqual(self.miniprogram.users.model, MiniProgramUser)
+        self.assertEqual(self.webapp.users.model, WeChatUser)
+
+    @FakeUserForeignKeyModel.fake_me
+    def test_user_model(self):
+        """测试能拿到正确的user类型"""
+
+        def assert_type_correct(app, user_type):
+            # 由反向related获取
+            user = app.users.create(openid="openid")
+            self.assertTrue(isinstance(user, user_type))
+            user = app.users.get(openid="openid")
+            self.assertTrue(isinstance(user, user_type))
+
+            # 由本类直接获取
+            user = user_type.objects.create(app=app, openid="openid2")
+            self.assertTrue(isinstance(user, user_type))
+            user = user_type.objects.get(app=app, openid="openid2")
+            self.assertTrue(isinstance(user, user_type))
+
+            # 由基类获取
+            user = WeChatUser.objects.create(app=app, openid="openid3")
+            self.assertTrue(isinstance(user, user_type))
+            user = WeChatUser.objects.get(app=app, openid="openid3")
+            self.assertTrue(isinstance(user, user_type))
+
+            # Foreignkey获取
+            fake = FakeUserForeignKeyModel.objects.create(user=user)
+            self.assertTrue(isinstance(fake.user, user_type))
+            fake = FakeUserForeignKeyModel.objects.get(id=fake.id)
+            self.assertTrue(isinstance(fake.user, user_type))
+
+        # 服务号用户
+        assert_type_correct(self.app, PublicUser)
+        # 订阅号
+        assert_type_correct(self.subscribe, PublicUser)
+        # 小程序
+        assert_type_correct(self.miniprogram, MiniProgramUser)
+        # 其他
+        assert_type_correct(self.webapp, WeChatUser)

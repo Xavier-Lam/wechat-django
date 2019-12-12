@@ -7,8 +7,8 @@ from wechatpy.client import WeChatClient as _Client
 from wechatpy.client.api import WeChatWxa
 
 from ..constants import AppType
-from ..models import apps, WeChatApp, WeChatUser
-from ..models.apps.base import ConfigurationProperty, FlagProperty
+from ..models import app, WeChatApp, WeChatUser
+from ..models.app.base import ConfigurationProperty, FlagProperty
 from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
@@ -134,31 +134,31 @@ class AppTestCase(WeChatTestCase):
 
     def test_from_db(self):
         """测试queryset取数据能取到正确类型"""
-        subscribe = apps.SubscribeApp.objects.create(title="subscribe",
-                                                     name="subscribe",
-                                                     appid="subscribe")
+        subscribe = app.SubscribeApp.objects.create(title="subscribe2",
+                                                     name="subscribe2",
+                                                     appid="subscribe2")
 
-        self.assertIsInstance(subscribe, apps.SubscribeApp)
+        self.assertIsInstance(subscribe, app.SubscribeApp)
         self.assertTrue(hasattr(subscribe, "log_message"))
         self.assertEqual(subscribe.type, AppType.SUBSCRIBEAPP)
         subscribe = WeChatApp.objects.get_by_name("subscribe")
-        self.assertIsInstance(subscribe, apps.SubscribeApp)
+        self.assertIsInstance(subscribe, app.SubscribeApp)
 
-        self.assertIsInstance(self.app, apps.ServiceApp)
+        self.assertIsInstance(self.app, app.ServiceApp)
         service = WeChatApp.objects.get_by_name(self.app.name)
         self.assertEqual(service.type, AppType.SERVICEAPP)
-        self.assertIsInstance(service, apps.ServiceApp)
+        self.assertIsInstance(service, app.ServiceApp)
 
-        self.assertIsInstance(self.miniprogram, apps.MiniProgramApp)
+        self.assertIsInstance(self.miniprogram, app.MiniProgramApp)
         miniprogram = WeChatApp.objects.get_by_name(self.miniprogram.name)
         self.assertEqual(miniprogram.type, AppType.MINIPROGRAM)
-        self.assertIsInstance(miniprogram, apps.MiniProgramApp)
+        self.assertIsInstance(miniprogram, app.MiniProgramApp)
 
         # 反向获取
         user = WeChatUser.objects.create(app=self.app, openid="openid")
-        self.assertIsInstance(user.app, apps.ServiceApp)
+        self.assertIsInstance(user.app, app.ServiceApp)
         user = WeChatUser.objects.get(openid="openid")
-        self.assertIsInstance(user.app, apps.ServiceApp)
+        self.assertIsInstance(user.app, app.ServiceApp)
 
     def test_appadmin_property(self):
         """测试app属性功能"""

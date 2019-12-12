@@ -1,4 +1,5 @@
 cryptography>=2.5
+django-fake-model==0.1.4
 httmock==1.2.6
 jsonfield>=2.0.2
 requests>=2.4.3
