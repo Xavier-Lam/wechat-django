@@ -90,7 +90,6 @@ class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
 
 class WeChatApp(m.Model, ShortcutBound):
     _registered_type_cls = dict()
-    _registered_models = dict()
 
     @staticmethod
     def __new__(cls, *args, **kwargs):
@@ -197,28 +196,6 @@ class WeChatApp(m.Model, ShortcutBound):
             model_cls = type(cls.__name__, (cls, sub_model), attrs)
 
         return model_cls
-
-    @classmethod
-    def register_model(cls, model_cls):
-        """将某个WeChatModel注册为某种WeChatApp的专有model"""
-        # 获取WeChatModel的基类
-        base_cls = model_cls.get_base_cls()
-
-        # 默认会取到基类
-        if base_cls not in cls._registered_models:
-            cls._registered_models[base_cls] = defaultdict(lambda: base_cls)
-
-        cls._registered_models[base_cls][cls] = model_cls
-        return model_cls
-
-    @classmethod
-    def get_registered_model(cls, base_cls):
-        """获取本类型app某一关联WeChatModel类型"""
-        if base_cls not in cls._registered_models:
-            return base_cls
-
-        # TODO: 考虑base_cls继承情况
-        return cls._registered_models[base_cls][cls]
 
     @classmethod
     def from_db(cls, db, field_names, values):

@@ -11,8 +11,7 @@ from wechat_django.utils.func import next_chunk
 from .base import WeChatUser
 
 
-@ServiceApp.register_model
-@SubscribeApp.register_model
+@PublicApp.register_model
 class PublicUser(WeChatUser):
     """公众号用户"""
 

@@ -4,6 +4,7 @@ recursive-include wechat_django/templates *
 include LICENCE
 include MANIFEST.in
 include README.md
+include requirements.test.txt
 include requirements.txt
 include runtests.py
 global-exclude __pycache__

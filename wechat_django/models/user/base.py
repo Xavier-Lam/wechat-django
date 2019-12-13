@@ -7,8 +7,8 @@ from django.db import models as m, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.models import WeChatApp
-from wechat_django.models.base import (WeChatManager, WeChatModel,
-                                       WeChatQuerySet)
+from wechat_django.models.base import (WeChatFixTypeQuerySet,
+                                       WeChatFixTypeManager, WeChatModel)
 from wechat_django.utils.model import enum2choices, model_fields
 
 
@@ -21,17 +21,7 @@ class ProxyField(property):
         super(ProxyField, self).__init__(fget, fset, fdel, doc)
 
 
-class WeChatUserIterable(m.query.ModelIterable):
-    """根据不同类型的WeChatApp,生成不同类型的WeChatUser实例"""
-
-    def __iter__(self):
-        for obj in super(WeChatUserIterable, self).__iter__():
-            base_cls = type(obj).get_base_cls()
-            obj.__class__ = type(obj.app).get_registered_model(base_cls)
-            yield obj
-
-
-class WeChatUserQuerySet(WeChatQuerySet):  # TODO: from_db或create时能返回正确实例
+class WeChatUserQuerySet(WeChatFixTypeQuerySet):
     def upsert(self, openid, **kwargs):
         updates = {
             k: v for k, v in kwargs.items()
@@ -50,23 +40,11 @@ class WeChatUserQuerySet(WeChatQuerySet):  # TODO: from_db或create时能返回�
         with transaction.atomic():
             return [o[0] for o in map(upsert, dicts)]
 
-    def create(self, **kwargs):
-        obj = super(WeChatUserQuerySet, self).create(**kwargs)
-        # create 返回子代理类
-        cls = type(obj.app).get_registered_model(self.model)
-        if cls is not obj.__class__:
-            obj.__class__ = cls
-        return obj
+
+WeChatUserManager = WeChatFixTypeManager.from_queryset(WeChatUserQuerySet)
 
 
-class WeChatUserManager(WeChatManager.from_queryset(WeChatUserQuerySet)):
-
-    def get_queryset(self):
-        queryset = super(WeChatUserManager, self).get_queryset()
-        queryset._iterable_class = WeChatUserIterable
-        return queryset.select_related("app")
-
-
+@WeChatApp.register_model
 class WeChatUser(WeChatModel):
     class Gender(object):
         UNKNOWN = 0

@@ -114,8 +114,11 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             if model in unregistered:
                 self.register(model, model_admin)
 
-    def _iter_wechatadmins(self, app=None):
-        """枚举所有的wechat-django modeladmin实例"""
+    def _iter_wechatadmins(self, request=None):
+        """枚举所有的wechat-django modeladmin实例
+
+        要对某app增加或者移除模型时,请复写方法,判断request不为空时,做额外处理
+        """
         for model, model_admin in registered_admins:
             yield model, self._registry[model]
 
@@ -244,7 +247,7 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
             models=[]
         )
 
-        for model, model_admin in self._iter_wechatadmins(request.app):
+        for model, model_admin in self._iter_wechatadmins(request):
             # 构建每个app下的功能菜单
             info = (model._meta.app_label, model._meta.model_name)
             perms = model_admin.get_model_perms(request)
