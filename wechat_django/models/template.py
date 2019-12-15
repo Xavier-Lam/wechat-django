@@ -7,9 +7,11 @@ from django.utils.translation import ugettext_lazy as _
 from ..constants import AppType
 from ..exceptions import WeChatAbilityError
 from ..utils.model import model_fields
-from . import WeChatApp, WeChatModel
+from . import MiniProgramApp, PublicApp, WeChatApp, WeChatModel
 
 
+@MiniProgramApp.register
+@PublicApp.register
 class Template(WeChatModel):
     app = m.ForeignKey(
         WeChatApp, related_name="templates", on_delete=m.CASCADE)

@@ -8,9 +8,10 @@ from jsonfield import JSONField
 from wechatpy.events import BaseEvent
 
 from ..utils.model import enum2choices
-from . import Rule, WeChatApp, WeChatModel, WeChatUser
+from . import PublicApp, Rule, WeChatApp, WeChatModel, WeChatUser
 
 
+@PublicApp.register
 class MessageLog(WeChatModel):
     class Direct(object):
         USER2APP = False

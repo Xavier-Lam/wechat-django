@@ -9,7 +9,7 @@ from .base import ApiClientApp, InteractableApp, WeChatApp
 
 
 @WeChatApp.register_apptype_cls(AppType.MINIPROGRAM)
-class MiniProgramApp(ApiClientApp, InteractableApp, WeChatApp):
+class MiniProgramApp(ApiClientApp, InteractableApp):
     """小程序"""
 
     @property

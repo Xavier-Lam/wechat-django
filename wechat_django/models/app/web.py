@@ -6,7 +6,7 @@ from .base import OAuthApp, WeChatApp
 
 
 @WeChatApp.register_apptype_cls(AppType.WEBAPP)
-class WebApp(OAuthApp, WeChatApp):
+class WebApp(OAuthApp):
     """网页应用"""
 
     OAUTH_URL = "https://open.weixin.qq.com/connect/qrconnect"

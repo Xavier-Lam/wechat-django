@@ -6,7 +6,7 @@ from .base import PublicApp, WeChatApp
 
 
 @WeChatApp.register_apptype_cls(AppType.SUBSCRIBEAPP)
-class SubscribeApp(PublicApp, WeChatApp):
+class SubscribeApp(PublicApp):
     """订阅号"""
 
     class Meta(object):

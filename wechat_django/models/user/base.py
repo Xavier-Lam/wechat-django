@@ -44,7 +44,7 @@ class WeChatUserQuerySet(WeChatFixTypeQuerySet):
 WeChatUserManager = WeChatFixTypeManager.from_queryset(WeChatUserQuerySet)
 
 
-@WeChatApp.register_model
+@WeChatApp.register
 class WeChatUser(WeChatModel):
     class Gender(object):
         UNKNOWN = 0

@@ -31,6 +31,7 @@ class MessageHandlerManager(WeChatManager):
         return handler
 
 
+@PublicApp.register
 class MessageHandler(WeChatModel):
     class Source(object):
         SELF = 0  # 自己的后台

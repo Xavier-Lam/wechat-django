@@ -14,34 +14,64 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='ApiClientApp',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('wechat_django.wechatapp',),
+        ),
+        migrations.CreateModel(
+            name='InteractableApp',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('wechat_django.wechatapp',),
+        ),
+        migrations.CreateModel(
+            name='MiniProgramSession',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('wechat_django.session',),
+        ),
+        migrations.CreateModel(
             name='MiniProgramApp',
             fields=[
             ],
             options={
                 'proxy': True,
-                'indexes': []
+                'indexes': [],
             },
-            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, 'wechat_django.wechatapp'),
+            bases=('wechat_django.apiclientapp', 'wechat_django.interactableapp'),
         ),
         migrations.CreateModel(
-            name='ServiceApp',
+            name='OAuthApp',
             fields=[
             ],
             options={
                 'proxy': True,
-                'indexes': []
+                'indexes': [],
             },
-            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, wechat_django.models.app.base.OAuthApp, 'wechat_django.wechatapp'),
+            bases=('wechat_django.wechatapp',),
         ),
         migrations.CreateModel(
-            name='SubscribeApp',
+            name='PublicApp',
             fields=[
             ],
             options={
                 'proxy': True,
-                'indexes': []
+                'indexes': [],
             },
-            bases=(wechat_django.models.app.base.ApiClientApp, wechat_django.models.app.base.InteractableApp, 'wechat_django.wechatapp'),
+            bases=('wechat_django.apiclientapp', 'wechat_django.interactableapp'),
         ),
         migrations.CreateModel(
             name='WebApp',
@@ -49,9 +79,29 @@ class Migration(migrations.Migration):
             ],
             options={
                 'proxy': True,
-                'indexes': []
+                'indexes': [],
             },
-            bases=(wechat_django.models.app.base.OAuthApp, 'wechat_django.wechatapp'),
+            bases=('wechat_django.oauthapp',),
+        ),
+        migrations.CreateModel(
+            name='ServiceApp',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('wechat_django.publicapp', 'wechat_django.oauthapp'),
+        ),
+        migrations.CreateModel(
+            name='SubscribeApp',
+            fields=[
+            ],
+            options={
+                'proxy': True,
+                'indexes': [],
+            },
+            bases=('wechat_django.publicapp',),
         ),
         migrations.AddField(
             model_name='wechatapp',

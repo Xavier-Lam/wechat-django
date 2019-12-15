@@ -6,10 +6,10 @@ from django.urls import reverse
 from wechatpy.client import WeChatClient as _Client
 from wechatpy.client.api import WeChatWxa
 
+from .. import models, pay, settings
 from ..constants import AppType
 from ..models import app, WeChatApp, WeChatUser
 from ..models.app.base import ConfigurationProperty, FlagProperty
-from .. import settings
 from .base import mock, WeChatTestCase
 from .interceptors import wechatapi, wechatapi_accesstoken, wechatapi_error
 
@@ -159,6 +159,51 @@ class AppTestCase(WeChatTestCase):
         self.assertIsInstance(user.app, app.ServiceApp)
         user = WeChatUser.objects.get(openid="openid")
         self.assertIsInstance(user.app, app.ServiceApp)
+
+    def test_register_models(self):
+        """测试app注册其他WeChatModel的模型"""
+
+        def assertRegisterCorrect(cls, should_registered_models):
+            registered_models = cls.list_registered_models()
+            self.assertEqual(set(registered_models),
+                             set(should_registered_models.values()))
+            for base, registered in should_registered_models.items():
+                self.assertEqual(cls.get_registered_model(base), registered)
+
+        assertRegisterCorrect(app.MiniProgramApp, {
+            models.WeChatUser: models.MiniProgramUser,
+            models.Template: models.Template,
+            pay.models.WeChatPay: pay.models.WeChatPay
+        })
+
+        publicapp_registered_models = {
+            models.WeChatUser: models.PublicUser,
+            models.Material: models.Material,
+            models.Menu: models.Menu,
+            models.MessageHandler: models.MessageHandler,
+            models.MessageLog: models.MessageLog,
+            models.Template: models.Template,
+            models.UserTag: models.UserTag,
+        }
+        assertRegisterCorrect(app.PublicApp, publicapp_registered_models)
+        assertRegisterCorrect(app.SubscribeApp, publicapp_registered_models)
+        publicapp_registered_models.update(
+            {pay.models.WeChatPay: pay.models.WeChatPay}
+        )
+        assertRegisterCorrect(app.ServiceApp, publicapp_registered_models)
+
+        common_registered_models = {
+            models.WeChatUser: models.WeChatUser
+        }
+        assertRegisterCorrect(app.WebApp, common_registered_models)
+        assertRegisterCorrect(app.WeChatApp, common_registered_models)
+
+        partner_registered_models = {
+            models.WeChatUser: models.WeChatUser,
+            pay.models.WeChatPay: pay.models.WeChatSubPay
+        }
+        assertRegisterCorrect(pay.models.PayPartnerApp,
+                              partner_registered_models)
 
     def test_appadmin_property(self):
         """测试app属性功能"""

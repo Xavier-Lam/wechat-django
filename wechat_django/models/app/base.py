@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from collections import defaultdict
 import logging
 
 from django import forms
@@ -22,7 +21,7 @@ from wechat_django.client import WeChatClient
 from wechat_django.constants import AppType, WeChatSNSScope, WeChatWebAppScope
 from wechat_django.exceptions import WeChatAbilityError
 from wechat_django.models import MsgLogFlag
-from wechat_django.models.base import ShortcutBound
+from wechat_django.models.base import AppRoot, AppRootMetaClass
 from wechat_django.oauth import WeChatOAuthClient
 from wechat_django.utils.func import Static
 from wechat_django.utils.model import enum2choices
@@ -88,7 +87,11 @@ class WeChatAppManager(BaseManager.from_queryset(WeChatAppQuerySet)):
         return queryset.filter(parent__isnull=True)
 
 
-class WeChatApp(m.Model, ShortcutBound):
+class WeChatAppMetaClass(AppRootMetaClass, m.base.ModelBase):
+    pass
+
+
+class WeChatApp(six.with_metaclass(WeChatAppMetaClass, AppRoot, m.Model)):
     _registered_type_cls = dict()
 
     @staticmethod
@@ -273,7 +276,7 @@ class WeChatApp(m.Model, ShortcutBound):
         verbose_name_plural = _("WeChat apps")
 
 
-class ApiClientApp(ShortcutBound):
+class ApiClientApp(WeChatApp):
     """可以调用api"""
 
     accesstoken_url = ConfigurationProperty("ACCESSTOKEN_URL",
@@ -300,8 +303,11 @@ class ApiClientApp(ShortcutBound):
         """
         return WeChatClient(self)
 
+    class Meta:
+        proxy = True
 
-class InteractableApp(ShortcutBound):
+
+class InteractableApp(WeChatApp):
     """可以进行消息交互"""
 
     log_message = FlagProperty(MsgLogFlag.LOG_MESSAGE, False,
@@ -322,8 +328,11 @@ class InteractableApp(ShortcutBound):
             )
         return self._crypto
 
+    class Meta:
+        proxy = True
 
-class OAuthApp(ShortcutBound):
+
+class OAuthApp(WeChatApp):
     """可以进行OAuth授权的app"""
 
     oauth_url = ConfigurationProperty("OAUTH_URL",
@@ -363,6 +372,9 @@ class OAuthApp(ShortcutBound):
         """
         return WeChatOAuthClient(self)
 
+    class Meta:
+        proxy = True
+
 
 class PublicApp(ApiClientApp, InteractableApp):
     """公众号"""
@@ -374,3 +386,6 @@ class PublicApp(ApiClientApp, InteractableApp):
         queryset = super(PublicApp, self).users
         queryset.model = PublicUser
         return queryset
+
+    class Meta:
+        proxy = True

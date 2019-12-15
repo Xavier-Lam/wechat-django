@@ -6,12 +6,12 @@ from django.utils import timezone as tz
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException
 
-from wechat_django.models import PublicApp, ServiceApp, SubscribeApp
+from wechat_django.models import PublicApp
 from wechat_django.utils.func import next_chunk
 from .base import WeChatUser
 
 
-@PublicApp.register_model
+@PublicApp.register
 class PublicUser(WeChatUser):
     """公众号用户"""
 

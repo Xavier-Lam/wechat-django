@@ -143,7 +143,8 @@ class UnifiedOrder(WeChatModel):
             if not self.time_start:
                 self.time_start = self.created_at
             if not self.time_expire:
-                self.time_expire = self.created_at + datetime.timedelta(hours=2)
+                default_delta = datetime.timedelta(hours=2)
+                self.time_expire = self.created_at + default_delta
             # 构建call_args并缓存
             notify_url = self.pay.app.build_url(
                 "order_notify", request=request,

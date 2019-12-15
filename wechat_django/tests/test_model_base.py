@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from ..models import PublicApp, WeChatApp
-from ..models.base import ShortcutBound, WeChatModel
+from ..models.base import WeChatModel
 from .base import WeChatTestCase
 
 
@@ -46,9 +46,16 @@ class ModelBaseTestCase(WeChatTestCase):
         self.assertFalse(hasattr(WeChatApp, "public_only"))
 
     def test_related_manager(self):
+        app_type = type(self.app)
         self.assertEqual(self.app.users.app, self.app)
+        self.assertIsInstance(self.app.users.app, app_type)
         self.assertEqual(self.app.users.all().app, self.app)
+        self.assertIsInstance(self.app.users.all().app, app_type)
         self.assertEqual(self.app.materials.app, self.app)
+        self.assertIsInstance(self.app.materials.app, app_type)
         self.assertEqual(self.app.materials.all().app, self.app)
+        self.assertIsInstance(self.app.materials.all().app, app_type)
         self.assertEqual(self.app.templates.app, self.app)
+        self.assertIsInstance(self.app.templates.app, app_type)
         self.assertEqual(self.app.templates.all().app, self.app)
+        self.assertIsInstance(self.app.templates.app, app_type)

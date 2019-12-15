@@ -10,6 +10,7 @@ from wechat_django.models import PublicApp, WeChatApp, WeChatModel
 from . import WeChatUser
 
 
+@PublicApp.register
 class UserTag(WeChatModel):
     SYS_TAGS = (0, 1, 2)
 

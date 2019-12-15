@@ -8,7 +8,7 @@ from .base import ProxyField, WeChatUser
 from .session import MiniProgramSession
 
 
-@MiniProgramApp.register_model
+@MiniProgramApp.register
 class MiniProgramUser(WeChatUser):
     """小程序用户"""
 

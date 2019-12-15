@@ -26,9 +26,65 @@ class ShortcutMethod(classmethod):
         setattr(self.cls, method_name, shortcut)
 
 
-class ShortcutBound(object):
-    _registered_models = dict()
+class WeChatQuerySet(m.QuerySet):
+    @property
+    def app(self):
+        # TODO: 可能存在related非app的情况
+        return self._hints.get("instance")
 
+
+class WeChatManager(BaseManager.from_queryset(WeChatQuerySet)):
+    @property
+    def app(self):
+        # TODO: 可能存在core_filters不存在的情况,即不是related_manager
+        return self.core_filters["app"]
+
+
+class Py2StrCompatibleMetaClass(type):
+    """python2.7 __str__必须返回bytestring"""
+
+    def __new__(meta, name, bases, attrs):
+        if six.PY2 and "__str__" in attrs:
+            __str__ = attrs.pop("__str__")
+            attrs["__str__"] = update_wrapper(
+                lambda self: force_bytes(__str__(self)), __str__)
+
+        return super(Py2StrCompatibleMetaClass, meta).__new__(meta, name,
+                                                              bases, attrs)
+
+
+class AppRootMetaClass(Py2StrCompatibleMetaClass, m.base.ModelBase):
+    def __init__(cls, name, bases, attrs):
+        super(AppRootMetaClass, cls).__init__(name, bases, attrs)
+
+        # 只处理子类
+        parents = [b for b in bases if isinstance(b, AppRootMetaClass)]
+        if not parents:
+            return
+
+        # 新建_registered_models
+        cls._registered_models = dict()
+        mro = cls.mro()
+        cls._based_models = mro[: mro.index(AppRoot)]
+
+    def get_registered_model(cls, basemodel):
+        """获取本类型app某一关联WeChatModel类型"""
+        basemodel = basemodel.__basemodel__
+        for class_ in cls._based_models:
+            if basemodel in class_._registered_models:
+                return class_._registered_models[basemodel]
+
+        raise KeyError(cls, basemodel)
+
+    def list_registered_models(cls):
+        """查看本类型app下关联的所有model"""
+        registered_models = []
+        for class_ in cls._based_models:
+            registered_models[0:0] = class_._registered_models.items()
+        return list(dict(registered_models).values())
+
+
+class AppRoot(six.with_metaclass(AppRootMetaClass)):
     @classmethod
     def shortcut(cls, func_or_name):
         """可以把其他对象的方法注册到本对象的语法糖
@@ -58,57 +114,28 @@ class ShortcutBound(object):
             return shortcuted
 
     @classmethod
-    def register_model(cls, model_cls):
+    def register(cls, model_cls):
         """将某个WeChatModel注册为某种WeChatApp的专有model"""
-        # 获取WeChatModel的基类
-        base_cls = model_cls.get_base_cls()
-
-        if cls not in cls._registered_models:
-            cls._registered_models[cls] = dict()
-
-        cls._registered_models[cls][base_cls] = model_cls
+        cls._registered_models[model_cls.__basemodel__] = model_cls
         return model_cls
 
-    @classmethod
-    def get_registered_model(cls, base_cls):
-        """获取本类型app某一关联WeChatModel类型"""
-        for class_ in cls.mro():
-            if class_ is m.Model:
-                raise KeyError(cls, base_cls)
-            if base_cls in cls._registered_models.get(class_, []):
-                return cls._registered_models[class_][base_cls]
 
+class WeChatModelMetaClass(Py2StrCompatibleMetaClass, m.base.ModelBase):
+    def __init__(cls, name, bases, attrs):
+        super(WeChatModelMetaClass, cls).__init__(name, bases, attrs)
 
-class WeChatQuerySet(m.QuerySet):
-    @property
-    def app(self):
-        # TODO: 可能存在related非app的情况
-        return self._hints.get("instance")
-
-
-class WeChatManager(BaseManager.from_queryset(WeChatQuerySet)):
-    @property
-    def app(self):
-        # TODO: 可能存在core_filters不存在的情况,即不是related_manager
-        return self.core_filters["app"]
-
-
-class WeChatModelMetaClass(m.base.ModelBase):
-    def __new__(meta, name, bases, attrs):
-        # python2.7 __str__必须返回bytestring
-        if six.PY2 and "__str__" in attrs:
-            __str__ = attrs.pop("__str__")
-            attrs["__str__"] = update_wrapper(
-                lambda self: force_bytes(__str__(self)), __str__)
-
-        cls = super(WeChatModelMetaClass, meta).__new__(meta, name, bases,
-                                                        attrs)
+        # 只处理子类
+        parents = [b for b in bases if isinstance(b, WeChatModelMetaClass)]
+        if not parents:
+            return
 
         for attr, val in attrs.items():
             # 将modelmethod转换为shortcut method
             isinstance(val, ShortcutMethod) and val.bind(cls)
 
-        return cls
+        # 获取WeChatModel代理Model的基类
+        mro = cls.mro()
+        cls.__basemodel__ = mro[mro.index(WeChatModel) - 1]
 
 
 class WeChatFixTypeIterable(m.query.ModelIterable):
@@ -144,14 +171,9 @@ class WeChatModel(six.with_metaclass(WeChatModelMetaClass, m.Model)):
 
     def fix_type(self):
         """修正model的类型"""
-        base_cls = type(self).get_base_cls()
-        self.__class__ = type(self.app).get_registered_model(base_cls)
-
-    @classmethod
-    def get_base_cls(cls):
-        """获取WeChatModel代理Model的基类"""
-        mro = cls.mro()
-        return mro[mro.index(WeChatModel) - 1]
+        # TODO: 对于pay的子模型需另外处理
+        basemodel = self.__basemodel__
+        self.__class__ = type(self.app).get_registered_model(basemodel)
 
     class Meta(object):
         abstract = True

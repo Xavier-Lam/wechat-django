@@ -64,6 +64,7 @@ class MaterialManager(WeChatManager):
         return news
 
 
+@PublicApp.register
 class Material(WeChatModel):
     class Type(object):
         IMAGE = "image"

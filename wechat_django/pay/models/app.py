@@ -4,11 +4,14 @@ from __future__ import unicode_literals
 from django.db import models as m
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+import six
 
-from wechat_django.models import WeChatApp
-from wechat_django.models.base import ShortcutBound
+from wechat_django.models import MiniProgramApp, ServiceApp, WeChatApp
+from wechat_django.models.base import (AppRoot, AppRootMetaClass, WeChatModel,
+                                       WeChatModelMetaClass)
 from wechat_django.utils.func import Static
 from wechat_django.pay.client import WeChatPayClient
+from .paypartner import PayPartnerApp
 
 
 class ReadonlyProperty(property):
@@ -26,7 +29,13 @@ class WeChatPayManager(m.Manager):
         return queryset.prefetch_related("app")
 
 
-class WeChatPay(m.Model, ShortcutBound):
+class WeChatPayMetaClass(AppRootMetaClass, WeChatModelMetaClass):
+    pass
+
+
+@MiniProgramApp.register
+@ServiceApp.register
+class WeChatPay(six.with_metaclass(WeChatPayMetaClass, WeChatModel, AppRoot)):
     app = m.ForeignKey(WeChatApp, on_delete=m.CASCADE, related_name="pays")
 
     title = m.CharField(_("title"), max_length=16, blank=True,
@@ -102,6 +111,7 @@ class WeChatPay(m.Model, ShortcutBound):
         ordering = ("app", "-weight", "pk")
 
 
+@PayPartnerApp.register
 class WeChatSubPay(WeChatPay):
     """微信支付子商户"""
 

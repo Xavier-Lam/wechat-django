@@ -19,6 +19,7 @@ class MenuManager(WeChatManager):
             .prefetch_related("sub_button"))
 
 
+@PublicApp.register
 class Menu(WeChatModel):
     class Event(object):
         CLICK = "click"
