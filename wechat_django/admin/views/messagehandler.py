@@ -156,7 +156,7 @@ class MessageHandlerAdmin(WeChatModelAdmin):
         "enabled", "weight", "starts", "ends", "updated_at", "created_at")
     list_editable = ("weight",)
     list_filter = (AvailableFilter, )
-    search_fields = ("name", "rules__content", "replies__content")
+    search_fields = ("name", "rules___content", "replies___content")
 
     inlines = (RuleInline, ReplyInline)
     fields = ("name", "strategy", "starts", "ends", "enabled", "log_message",

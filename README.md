@@ -2,6 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/wechat-django.svg)](https://pypi.org/project/wechat-django)
 [![Build Status](https://travis-ci.org/Xavier-Lam/wechat-django.svg?branch=master)](https://travis-ci.org/Xavier-Lam/wechat-django)
+[![Donate with Bitcoin](https://en.cryptobadges.io/badge/micro/1BdJG31zinrMFWxRt2utGBU2jdpv8xSgju)](https://en.cryptobadges.io/donate/1BdJG31zinrMFWxRt2utGBU2jdpv8xSgju)
 
 **WeChat-Django**旨在为接入微信公众平台的django开发者提供便捷的微信及微信支付功能封装及基本的[**后台管理支持**](docs/admin.md).
 

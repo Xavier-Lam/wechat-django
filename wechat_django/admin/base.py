@@ -72,6 +72,10 @@ def has_wechat_permission(request, app, category="", operate="", obj=None):
 
 class WeChatChangeList(ChangeList):
     def __init__(self, request, *args, **kwargs):
+        if "app_id" in request.GET and not request.GET["app_id"]:
+            request.GET._mutable = True
+            del request.GET["app_id"]
+            request.GET._mutable = False
         super(WeChatChangeList, self).__init__(request, *args, **kwargs)
         self.request = request
 

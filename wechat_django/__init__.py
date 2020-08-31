@@ -7,7 +7,7 @@ __description__ = "Django WeChat Extension"
 __url__ = "https://github.com/Xavier-Lam/wechat-django"
 __version__ = "0.3.4"
 __author__ = "Xavier-Lam"
-__author_email__ = "Lam.Xavier@hotmail.com"
+__author_email__ = "xavierlam7@hotmail.com"
 
 default_app_config = "wechat_django.apps.WeChatConfig"
 

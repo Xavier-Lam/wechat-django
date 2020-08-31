@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import django
 from django import forms
+from django.apps import apps
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
 from django.utils.html import mark_safe
@@ -197,12 +198,14 @@ class WeChatAppAdmin(admin.ModelAdmin):
             else super(WeChatAppAdmin, self).get_model_perms(request))
 
     def get_deleted_objects(self, objs, request):
-        from ..models import WeChatUser
-        from ..pay.models import UnifiedOrder
         deleted_objects, model_count, perms_needed, protected =\
             super(WeChatAppAdmin, self).get_deleted_objects(objs, request)
-        ignored_models = (
-            WeChatUser._meta.verbose_name, UnifiedOrder._meta.verbose_name)
+
+        from ..models import WeChatUser
+        ignored_models = [WeChatUser._meta.verbose_name]
+        if apps.is_installed("wechat_django.pay"):
+            from ..pay.models import UnifiedOrder
+            ignored_models += [UnifiedOrder._meta.verbose_name]
         perms_needed = perms_needed.difference(ignored_models)
         return deleted_objects, model_count, perms_needed, protected
 
