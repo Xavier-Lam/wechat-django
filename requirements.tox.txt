@@ -1,6 +1,7 @@
 cryptography>=2.5
+django-object-tool>=0.0.9
 httmock==1.2.6
-jsonfield>=2.0.2
+jsonfield>=2.0.2,<3.0.0
 requests>=2.4.3
 tox>=3.7.0
-wechatpy>=1.7.6
+wechatpy>=1.8.3
