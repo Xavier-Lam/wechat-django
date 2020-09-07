@@ -241,6 +241,16 @@ class UnifiedOrder(WeChatModel):
             assert str(result["total_fee"]) == str(self.total_fee),\
                 "incorrect total fee"
 
+    def is_success(self, refresh=False):
+        """订单是否是成功订单"""
+        from . import UnifiedOrderResult
+        refresh and self.sync()
+        try:
+            state = self.result.trade_status
+        except AttributeError:
+            return False
+        return state == UnifiedOrderResult.State.SUCCESS
+
     def __str__(self):
         return "{0} ({1})".format(self.out_trade_no, self.body)
 

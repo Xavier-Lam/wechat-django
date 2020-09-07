@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'wechat_django', #!wechat_django 添加wechat_django
     'wechat_django.pay', #!wechat_django 添加微信支付相关功能
-    # 'wechat'
+    'wechat'
 ]
 
 MIDDLEWARE = [
