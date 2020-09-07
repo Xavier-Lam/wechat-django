@@ -201,8 +201,9 @@ class WeChatAppAdmin(admin.ModelAdmin):
         deleted_objects, model_count, perms_needed, protected =\
             super(WeChatAppAdmin, self).get_deleted_objects(objs, request)
 
-        from ..models import WeChatUser
-        ignored_models = [WeChatUser._meta.verbose_name]
+        from ..models import Template, WeChatUser
+        ignored_models = [cls._meta.verbose_name for cls in
+                          (Template, WeChatUser)]
         if apps.is_installed("wechat_django.pay"):
             from ..pay.models import UnifiedOrder
             ignored_models += [UnifiedOrder._meta.verbose_name]

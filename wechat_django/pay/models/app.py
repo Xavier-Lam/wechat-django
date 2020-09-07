@@ -16,7 +16,7 @@ class WeChatPay(m.Model):
     title = m.CharField(_("title"), max_length=16, blank=True,
                         help_text=_("商户号标识,用于后台辨识商户号"))
     name = m.CharField(_("name"), max_length=16, null=False,
-                       default=_("default"), help_text=_("商户号程序标识"))
+                       default="default", help_text=_("商户号程序标识"))
     weight = m.IntegerField(_("weight"), default=0, null=False)
 
     mch_id = m.CharField(_("mch_id"), max_length=32,
