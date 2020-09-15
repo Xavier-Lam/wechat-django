@@ -12,7 +12,7 @@
 
 如果你没有使用模板,默认地址应该是
 
-    <script src="/wechat/{{yourappname}}/wx.jsconfig.js?jsApiList=onMenuShareTimeline,onMenuShareAppMessage&debug=1"></script>
+    <script src="/wechat/{{yourappname}}/wx.config.js?jsApiList=onMenuShareTimeline,onMenuShareAppMessage&debug=1"></script>
 
 其中,jsApiList参数传入需要使用的JS接口列表,debug如填写且settings.py的DEBUG为真值,则会配置调试模式.
 

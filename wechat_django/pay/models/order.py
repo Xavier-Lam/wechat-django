@@ -246,10 +246,9 @@ class UnifiedOrder(WeChatModel):
         from . import UnifiedOrderResult
         refresh and self.sync()
         try:
-            state = self.result.trade_status
+            return self.result.is_success()
         except AttributeError:
             return False
-        return state == UnifiedOrderResult.State.SUCCESS
 
     def __str__(self):
         return "{0} ({1})".format(self.out_trade_no, self.body)

@@ -120,6 +120,7 @@ class OrderTestCase(WeChatPayTestCase):
                     v = v if v is None else str(v)
                     self.assertEqual(v, value)
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
+            self.assertFalse(order.is_success())
 
         # 测试无result更新已完成订单
         with mock.patch.object(UnifiedOrder, "verify"):
@@ -133,9 +134,15 @@ class OrderTestCase(WeChatPayTestCase):
                     self.assertEqual(v, value)
                 if key in self.list_fields(UnifiedOrderResult):
                     v = getattr(order.result, key)
-                    v = v if v is None else str(v)
+                    if v is None:
+                        v = None
+                    elif isinstance(v, tz.datetime):
+                        v = PayDateTimeField.dt2str(v)
+                    else:
+                        v = str(v)
                     self.assertEqual(v, value)
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
+            self.assertTrue(order.is_success())
 
         # 测试有result更新待支付订单
         order = self.app.pay.create_order(**self.minimal_example)
@@ -151,9 +158,15 @@ class OrderTestCase(WeChatPayTestCase):
                     self.assertEqual(v, value)
                 if key in self.list_fields(UnifiedOrderResult):
                     v = getattr(order.result, key)
-                    v = v if v is None else str(v)
+                    if v is None:
+                        v = None
+                    elif isinstance(v, tz.datetime):
+                        v = PayDateTimeField.dt2str(v)
+                    else:
+                        v = str(v)
                     self.assertEqual(v, value)
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
+            self.assertFalse(order.is_success())
 
         # 测试有result更新已完成订单
         order = self.app.pay.create_order(**self.minimal_example)
@@ -169,9 +182,15 @@ class OrderTestCase(WeChatPayTestCase):
                     self.assertEqual(v, value)
                 if key in self.list_fields(UnifiedOrderResult):
                     v = getattr(order.result, key)
-                    v = v if v is None else str(v)
+                    if v is None:
+                        v = None
+                    elif isinstance(v, tz.datetime):
+                        v = PayDateTimeField.dt2str(v)
+                    else:
+                        v = str(v)
                     self.assertEqual(v, value)
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
+            self.assertTrue(order.is_success())
 
         # 测试再度更新已完成订单
         with mock.patch.object(UnifiedOrder, "verify"):
@@ -184,9 +203,15 @@ class OrderTestCase(WeChatPayTestCase):
                     self.assertEqual(v, value)
                 if key in self.list_fields(UnifiedOrderResult):
                     v = getattr(order.result, key)
-                    v = v if v is None else str(v)
+                    if v is None:
+                        v = None
+                    elif isinstance(v, tz.datetime):
+                        v = PayDateTimeField.dt2str(v)
+                    else:
+                        v = str(v)
                     self.assertEqual(v, value)
             self.assertEqual(UnifiedOrder.verify.call_count, 1)
+            self.assertTrue(order.is_success())
 
         # 测试回调更新
         result = self.notify(self.app.pay, order)
@@ -198,8 +223,14 @@ class OrderTestCase(WeChatPayTestCase):
                 self.assertEqual(v, value)
             if key in self.list_fields(UnifiedOrderResult):
                 v = getattr(order.result, key)
-                v = v if v is None else str(v)
+                if v is None:
+                    v = None
+                elif isinstance(v, tz.datetime):
+                    v = PayDateTimeField.dt2str(v)
+                else:
+                    v = str(v)
                 self.assertEqual(v, value)
+            self.assertTrue(order.is_success())
 
         # 测试回调更新
         order = self.app.pay.create_order(**self.minimal_example)
@@ -212,8 +243,14 @@ class OrderTestCase(WeChatPayTestCase):
                 self.assertEqual(v, value)
             if key in self.list_fields(UnifiedOrderResult):
                 v = getattr(order.result, key)
-                v = v if v is None else str(v)
+                if v is None:
+                    v = None
+                elif isinstance(v, tz.datetime):
+                    v = PayDateTimeField.dt2str(v)
+                else:
+                    v = str(v)
                 self.assertEqual(v, value)
+            self.assertTrue(order.is_success())
 
     def test_verify(self):
         """测试订单参数是否一致"""
