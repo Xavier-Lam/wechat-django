@@ -1,0 +1,285 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-10-05 20:42+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\admin\app\base.py:34 .\models\apps\base.py:55
+msgid "Parent application"
+msgstr "父应用"
+
+#: .\admin\app\base.py:63
+msgid "All"
+msgstr "全部"
+
+#: .\admin\app\base.py:164
+msgid "WeChat Pays"
+msgstr "微信支付"
+
+#: .\admin\app\base.py:192
+msgid "Manage"
+msgstr "管理"
+
+#: .\admin\app\ordinaryapplication.py:32
+#: .\tests\test_admin_application_ordinary.py:24
+msgid "Add an official account"
+msgstr "新增一个公众号"
+
+#: .\admin\app\ordinaryapplication.py:38
+#: .\tests\test_admin_application_ordinary.py:31
+msgid "Add a miniprogram"
+msgstr "新增一个小程序"
+
+#: .\admin\app\payapplication.py:13
+msgid "Clear certs"
+msgstr "清除证书"
+
+#: .\admin\app\payapplication.py:15
+msgid "Remove your cert pair already uploaded"
+msgstr "移除已经上传的证书"
+
+#: .\admin\app\payapplication.py:17 .\models\apps\pay.py:12
+#: .\models\apps\pay.py:37
+msgid "mch_cert"
+msgstr ""
+
+#: .\admin\app\payapplication.py:18 .\models\apps\pay.py:13
+#: .\models\apps\pay.py:38
+msgid "mch_key"
+msgstr ""
+
+#: .\admin\app\payapplication.py:52
+msgid "You have to upload both mch_cert and mch_key"
+msgstr "你必须同时上传mch_cert和mch_key"
+
+#: .\models\apps\base.py:30
+msgid "Title"
+msgstr "标题"
+
+#: .\models\apps\base.py:31
+msgid "The human-readable name of the application"
+msgstr "显示名"
+
+#: .\models\apps\base.py:33
+msgid "Application name"
+msgstr "程序名"
+
+#: .\models\apps\base.py:35
+msgid "The program name of the application"
+msgstr "程序使用的应用名"
+
+#: .\models\apps\base.py:36
+msgid "Description"
+msgstr "描述"
+
+#: .\models\apps\base.py:37
+msgid "Application type"
+msgstr "应用类型"
+
+#: .\models\apps\base.py:38
+msgid "Unknown application"
+msgstr "未知类型应用"
+
+#: .\models\apps\base.py:39
+msgid "Miniprogram"
+msgstr "小程序"
+
+#: .\models\apps\base.py:40
+msgid "Official account"
+msgstr "公众号"
+
+#: .\models\apps\base.py:41
+msgid "Web application"
+msgstr "Web应用"
+
+#: .\models\apps\base.py:42 .\models\apps\base.py:59
+msgid "WeChat pay"
+msgstr "微信支付"
+
+#: .\models\apps\base.py:43 .\models\apps\pay.py:42
+msgid "WeChat pay merchant"
+msgstr "微信支付服务商"
+
+#: .\models\apps\base.py:44
+msgid "Hosted WeChat pay"
+msgstr "子商户"
+
+#: .\models\apps\base.py:45 .\models\apps\thirdpartyplatform.py:24
+msgid "Third party platform"
+msgstr "第三方平台"
+
+#: .\models\apps\base.py:46
+msgid "Hosted miniprogram"
+msgstr "托管小程序"
+
+#: .\models\apps\base.py:48
+msgid "Hosted official account"
+msgstr "托管公众号"
+
+#: .\models\apps\base.py:51
+msgid "AppId"
+msgstr ""
+
+#: .\models\apps\base.py:52
+msgid "AppSecret"
+msgstr ""
+
+#: .\models\apps\base.py:64
+msgid "Configurations"
+msgstr "配置"
+
+#: .\models\apps\base.py:67
+msgid "Create at"
+msgstr "创建时间"
+
+#: .\models\apps\base.py:68
+msgid "Updated at"
+msgstr "更新时间"
+
+#: .\models\apps\base.py:71
+msgid "Access Token Url"
+msgstr "获取AccessToken的url"
+
+#: .\models\apps\base.py:72
+msgid "The url used to fetch access_token"
+msgstr "这个Url用于获取access_token"
+
+#: .\models\apps\base.py:76
+msgid "Application"
+msgstr "应用"
+
+#: .\models\apps\base.py:77
+msgid "Applications"
+msgstr "应用"
+
+#: .\models\apps\base.py:117 .\models\apps\base.py:122
+msgid ""
+"Application's name can only include letters, numbers, underscores or hyphens"
+msgstr "应用程序名只包含字母,数字,_及-"
+
+#: .\models\apps\base.py:135
+#, python-format
+msgid "Hosted application's must be named as '%s.<name>'"
+msgstr "托管应用程序名必须是'%s.<name>'格式"
+
+#: .\models\apps\miniprogram.py:18
+msgid "Miniprogram application"
+msgstr "小程序"
+
+#: .\models\apps\miniprogram.py:19
+msgid "Miniprogram applications"
+msgstr "小程序"
+
+#: .\models\apps\officialaccount.py:20 .\models\apps\thirdpartyplatform.py:15
+msgid "Token"
+msgstr ""
+
+#: .\models\apps\officialaccount.py:21 .\models\apps\thirdpartyplatform.py:16
+msgid "Encoding AES Key"
+msgstr ""
+
+#: .\models\apps\officialaccount.py:23
+msgid "Encrypt Strategy"
+msgstr "加密策略"
+
+#: .\models\apps\officialaccount.py:32
+msgid "Official account application"
+msgstr "公众号"
+
+#: .\models\apps\officialaccount.py:33
+msgid "Official account applications"
+msgstr "公众号"
+
+#: .\models\apps\ordinaryapplication.py:10
+#: .\models\apps\thirdpartyplatform.py:20
+#: .\models\apps\thirdpartyplatform.py:50
+msgid "Access Token"
+msgstr ""
+
+#: .\models\apps\ordinaryapplication.py:19
+msgid "Ordinary application"
+msgstr "应用"
+
+#: .\models\apps\ordinaryapplication.py:20
+msgid "Ordinary applications"
+msgstr "应用"
+
+#: .\models\apps\pay.py:10
+msgid "mch id"
+msgstr "商户id"
+
+#: .\models\apps\pay.py:11 .\models\apps\pay.py:36
+msgid "API key"
+msgstr ""
+
+#: .\models\apps\pay.py:17
+msgid "WeChat pay application"
+msgstr "微信支付"
+
+#: .\models\apps\pay.py:18
+msgid "WeChat pay applications"
+msgstr "微信支付"
+
+#: .\models\apps\pay.py:35
+msgid "Merchant's mchid"
+msgstr "服务商商户id"
+
+#: .\models\apps\pay.py:43
+msgid "WeChat pay merchants"
+msgstr "微信支付服务商"
+
+#: .\models\apps\pay.py:60
+msgid "Hosted WeChat pay application"
+msgstr "子商户"
+
+#: .\models\apps\pay.py:61
+msgid "Hosted WeChat pay applications"
+msgstr "子商户"
+
+#: .\models\apps\thirdpartyplatform.py:17
+msgid "Component Verify Ticket"
+msgstr ""
+
+#: .\models\apps\thirdpartyplatform.py:25
+msgid "Third party platforms"
+msgstr "第三方平台"
+
+#: .\models\apps\thirdpartyplatform.py:51
+msgid "Refresh Token"
+msgstr ""
+
+#: .\models\apps\thirdpartyplatform.py:55
+msgid "Authorizer application"
+msgstr "托管应用"
+
+#: .\models\apps\thirdpartyplatform.py:56
+msgid "Authorizer applications"
+msgstr "托管应用"
+
+#: .\models\apps\thirdpartyplatform.py:75
+msgid "Hosted miniprogram application"
+msgstr "托管小程序"
+
+#: .\models\apps\thirdpartyplatform.py:76
+msgid "Hosted miniprogram applications"
+msgstr "托管小程序"
+
+#: .\models\apps\thirdpartyplatform.py:87
+msgid "Hosted official account application"
+msgstr "托管公众号"
+
+#: .\models\apps\thirdpartyplatform.py:88
+msgid "Hosted official account applications"
+msgstr "托管公众号"
