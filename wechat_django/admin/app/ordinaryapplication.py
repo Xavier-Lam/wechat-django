@@ -43,6 +43,10 @@ class ApplicationAdmin(CustomObjectToolModelAdminMixin,
 
 
 class OrdinaryApplicationAdmin(BaseApplicationAdmin):
+    fields = ("title", "name", "appid", "appsecret", "token",
+              "encoding_aes_key", "encrypt_strategy", "access_token_url",
+              "desc", "pays", "notify_url")
+
     def changelist_view(self, request, extra_context=None):
         return HttpResponseRedirect(
             reverse("admin:{0}_{1}_changelist".format(
@@ -61,10 +65,6 @@ class OrdinaryApplicationAdmin(BaseApplicationAdmin):
 @admin.register(apps.OfficialAccountApplication)
 class OfficialAccountApplicationAdmin(OrdinaryApplicationAdmin):
     allowed_app_types = (AppType.OFFICIALACCOUNT,)
-
-    fields = ("title", "name", "appid", "appsecret", "token",
-              "encoding_aes_key", "encrypt_strategy", "access_token_url",
-              "desc", "pays")
 
 
 @admin.register(apps.MiniProgramApplication)

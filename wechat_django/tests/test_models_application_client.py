@@ -3,10 +3,11 @@ import time
 from unittest import mock
 
 from wechatpy import client, WeChatComponent, WeChatPay
-from wechatpy.crypto import WeChatCrypto
+from wechatpy.component import ComponentVerifyTicketMessage
 from wechatpy.utils import to_binary
 
-from wechat_django.models.apps import Application
+from wechat_django.models import Application
+from wechat_django.wechat.messagehandler import thirdpartyplatform_ticket
 from .base import wechatapi, WeChatDjangoTestCase
 
 
@@ -101,11 +102,8 @@ class ModelApplicationClientTestCase(WeChatDjangoTestCase):
                          self.thirdpartyplatform.client.component_appid)
         self.assertEqual(self.thirdpartyplatform.client.component_appsecret,
                          self.APPSECRET)
-        self.assertEqual(self.thirdpartyplatform.client.crypto.token,
-                         self.TOKEN)
-        key = to_binary(self.ENCODING_AES_KEY + "=")
-        self.assertEqual(base64.b64decode(key),
-                         self.thirdpartyplatform.client.crypto.key)
+        self.assertIs(self.thirdpartyplatform.client.crypto,
+                      self.thirdpartyplatform.crypto)
 
         # 托管小程序
         self.assertIsInstance(self.hosted_miniprogram.client,
@@ -217,17 +215,15 @@ class ModelApplicationClientTestCase(WeChatDjangoTestCase):
 
     def test_thirdpartyplatform_storage(self):
         """测试第三方平台存储"""
+        request = self.make_request("POST", path="/",
+                                    wechat_app=self.thirdpartyplatform)
         # 接收verify_ticket
-        xml = """<xml>
-                     <AppId>some_appid</AppId>
-                     <CreateTime>1413192605</CreateTime>
-                     <InfoType>component_verify_ticket</InfoType>
-                     <ComponentVerifyTicket>ticket</ComponentVerifyTicket>
-                 </xml>"""
-        with mock.patch.object(WeChatCrypto, "decrypt_message",
-                               return_value=xml):
-            self.thirdpartyplatform.client.parse_message("", "", "", "")
-            self.assertEqual(self.thirdpartyplatform.verify_ticket, "ticket")
+        thirdpartyplatform_ticket(
+            ComponentVerifyTicketMessage({"ComponentVerifyTicket": "ticket"}),
+            request)
+        self.assertEqual(self.thirdpartyplatform.verify_ticket, "ticket")
+        self.assertEqual(
+            self.thirdpartyplatform.client.component_verify_ticket, "ticket")
         thirdpartyplatform = Application.objects.get(
             name=self.thirdpartyplatform.name)
         self.assertEqual(thirdpartyplatform.verify_ticket, "ticket")
@@ -326,3 +322,17 @@ class ModelApplicationClientTestCase(WeChatDjangoTestCase):
         # 移除测试数据
         del hosted_miniprogram._access_token
         del hosted_miniprogram.refresh_token
+
+    def test_crypto(self):
+        """测试加密对象"""
+        # 一般应用
+        self.assertEqual(self.officialaccount.crypto.app_id,
+                         self.officialaccount.appid)
+        self.assertEqual(self.officialaccount.crypto.token, self.TOKEN)
+        key = to_binary(self.ENCODING_AES_KEY + "=")
+        self.assertEqual(base64.b64decode(key),
+                         self.officialaccount.crypto.key)
+
+        # 托管应用
+        self.assertIs(self.hosted_officialaccount.crypto,
+                      self.hosted_officialaccount.parent.crypto)

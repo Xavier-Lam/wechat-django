@@ -31,6 +31,10 @@ def wechatapi(api, data="", callback=None):
     return HTTMock(wechatapi_mock)
 
 
+class TestOnlyException(Exception):
+    pass
+
+
 class WeChatDjangoTestCase(TestCase):
     APPSECRET = "appsecret"
     ENCODING_AES_KEY = "yguy3495y79o34vod7843933902h9gb2834hgpB90rg"
@@ -47,7 +51,9 @@ class WeChatDjangoTestCase(TestCase):
             title="miniprogram_title",
             name="miniprogram",
             appid="miniprogram_appid",
-            appsecret=crypto.encrypt(cls.APPSECRET, raw=True)
+            appsecret=crypto.encrypt(cls.APPSECRET, raw=True),
+            token=crypto.encrypt(cls.TOKEN),
+            encoding_aes_key=crypto.encrypt(cls.ENCODING_AES_KEY)
         )
         apps.OfficialAccountApplication.objects.create(
             title="officialaccount_title",
@@ -162,10 +168,12 @@ class WeChatDjangoTestCase(TestCase):
 
     def make_request(self, method, *args, **kwargs):
         user = kwargs.pop("user", None)
+        wechat_app = kwargs.pop("wechat_app", None)
         rf = RequestFactory()
         request = getattr(rf, method.lower())(*args, **kwargs)
         SessionMiddleware().process_request(request)
         CommonMiddleware().process_request(request)
         MessageMiddleware().process_request(request)
-        request.user = user
+        user and setattr(request, "user", user)
+        wechat_app and setattr(request, "wechat_app", wechat_app)
         return request

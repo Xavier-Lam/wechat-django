@@ -7,3 +7,8 @@ class AppType:
     MERCHANTPAY = 0x10
     HOSTED = 0x20
     WEBAPP = 0x40
+
+
+class EncryptStrategy:
+    ENCRYPTED = 'encrypted'
+    PLAIN = 'plain'

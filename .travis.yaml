@@ -12,6 +12,8 @@ matrix:
       python: "3.8"
     - env: TOX_ENV=py39-django22,py39-django30,py39-django31,py39-django32
       python: "3.9"
+    - env: TOX_ENV=py310-django22,py310-django30,py310-django31,py310-django32
+      python: "3.10"
 
 install:
   - pip install tox

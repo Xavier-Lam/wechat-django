@@ -20,7 +20,7 @@ with open("README.md", "rb") as f:
 with open("requirements.txt") as f:
     requirements = [l for l in f.read().splitlines() if l]
 
-with open("requirements.test.txt") as f:
+with open("requirements.unittest.txt") as f:
     test_requirements = [l for l in f.read().splitlines() if l]
 
 
@@ -61,6 +61,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",

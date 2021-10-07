@@ -1,11 +1,11 @@
 import base64
 from urllib.parse import parse_qsl
 
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.filters import ChoicesFieldListFilter
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.forms import CharField, PasswordInput
 from django.http.response import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -73,7 +73,7 @@ class ApplicationTypeFilter(ChoicesFieldListFilter):
                 }
 
 
-class EncryptedField(CharField):
+class EncryptedField(forms.CharField):
     """加密存储"""
 
     @property
@@ -91,16 +91,16 @@ class EncryptedField(CharField):
         super().__init__(*args, **kwargs)
 
     def has_changed(self, initial, data):
-        if not self._has_changed(initial, data):
-            return False
-        return super().has_changed(initial, data)
+        return self._has_changed(initial, data)\
+               and self.clean(data) != initial
 
     def prepare_value(self, value):
-        if self.raw:
+        if self.raw and not isinstance(value, str):
+            # 如果表单验证错误,会直接打下提交的内容,我们也直接输出
             value = base64.b64encode(value or b"").decode()
         return super().prepare_value(value)
 
-    def to_python(self, value):
+    def clean(self, value):
         if not self._has_changed(self.initial, value):
             if self.raw:
                 return base64.b64decode(value.encode())
@@ -124,9 +124,20 @@ class BaseApplicationAdmin(admin.ModelAdmin):
 
     form = ModelForm
 
+    def notify_url(self, obj):
+        return obj and obj.notify_url(self.request)
+    notify_url.short_description = _("Message notify URL")
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj=obj)
+        if not obj:
+            return tuple(field for field in fields if field not in
+                         ("notify_url",))
+        return fields
+
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            fields = ("name", "appid", "mchid")
+            fields = ("name", "appid", "mchid", "notify_url")
             if obj.type != AppType.UNKNOWN:
                 fields = fields + ("type",)
             return fields
@@ -157,11 +168,14 @@ class BaseApplicationAdmin(admin.ModelAdmin):
         # 替换formclass为EncryptedField
         if db_field.name in ENCRYPTED_FIELDS:
             kwargs["form_class"] = EncryptedField
-            kwargs["widget"] = PasswordInput(render_value=True)
+            kwargs["widget"] = forms.PasswordInput(render_value=True)
             kwargs["raw"] = db_field.name in BINARY_FIELDS
 
-        if db_field.name == "pays":
+        elif db_field.name == "pays":
             kwargs["widget"] = FilteredSelectMultiple(_("WeChat Pays"), False)
+
+        elif db_field.name == "access_token_url":
+            kwargs["form_class"] = forms.URLField
 
         formfield = super().formfield_for_dbfield(db_field=db_field,
                                                   request=request, **kwargs)
@@ -172,6 +186,7 @@ class BaseApplicationAdmin(admin.ModelAdmin):
         return formfield
 
     def get_queryset(self, request):
+        self.request = request
         return super().get_queryset(request).filter(
             type__in=self.query_app_types)
 

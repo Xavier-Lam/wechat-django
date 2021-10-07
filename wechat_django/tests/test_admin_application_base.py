@@ -23,6 +23,9 @@ class AdminApplicationBaseTestCase(WeChatDjangoTestCase):
             "raw": "raw"
         }
 
+        # TODO: 渲染空白表单
+        pass
+
         # 填充空值
         form = DummyForm({})
         self.assertTrue(form.is_valid())
@@ -78,6 +81,9 @@ class AdminApplicationBaseTestCase(WeChatDjangoTestCase):
         self.assertIn("raw", form.changed_data)
         self.assertEqual(form.cleaned_data["plain"], "")
         self.assertEqual(form.cleaned_data["raw"], b"")
+
+        # TODO: 渲染提交错误的表单
+        pass
 
         # 一般修改
         data = {

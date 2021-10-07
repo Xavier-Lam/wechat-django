@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import os
 from tempfile import NamedTemporaryFile
 
+import requests
 from wechatpy import (WeChatClient as BaseWeChatClient,
                       WeChatComponent as BaseWeChatComponent,
                       WeChatPay as BaseWeChatPay)
@@ -90,13 +91,19 @@ class WeChatPay(BaseWeChatPay):
 class WeChatComponent(BaseWeChatComponent):
     def __init__(self, app):
         self.app = app
-        super().__init__(app.appid,
-                         crypto.decrypt(app.appsecret),
-                         crypto.decrypt(app.token),
-                         crypto.decrypt(app.encoding_aes_key),
-                         session=app.session)
+        self._http = requests.Session()
+        self.component_appid = app.appid
+        self.component_appsecret = crypto.decrypt(app.appsecret)
+        self.expires_at = None
+        self.crypto = self.app.crypto
+        self.session = app.session
+        self.auto_retry = True
 
     def query_auth(self, authorization_code):
+        raise NotImplementedError
+
+    def parse_message(self, msg, msg_signature, timestamp, nonce):
+        """请使用app.parse_message替代"""
         raise NotImplementedError
 
     def cache_component_verify_ticket(self, msg, signature, timestamp, nonce):

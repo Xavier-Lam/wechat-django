@@ -1,23 +1,24 @@
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+from wechatpy.component import COMPONENT_MESSAGE_TYPES, ComponentUnknownMessage
+from wechatpy.parser import parse_message
+from wechatpy.utils import to_text
+import xmltodict
 
 from wechat_django.enums import AppType
-from wechat_django.utils.model import CacheField
 from wechat_django.utils.wechatpy import WeChatComponent, WeChatComponentClient
-from .base import (Application, ConfigurationProperty, HostedApplicationMixin,
-                   StorageProperty)
+from wechat_django.wechat.messagehandler import reply2send
+from .base import (Application, HostedApplicationMixin,
+                   MessagePushApplicationMixin, StorageProperty)
 from .miniprogram import MiniProgramApplicationMixin
 from .ordinaryapplication import OrdinaryApplication
 from .officialaccount import OfficialAccountApplicationMixin
 
 
-class ThirdPartyPlatform(Application):
-    token = ConfigurationProperty(_("Token"))
-    encoding_aes_key = ConfigurationProperty(_("Encoding AES Key"))
-    verify_ticket = StorageProperty(_("Component Verify Ticket"),
+class ThirdPartyPlatform(MessagePushApplicationMixin, Application):
+    verify_ticket = StorageProperty(_("Component verify ticket"),
                                     auto_commit=True)
-
-    _access_token = CacheField(_("Access Token"), expires_in=2*3600)
 
     class Meta:
         proxy = True
@@ -25,12 +26,17 @@ class ThirdPartyPlatform(Application):
         verbose_name_plural = _("Third party platforms")
 
     @cached_property
-    def client(self):
+    def base_client(self):
         return WeChatComponent(self)
 
-    @property
-    def access_token(self):
-        return self.client.access_token
+    def parse_message(self, raw_message):
+        message = xmltodict.parse(to_text(raw_message))["xml"]
+        type = message["InfoType"].lower()
+        cls = COMPONENT_MESSAGE_TYPES.get(type, ComponentUnknownMessage)
+        return cls(message)
+
+    def send_message(self, reply):
+        raise NotImplementedError
 
     def query_auth(self, authorization_code):
         result = self.client._query_auth(authorization_code)
@@ -41,14 +47,22 @@ class ThirdPartyPlatform(Application):
         authorizer.refresh_token = info['authorizer_refresh_token']
         return result
 
+    def authorizer_notify_url(self, request):
+        path = reverse("wechat_django:authorizer_handler",
+                       kwargs={"app_name": self.name, "appid": "$APPID$"})
+        return "{protocol}//{host}{path}".format(
+            protocol="https" if request.is_secure() else "http",
+            host=request.host,
+            path=path
+        )
+
     def save(self, *args, **kwargs):
         self.type = AppType.THIRDPARTYPLATFORM
         return super().save(*args, **kwargs)
 
 
 class AuthorizerApplication(HostedApplicationMixin, OrdinaryApplication):
-    _access_token = CacheField(_("Access Token"), expires_in=2*3600)
-    refresh_token = StorageProperty(_("Refresh Token"), auto_commit=True)
+    refresh_token = StorageProperty(_("Refresh token"), auto_commit=True)
 
     class Meta:
         proxy = True
@@ -59,13 +73,22 @@ class AuthorizerApplication(HostedApplicationMixin, OrdinaryApplication):
     def base_client(self):
         return WeChatComponentClient(self)
 
-    @cached_property
-    def client(self):
-        return self.base_client
-
     @property
-    def access_token(self):
-        return self.base_client.access_token
+    def crypto(self):
+        return self.parent.crypto
+
+    def decrypt_message(self, request):
+        return self.parent.decrypt_message(request)
+
+    def encrypt_message(self, reply, request):
+        return self.parent.encrypt_message(reply, request)
+
+    def parse_message(self, raw_message):
+        return parse_message(raw_message)
+
+    def send_message(self, reply):
+        func_name, kwargs = reply2send(reply)
+        func_name and getattr(self.base_client.message, func_name)(**kwargs)
 
 
 class MiniProgramAuthorizerApplication(MiniProgramApplicationMixin,
@@ -74,10 +97,6 @@ class MiniProgramAuthorizerApplication(MiniProgramApplicationMixin,
         proxy = True
         verbose_name = _("Hosted miniprogram application")
         verbose_name_plural = _("Hosted miniprogram applications")
-
-    @cached_property
-    def client(self):
-        return self.base_client.wxa
 
 
 class OfficialAccountAuthorizerApplication(OfficialAccountApplicationMixin,
