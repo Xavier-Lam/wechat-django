@@ -15,20 +15,24 @@ class WeChatDjangoConfig(AppConfig):
         super().ready()
 
         from django.contrib.admin import site
-        from . import admin, models
+        from . import admin, models, views
+        from .sites import default_site
 
-        if get_setting("ADMIN_SHOW_MERCHANT"):
+        if get_setting("ENABLE_MERCHANT"):
             site.register(models.apps.PayMerchant,
                           admin.app.payapplication.PayMerchantAdmin)
             site.register(models.apps.HostedPayApplication,
                           admin.app.payapplication.HostedPayAdmin)
-        if get_setting("ADMIN_SHOW_THIRDPARTYPLATFORM"):
+        if get_setting("ENABLE_THIRDPARTYPLATFORM"):
+            default_site.register(views.messagehandler.AuthorizerHandler)
+
             site.register(
                 models.apps.ThirdPartyPlatform,
-                admin.app.thirdpartyplatform.ThirdPartyPlatformApplicationAdmin)
+                admin.app.thirdpartyplatform.ThirdPartyPlatformApplicationAdmin
+            )
             site.register(
                 models.apps.AuthorizerApplication,
                 admin.app.thirdpartyplatform.AuthorizerApplicationAdmin)
-        if get_setting("ADMIN_SHOW_WECHATPAY"):
+        if get_setting("ENABLE_WECHATPAY"):
             site.register(models.apps.PayApplication,
                           admin.app.payapplication.PayApplicationAdmin)

@@ -6,9 +6,9 @@ from .base import Application, AccessTokenApplicationMixin
 
 class OrdinaryApplication(AccessTokenApplicationMixin, Application):
     _jsapi_ticket = CacheField(expires_in=2*3600)
-    _jsapi_ticket_expires_at = CacheField(expires_in=2*3600)
+    _jsapi_ticket_expires_at = CacheField(expires_in=2*3600, default=0)
     _jsapi_card_ticket = CacheField(expires_in=2*3600)
-    _jsapi_card_ticket_expires_at = CacheField(expires_in=2*3600)
+    _jsapi_card_ticket_expires_at = CacheField(expires_in=2*3600, default=0)
 
     class Meta:
         proxy = True

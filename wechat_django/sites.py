@@ -31,9 +31,6 @@ class WeChatSite:
 
     @cached_property
     def urls(self):
-        # 确保views被加载
-        import wechat_django.views
-
         return self.get_urls(), "wechat_django", self.name
 
     def _create_view(self, cls):

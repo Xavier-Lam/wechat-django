@@ -47,7 +47,7 @@ class CacheFieldDescriptor(ModelFieldMixin):
         super().__init__(verbose_name, **kwargs)
 
     def __get__(self, obj, objtype):
-        return self.get_cache(obj).get(self.get_key(obj))
+        return self.get_cache(obj).get(self.get_key(obj), self.default)
 
     def __set__(self, obj, value):
         self.get_cache(obj).set(

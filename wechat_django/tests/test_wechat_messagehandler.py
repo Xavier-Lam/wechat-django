@@ -8,7 +8,7 @@ from wechat_django.wechat.messagehandler import (
 from .base import TestOnlyException, WeChatDjangoTestCase
 
 
-class ModelWeChatMessageHandlerTestCase(WeChatDjangoTestCase):
+class WeChatMessageHandlerTestCase(WeChatDjangoTestCase):
     def test_reply2send(self):
         """测试被动回复转主动"""
         # 空消息转换

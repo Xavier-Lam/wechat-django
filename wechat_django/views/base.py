@@ -21,19 +21,19 @@ class WeChatViewMixin:
 
     def initialize_request(self, request, *args, **kwargs):
         request = super().initialize_request(request, *args, **kwargs)
-        request.wechat_app = self.get_app(request, *args, **kwargs)
+        self.get_app(request, *args, **kwargs)
         return request
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
         if self.exclude_application_classes:
-            for cls in self.exclude_application_classes:
-                if isinstance(request.wechat_app, cls):
-                    raise django_response.Http404
+            if isinstance(request.wechat_app,
+                          self.exclude_application_classes):
+                raise django_response.Http404
         if self.include_application_classes:
-            for cls in self.required_application_classes:
-                if isinstance(request.wechat_app, cls):
-                    return
+            if isinstance(request.wechat_app,
+                          self.include_application_classes):
+                return
             else:
                 raise django_response.Http404
 
@@ -50,8 +50,10 @@ class WeChatViewMixin:
         return csrf_exempt(view)
 
     def get_app(self, request, *args, **kwargs):
-        app_name = self.get_app_name(request, *args, **kwargs)
-        return Application.objects.get(name=app_name)
+        if not hasattr(request, "wechat_app"):
+            app_name = self.get_app_name(request, *args, **kwargs)
+            request.wechat_app = Application.objects.get(name=app_name)
+        return request.wechat_app
 
     def get_app_name(self, request, *args, **kwargs):
         return kwargs["app_name"].replace("/", ".")

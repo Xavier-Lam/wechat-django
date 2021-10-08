@@ -18,7 +18,7 @@ from wechat_django.wechat.messagehandler import message_handlers
 from .base import WeChatDjangoTestCase
 
 
-class ModelWeChatMessageHandlerTestCase(WeChatDjangoTestCase):
+class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
     def test_response(self):
         """测试MessageResponse"""
         reply1 = replies.TextReply(content="1")

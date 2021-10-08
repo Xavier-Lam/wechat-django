@@ -9,7 +9,7 @@ from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
 import xmltodict
 
-from wechat_django.exceptions import AbilityError, BadMessageRequest
+from wechat_django.exceptions import BadMessageRequest
 from wechat_django.models.apps.base import MessagePushApplicationMixin
 from wechat_django.models.apps.thirdpartyplatform import (
     AuthorizerApplication, ThirdPartyPlatform)
@@ -51,7 +51,8 @@ class MessageResponse(response.HttpResponse):
 class Handler(WeChatView):
     DEFAULT_OFFSET = 600
 
-    required_application_classes = (MessagePushApplicationMixin,)
+    include_application_classes = (MessagePushApplicationMixin,
+                                   AuthorizerApplication)
     url_pattern = r"^notify/$"
     url_name = "handler"
 
@@ -85,10 +86,10 @@ class Handler(WeChatView):
                             InvalidSignatureException,
                             xmltodict.expat.ExpatError)):
             return response.HttpResponseBadRequest()
-        elif isinstance(exc, AbilityError):
-            return ""
-        else:
-            return ""
+        elif isinstance(exc, (response.Http404,)):
+            return super().handle_exception(exc)
+        # 用户抛出的异常,返回空响应
+        return ""
 
     def get(self, request, *args, **kwargs):
         return request.GET["echostr"]
@@ -126,18 +127,18 @@ class Handler(WeChatView):
         return MessageResponse(request, replies)
 
 
-@default_site.register
 class AuthorizerHandler(Handler):
     required_application_classes = (AuthorizerApplication,)
     url_pattern = r"^notify/(?P<appid>[-_a-zA-Z\d\$]+)/?$"
     url_name = "authorizer_handler"
 
     def get_app(self, request, *args, **kwargs):
-        # 该地址注册在第三方平台上,app需转换为托管app
-        # TODO: 缓存
-        platform_name = super().get_app_name(request, *args, **kwargs)
-        platform = ThirdPartyPlatform.objects.get(name=platform_name)
-        return platform.children.get(appid=kwargs["appid"])
+        if not hasattr(request, "wechat_app"):
+            # 该地址注册在第三方平台上,app需转换为托管app
+            platform_name = super().get_app_name(request, *args, **kwargs)
+            platform = ThirdPartyPlatform.objects.get(name=platform_name)
+            request.wechat_app = platform.children.get(appid=kwargs["appid"])
+        return request.wechat_app
 
     def get_app_name(self, request, *args, **kwargs):
         return self.get_app(request, *args, **kwargs).name
