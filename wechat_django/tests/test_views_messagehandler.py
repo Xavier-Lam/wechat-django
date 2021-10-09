@@ -32,6 +32,7 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
         request = self.make_request("POST", path="/",
                                     wechat_app=self.officialaccount,
                                     QUERY_STRING=urlencode(query))
+        request.message = ""
         response = MessageResponse(request, [reply1, reply2])
         with mock.patch.object(BasePrpCrypto, "get_random_string",
                                return_value="0"*16):

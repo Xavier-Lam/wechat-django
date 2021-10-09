@@ -9,6 +9,7 @@ from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.utils import check_signature
 import xmltodict
 
+from wechat_django import signals
 from wechat_django.exceptions import BadMessageRequest
 from wechat_django.models.apps.base import MessagePushApplicationMixin
 from wechat_django.models.apps.thirdpartyplatform import (
@@ -27,10 +28,28 @@ class MessageResponse(response.HttpResponse):
         super().__init__(b'', *args, **kwargs)
 
     def close(self):
+        wechat_app = self._request.wechat_app
+        signals.message_replied.send_robust(wechat_app,
+                                            reply=self.replies[0],
+                                            message=self._request.message,
+                                            response_content=self.content)
+
         # 主动发送消息
-        # TODO: 异常处理
         for reply in self.replies[1:]:
-            self._request.wechat_app.send_message(reply)
+            try:
+                wechat_app.send_message(reply)
+                signals.message_sent.send_robust(
+                    wechat_app, reply=reply, message=self._request.message)
+            except Exception as e:
+                wechat_app.logger("messagehandler").exception(
+                    _("An exception occurred when sending message"), extra={
+                        "url": self._request.get_full_path(),
+                        "body": self._request.body
+                    })
+                signals.message_send_failed.send_robust(
+                    wechat_app, reply=reply, message=self._request.message,
+                    exc=e, request=self._request)
+
         return super().close()
 
     @property
@@ -81,13 +100,19 @@ class Handler(WeChatView):
             )
 
     def handle_exception(self, exc):
-        # TODO: log
+        if isinstance(exc, (response.Http404,)):
+            return super().handle_exception(exc)
         if isinstance(exc, (MultiValueDictKeyError, BadMessageRequest,
                             InvalidSignatureException,
                             xmltodict.expat.ExpatError)):
+            self.request.wechat_app.logger("messagehandler").warning(
+                _("Received an unexpected request"),
+                extra={
+                    "url": self.request.get_full_path(),
+                    "body": self.request.body
+                }
+            )
             return response.HttpResponseBadRequest()
-        elif isinstance(exc, (response.Http404,)):
-            return super().handle_exception(exc)
         # 用户抛出的异常,返回空响应
         return ""
 
@@ -96,7 +121,23 @@ class Handler(WeChatView):
 
     def post(self, request, *args, **kwargs):
         message = self.parse_message(request, *args, **kwargs)
-        replies = self.handle_message(message, request, *args, **kwargs)
+        request.message = message
+        signals.message_received.send_robust(request.wechat_app,
+                                             message=message,
+                                             request=request)
+
+        try:
+            replies = self.handle_message(message, request, *args, **kwargs)
+        except Exception as e:
+            request.wechat_app.logger("messagehandler").exception(
+                _("An exception occurred when handling message"), extra={
+                    "url": request.get_full_path(),
+                    "body": request.body
+                })
+            signals.message_handle_failed.send_robust(
+                request.wechat_app, message=message, exc=e, request=request)
+            raise
+
         return self.make_response(replies, request, *args, **kwargs)
 
     @contextmanager

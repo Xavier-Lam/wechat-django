@@ -32,8 +32,9 @@ class JSSDKConfig(WeChatView):
         try:
             ticket = request.wechat_app.jsapi_ticket
         except Exception:
-            # TODO: log
-            raise JSAPIError(_("Couldn't get jsapi ticket"))
+            msg = _("Couldn't get jsapi ticket")
+            request.wechat_app.logger("jssdk").warning(msg)
+            raise JSAPIError(msg)
         noncestr = str(uuid4()).replace("-", "")
         timestamp = int(time.time())
         signature = request.wechat_app.client.jsapi.get_jsapi_signature(

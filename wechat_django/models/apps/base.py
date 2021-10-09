@@ -109,6 +109,9 @@ class Application(m.Model):
             cls = apps.OrdinaryApplication
         return cls
 
+    def logger(self, name):
+        return logging.getLogger(name).getChild(self.name)
+
     def clean(self):
         not self.parent_id and validate_slug(self.name)
         return super().clean()
@@ -137,8 +140,7 @@ class HostedApplicationMixin:
 class AccessTokenApplicationMixin(m.Model):
     access_token_url = ConfigurationProperty(
         _("Access token url"),
-        help_text=_("The url used to fetch access_token")
-    )
+        help_text=_("The url used to fetch access_token"))
     _access_token = CacheField(_("Access Token"), expires_in=2*3600)
 
     class Meta:
@@ -248,6 +250,7 @@ class ApplicationStorage(SessionStorage):
         elif key.startswith(self.app.appid):
             return key[len(self.app.appid):]
         else:
-            logging.warning("Unknown wechatpy cache key '{0}', you will not "
-                            "get any results by using this key.".format(key))
+            self.app.logger("core").warning(_(
+                "Unknown wechatpy cache key '%s', you will not get any "
+                "results by using this key.") % key)
             return self.BLACKHOLE

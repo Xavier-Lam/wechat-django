@@ -116,3 +116,4 @@ dmypy.json
 
 .vscode/
 **/*.sqlite3
+docs/_build/**

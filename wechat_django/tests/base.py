@@ -32,7 +32,9 @@ def wechatapi(api, data="", callback=None):
 
 
 class TestOnlyException(Exception):
-    pass
+    @classmethod
+    def throw(cls, *args, **kwargs):
+        raise cls(*args, **kwargs)
 
 
 class WeChatDjangoTestCase(TestCase):
