@@ -2,10 +2,12 @@ import base64
 from contextlib import contextmanager
 import os
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlencode
 
 import requests
 from wechatpy import (WeChatClient as BaseWeChatClient,
                       WeChatComponent as BaseWeChatComponent,
+                      WeChatOAuth as BaseWeChatOAuth,
                       WeChatPay as BaseWeChatPay)
 from wechatpy.client import WeChatComponentClient as BaseWeChatComponentClient
 
@@ -133,3 +135,25 @@ class WeChatComponentClient(BaseWeChatComponentClient):
         if result.get("authorizer_refresh_token"):
             self.app.refresh_token = result["authorizer_refresh_token"]
         return result
+
+
+class WeChatOAuth(BaseWeChatOAuth):
+    def __init__(self, app):
+        if app.oauth_url:
+            self.AUTHORIZE_URL = app.authorize_url
+        super().__init__(app.appid, crypto.decrypt(app.appsecret), "")
+
+    def authorize_url(self, redirect_uri, scope, state=""):
+        if not isinstance(scope, str):
+            scope = ",".join(scope)
+        return self.AUTHORIZE_URL + "?" + urlencode(dict(
+            appid=self.app_id,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope=scope,
+            state=state or ""
+        )) + "#wechat_redirect"
+
+    @property
+    def qrconnect_url(self):
+        raise NotImplementedError

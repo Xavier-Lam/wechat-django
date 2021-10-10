@@ -1,7 +1,7 @@
 # flake8: noqa
 
 from .base import Application
-from .ordinaryapplication import OrdinaryApplication
+from .ordinaryapplication import OrdinaryApplication, WebApplication
 from .miniprogram import MiniProgramApplication
 from .officialaccount import OfficialAccountApplication
 from .pay import HostedPayApplication, PayApplication, PayMerchant

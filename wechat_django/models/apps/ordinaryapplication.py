@@ -1,24 +1,22 @@
 from django.utils.translation import ugettext_lazy as _
 
-from wechat_django.utils.model import CacheField
-from .base import Application, AccessTokenApplicationMixin
+from wechat_django.enums import WeChatOAuthScope
+from .base import Application
+from .mixins import AccessTokenApplicationMixin, OAuthApplicationMixin
 
 
 class OrdinaryApplication(AccessTokenApplicationMixin, Application):
-    _jsapi_ticket = CacheField(expires_in=2*3600)
-    _jsapi_ticket_expires_at = CacheField(expires_in=2*3600, default=0)
-    _jsapi_card_ticket = CacheField(expires_in=2*3600)
-    _jsapi_card_ticket_expires_at = CacheField(expires_in=2*3600, default=0)
-
     class Meta:
         proxy = True
         verbose_name = _("Ordinary application")
         verbose_name_plural = _("Ordinary applications")
 
-    @property
-    def jsapi_ticket(self):
-        return self.base_client.jsapi.get_jsapi_ticket()
 
-    @property
-    def jsapi_card_ticket(self):
-        return self.base_client.jsapi.get_jsapi_card_ticket()
+class WebApplication(OAuthApplicationMixin, OrdinaryApplication):
+    DEFAULT_AUTHORIZE_URL = "https://open.weixin.qq.com/connect/qrconnect"
+    DEFAULT_SCOPES = WeChatOAuthScope.LOGIN
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Web application")
+        verbose_name_plural = _("Web applications")

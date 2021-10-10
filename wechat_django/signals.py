@@ -49,3 +49,7 @@ message_handle_failed = WeChatDjangoSignal((
 message_sent = WeChatDjangoSignal(("wechat_app", "reply", "message"))
 message_send_failed = WeChatDjangoSignal((
     "wechat_app", "reply", "message", "exc", "request"))
+
+
+post_oauth = WeChatDjangoSignal((
+    "wechat_app", "user", "scopes", "state", "request"))

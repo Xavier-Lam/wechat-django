@@ -12,3 +12,9 @@ class AppType:
 class EncryptStrategy:
     ENCRYPTED = 'encrypted'
     PLAIN = 'plain'
+
+
+class WeChatOAuthScope:
+    BASE = "snsapi_base"
+    USERINFO = "snsapi_userinfo"
+    LOGIN = "snsapi_login"

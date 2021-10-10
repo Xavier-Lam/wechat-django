@@ -6,9 +6,9 @@ from django.urls import reverse
 from wechatpy.utils import WeChatSigner, random_string
 from wechat_django.enums import EncryptStrategy
 
-from wechat_django.models.apps.base import MessagePushApplicationMixin
+from wechat_django.models.apps.mixins import MessagePushApplicationMixin
 from wechat_django import signals
-from wechat_django.wechat.messagehandler import message_handlers
+from wechat_django.messagehandler import message_handlers
 from .base import TestOnlyException, WeChatDjangoTestCase
 
 

@@ -7,16 +7,16 @@ from wechatpy.utils import to_text
 import xmltodict
 
 from wechat_django.enums import AppType
+from wechat_django.messagehandler import reply2send
 from wechat_django.utils.wechatpy import WeChatComponent, WeChatComponentClient
-from wechat_django.wechat.messagehandler import reply2send
-from .base import (Application, HostedApplicationMixin,
-                   MessagePushApplicationMixin, StorageProperty)
+from . import mixins
+from .base import Application, StorageProperty
 from .miniprogram import MiniProgramApplicationMixin
 from .ordinaryapplication import OrdinaryApplication
 from .officialaccount import OfficialAccountApplicationMixin
 
 
-class ThirdPartyPlatform(MessagePushApplicationMixin, Application):
+class ThirdPartyPlatform(mixins.MessagePushApplicationMixin, Application):
     verify_ticket = StorageProperty(_("Component verify ticket"),
                                     auto_commit=True)
 
@@ -61,7 +61,10 @@ class ThirdPartyPlatform(MessagePushApplicationMixin, Application):
         return super().save(*args, **kwargs)
 
 
-class AuthorizerApplication(HostedApplicationMixin, OrdinaryApplication):
+class AuthorizerApplication(mixins.HostedApplicationMixin,
+                            mixins.JSAPIMixin,
+                            mixins.MessagePushApplicationMixin,
+                            OrdinaryApplication):
     refresh_token = StorageProperty(_("Refresh token"), auto_commit=True)
 
     class Meta:
@@ -100,6 +103,7 @@ class MiniProgramAuthorizerApplication(MiniProgramApplicationMixin,
 
 
 class OfficialAccountAuthorizerApplication(OfficialAccountApplicationMixin,
+                                           mixins.OAuthApplicationMixin,
                                            AuthorizerApplication):
     class Meta:
         proxy = True

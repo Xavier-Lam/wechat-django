@@ -6,11 +6,11 @@ from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
+from wechat_django.core.view import WeChatView
 from wechat_django.exceptions import JSAPIError
 from wechat_django.models.apps import OrdinaryApplication
 from wechat_django.sites import default_site
 from django.conf import settings
-from .base import WeChatView
 
 
 @default_site.register

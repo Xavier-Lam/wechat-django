@@ -3,7 +3,6 @@ from functools import wraps
 from django.http import response as django_response
 from django.views.decorators.csrf import csrf_exempt
 
-from wechat_django.models import Application
 from wechat_django.rest_framework.views import APIView
 
 
@@ -51,6 +50,8 @@ class WeChatViewMixin:
 
     def get_app(self, request, *args, **kwargs):
         if not hasattr(request, "wechat_app"):
+            from wechat_django.models import Application
+
             app_name = self.get_app_name(request, *args, **kwargs)
             request.wechat_app = Application.objects.get(name=app_name)
         return request.wechat_app

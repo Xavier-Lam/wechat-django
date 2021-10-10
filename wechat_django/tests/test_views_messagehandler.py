@@ -10,11 +10,11 @@ import xmltodict
 
 from wechat_django.enums import EncryptStrategy
 from wechat_django.exceptions import BadMessageRequest
-from wechat_django.models.apps.base import (Application,
-                                            MessagePushApplicationMixin)
+from wechat_django.messagehandler import message_handlers
+from wechat_django.models.apps.base import Application
+from wechat_django.models.apps.mixins import MessagePushApplicationMixin
 from wechat_django.views.messagehandler import (AuthorizerHandler, Handler,
                                                 MessageResponse)
-from wechat_django.wechat.messagehandler import message_handlers
 from .base import WeChatDjangoTestCase
 
 
@@ -56,17 +56,39 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
 
     def test_initial(self):
         """测试初始化请求"""
+        self.officialaccount.encrypt_strategy = EncryptStrategy.PLAIN
+        self.miniprogram.encrypt_strategy = EncryptStrategy.PLAIN
         query = self.make_query()
         handler = Handler()
+        raw_message = """<xml>
+        <ToUserName><![CDATA[toUser]]></ToUserName>
+        <FromUserName><![CDATA[{sender}]]></FromUserName>
+        <CreateTime>{timestamp}</CreateTime>
+        <MsgType><![CDATA[text]]></MsgType>
+        <Content><![CDATA[{content}]]></Content>
+        <MsgId>1234567890123456</MsgId>
+        </xml>""".format(
+            sender="sender",
+            content="content",
+            timestamp=query["timestamp"]
+        )
         request = self.make_request("POST", path="/",
+                                    content_type="text/plain",
                                     wechat_app=self.officialaccount,
+                                    data=raw_message,
                                     QUERY_STRING=urlencode(query))
         handler.initial(request)
+        self.assertEqual(request.user.openid, "sender")
+        self.officialaccount.users.get(openid="sender")
         self.assertRaises(BadMessageRequest, lambda: handler.initial(request))
         request = self.make_request("POST", path="/",
+                                    content_type="text/plain",
                                     wechat_app=self.miniprogram,
+                                    data=raw_message,
                                     QUERY_STRING=urlencode(query))
         handler.initial(request)
+        self.assertEqual(request.user.openid, "sender")
+        self.miniprogram.users.get(openid="sender")
 
     def test_echostr(self):
         """测试输出echostr"""

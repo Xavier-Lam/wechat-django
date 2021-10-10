@@ -10,7 +10,7 @@ class AdminOrdinaryApplicationTestCase(WeChatDjangoTestCase):
         """测试一般app后台可访问性"""
         model = apps.OrdinaryApplication
         admin = self.get_model_admin(model)
-        app = self.webapp
+        app = self.unknown
 
         url = self.get_admin_url(model, "changelist")
         request = self.make_request("get", url, user=self.superadmin)
@@ -49,6 +49,18 @@ class AdminOrdinaryApplicationTestCase(WeChatDjangoTestCase):
         resp = admin.change_view(request, str(self.miniprogram.id))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, "/admin/")
+
+    def test_web_accessibility(self):
+        """测试webapp后台可访问性"""
+        model = apps.OrdinaryApplication
+        admin = self.get_model_admin(model)
+        app = self.webapp
+
+        url = self.get_admin_url(model, "change", args=(app.id,))
+        request = self.make_request("get", url, user=self.superadmin)
+        resp = admin.change_view(request, str(app.id))
+        resp.render()
+        self.assertEqual(resp.status_code, 200)
 
     def test_miniprogram_accessibility(self):
         """测试小程序app后台访问性"""

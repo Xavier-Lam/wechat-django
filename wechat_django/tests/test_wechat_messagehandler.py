@@ -1,10 +1,10 @@
 from unittest import mock
 from wechatpy import messages, replies, WeChatComponent
 
-from wechat_django.models.apps.base import Application
-from wechat_django.wechat.messagehandler import (
+from wechat_django.messagehandler import (
     builtin_handlers, MessageHandler, MessageHandlerCollection,
     MessageMatcher, MessageResponder, reply2send)
+from wechat_django.models.apps.base import Application
 from .base import TestOnlyException, WeChatDjangoTestCase
 
 

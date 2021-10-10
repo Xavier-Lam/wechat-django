@@ -10,4 +10,7 @@ __author_email__ = "xavierlam7@hotmail.com"
 default_app_config = "wechat_django.apps.WeChatDjangoConfig"
 
 
+from .rest_framework import permissions
+from .messagehandler import message_handlers
 from .sites import default_site as site
+from .oauth import wechat_oauth, WeChatOAuthView, WeChatOAuthViewMixin

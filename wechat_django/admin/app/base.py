@@ -23,7 +23,9 @@ ENCRYPTED_FIELDS = ("appsecret", "encoding_aes_key", "token", "api_key")
 
 class ApplicationChangeList(ChangeList):
     def url_for_result(self, result):
-        cls = Application.get_class_by_type(result.type)
+        for cls in result.__class__.mro():
+            if cls in self.model_admin.admin_site._registry:
+                break
         return reverse("admin:{0}_{1}_change".format(cls._meta.app_label,
                                                      cls._meta.model_name),
                        args=(result.pk,))

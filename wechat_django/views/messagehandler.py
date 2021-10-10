@@ -10,13 +10,14 @@ from wechatpy.utils import check_signature
 import xmltodict
 
 from wechat_django import signals
+from wechat_django.authentication import MessageHandlerAuth
+from wechat_django.core.view import WeChatView
 from wechat_django.exceptions import BadMessageRequest
-from wechat_django.models.apps.base import MessagePushApplicationMixin
+from wechat_django.models.apps.mixins import MessagePushApplicationMixin
 from wechat_django.models.apps.thirdpartyplatform import (
     AuthorizerApplication, ThirdPartyPlatform)
 from wechat_django.sites import default_site
-from wechat_django.views.base import WeChatView
-from wechat_django.wechat.messagehandler import (
+from wechat_django.messagehandler import (
     builtin_handlers, message_handlers,  MessageHandlerCollection)
 
 
@@ -70,14 +71,14 @@ class MessageResponse(response.HttpResponse):
 class Handler(WeChatView):
     DEFAULT_OFFSET = 600
 
+    authentication_classes = (MessageHandlerAuth,)
+
     include_application_classes = (MessagePushApplicationMixin,
                                    AuthorizerApplication)
     url_pattern = r"^notify/$"
     url_name = "handler"
 
     def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-
         try:
             timestamp = int(request.GET["timestamp"])
         except ValueError:
@@ -98,6 +99,14 @@ class Handler(WeChatView):
                 timestamp,
                 nonce
             )
+
+        if request.method == "POST":
+            request.message = self.parse_message(request, *args, **kwargs)
+            signals.message_received.send_robust(request.wechat_app,
+                                                 message=request.message,
+                                                 request=request)
+
+        super().initial(request, *args, **kwargs)
 
     def handle_exception(self, exc):
         if isinstance(exc, (response.Http404,)):
@@ -120,14 +129,9 @@ class Handler(WeChatView):
         return request.GET["echostr"]
 
     def post(self, request, *args, **kwargs):
-        message = self.parse_message(request, *args, **kwargs)
-        request.message = message
-        signals.message_received.send_robust(request.wechat_app,
-                                             message=message,
-                                             request=request)
-
         try:
-            replies = self.handle_message(message, request, *args, **kwargs)
+            replies = self.handle_message(
+                request.message, request, *args, **kwargs)
         except Exception as e:
             request.wechat_app.logger("messagehandler").exception(
                 _("An exception occurred when handling message"), extra={
@@ -135,7 +139,8 @@ class Handler(WeChatView):
                     "body": request.body
                 })
             signals.message_handle_failed.send_robust(
-                request.wechat_app, message=message, exc=e, request=request)
+                request.wechat_app, message=request.message, exc=e,
+                request=request)
             raise
 
         return self.make_response(replies, request, *args, **kwargs)

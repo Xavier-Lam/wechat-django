@@ -6,8 +6,8 @@ from wechatpy import client, WeChatComponent, WeChatPay
 from wechatpy.component import ComponentVerifyTicketMessage
 from wechatpy.utils import to_binary
 
+from wechat_django.messagehandler import thirdpartyplatform_ticket
 from wechat_django.models import Application
-from wechat_django.wechat.messagehandler import thirdpartyplatform_ticket
 from .base import wechatapi, WeChatDjangoTestCase
 
 

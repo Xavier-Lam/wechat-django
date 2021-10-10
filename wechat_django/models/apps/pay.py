@@ -3,7 +3,8 @@ from django.utils.translation import ugettext_lazy as _
 from wechat_django.enums import AppType
 from wechat_django.utils.model import FieldAlias
 from wechat_django.utils.wechatpy import WeChatPay
-from .base import Application, ConfigurationProperty, HostedApplicationMixin
+from .base import Application, ConfigurationProperty
+from .mixins import HostedApplicationMixin
 
 
 class PayApplication(Application):

@@ -1,8 +1,9 @@
 from collections.abc import Iterable
 from copy import deepcopy
+import time
 
 from django.utils.functional import SimpleLazyObject
-from wechatpy import replies
+from wechatpy import events, replies
 
 from wechat_django.enums import AppType
 
@@ -229,6 +230,29 @@ message_handlers = SimpleLazyObject(MessageHandlerCollection)
 builtin_handlers = MessageHandlerCollection()
 builtin_handlers.DEFAULT_PASSTHROUGH = True
 builtin_handlers.DEFAULT_WEIGHT = 9999
+
+
+def subscribe_matcher(message, request, *args, **kwargs):
+    return isinstance(message, events.BaseEvent) and\
+        message.event in ("subscribe", "subscribe_scan", "unsubscribe")
+
+
+@builtin_handlers(matcher=subscribe_matcher)
+def subscribe(message, request, *args, **kwargs):
+    """处理关注与取消关注"""
+    # 关注事件
+    if message.event in ("subscribe", "subscribe_scan"):
+        # 首次订阅
+        subscribed = request.user.ext_info.get("subscribed", None)
+        request.user.first_subscribe = subscribed is None
+        request.user.ext_info["subscribed"] = True
+        request.user.ext_info["subscribe_time"] = time.time()
+        request.user.save()
+
+    # 取关事件
+    if message.event == "unsubscribe":
+        request.user.ext_info["subscribed"] = False
+        request.user.save()
 
 
 def thirdpartyplatform_ticket_matcher(message, request, *args, **kwargs):
