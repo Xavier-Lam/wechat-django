@@ -60,3 +60,20 @@ class WeChatUser(m.Model):
     @property
     def union_users(self):
         return self.__class__.objects.filter(unionid=self.unionid)
+
+    @classmethod
+    def make_kwargs(cls, **kwargs):
+        allows = ("unionid", "nickname", "language", "access_token",
+                  "refresh_token", "remark")
+        alias = {
+            "headimgurl": "avatar_url",
+        }
+        rv = {"ext_info": {}}
+        for k, v in kwargs.items():
+            if k in allows:
+                rv[k] = v
+            elif k in alias:
+                rv[alias[k]] = v
+            else:
+                rv["ext_info"][k] = v
+        return rv

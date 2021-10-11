@@ -5,7 +5,7 @@ from wechat_django.messagehandler import (
     builtin_handlers, MessageHandler, MessageHandlerCollection,
     MessageMatcher, MessageResponder, reply2send)
 from wechat_django.models.apps.base import Application
-from .base import TestOnlyException, WeChatDjangoTestCase
+from ..base import TestOnlyException, WeChatDjangoTestCase
 
 
 class WeChatMessageHandlerTestCase(WeChatDjangoTestCase):
@@ -335,6 +335,10 @@ class WeChatMessageHandlerTestCase(WeChatDjangoTestCase):
         replies = message_handler.handle(message, None)
         self.assertEqual(tuple(map(lambda o: int(o.content), replies)),
                          (1, 2))
+
+    def test_builtin_subscribe_handlers(self):
+        """测试内建关注相关处理器"""
+        pass
 
     def test_builtin_thirdpartyplatform_handlers(self):
         """测试内建第三方平台相关处理器"""

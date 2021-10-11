@@ -1,5 +1,5 @@
 try:
-    from rest_framework import APIView
+    from rest_framework.views import APIView
 except ImportError:
     from django.views import View
 

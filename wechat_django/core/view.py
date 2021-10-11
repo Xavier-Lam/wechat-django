@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.http import response as django_response
+from django.urls.base import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from wechat_django.rest_framework.views import APIView
@@ -56,6 +57,12 @@ class WeChatViewMixin:
 
     def get_app_name(self, request, *args, **kwargs):
         return kwargs["app_name"].replace("/", ".")
+
+    @classmethod
+    def get_url(cls, wechat_app, *args, **kwargs):
+        kwargs.update({"app_name": wechat_app.name})
+        url_name = "{0}:{1}".format("wechat_django", cls.url_name)
+        return reverse(url_name, args=args, kwargs=kwargs)
 
 
 class WeChatView(WeChatViewMixin, APIView):

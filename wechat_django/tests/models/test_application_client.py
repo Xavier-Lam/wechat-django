@@ -8,7 +8,7 @@ from wechatpy.utils import to_binary
 
 from wechat_django.messagehandler import thirdpartyplatform_ticket
 from wechat_django.models import Application
-from .base import wechatapi, WeChatDjangoTestCase
+from ..base import wechatapi, WeChatDjangoTestCase
 
 
 class ModelApplicationClientTestCase(WeChatDjangoTestCase):

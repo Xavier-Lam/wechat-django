@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
@@ -6,7 +7,7 @@ from wechatpy.parser import parse_message
 from wechatpy.utils import to_text
 import xmltodict
 
-from wechat_django.enums import AppType
+from wechat_django.enums import AppType, EncryptStrategy
 from wechat_django.messagehandler import reply2send
 from wechat_django.utils.wechatpy import (
     ComponentOAuth, WeChatComponent, WeChatComponentClient)
@@ -18,6 +19,7 @@ from .officialaccount import OfficialAccountApplicationMixin
 
 
 class ThirdPartyPlatform(mixins.MessagePushApplicationMixin, Application):
+    encrypt_strategy = EncryptStrategy.ENCRYPTED
     verify_ticket = StorageProperty(_("Component verify ticket"),
                                     auto_commit=True)
 
@@ -45,8 +47,9 @@ class ThirdPartyPlatform(mixins.MessagePushApplicationMixin, Application):
         appid = info['authorizer_appid']
         authorizer = self.children.get(appid=appid)
         authorizer._access_token = info['authorizer_access_token']
+        authorizer.storage["func_info"] = info.get("func_info", None)
         authorizer.refresh_token = info['authorizer_refresh_token']
-        return result
+        return authorizer
 
     def authorizer_notify_url(self, request):
         path = reverse("wechat_django:authorizer_handler",
@@ -78,8 +81,26 @@ class AuthorizerApplication(mixins.HostedApplicationMixin,
         return WeChatComponentClient(self)
 
     @property
+    def token(self):
+        raise AttributeError
+
+    @property
+    def encoding_aes_key(self):
+        raise AttributeError
+
+    @property
+    def encrypt_strategy(self):
+        raise AttributeError
+
+    @property
     def crypto(self):
         return self.parent.crypto
+
+    def authorize_url(self, request):
+        kwargs = {"app_name": self.name}
+        path = reverse("wechat_django:thirdpartyplatform_auth", kwargs=kwargs)
+        return request.build_absolute_uri(
+            "{0}?{1}".format(path, urlencode({"biz_appid": self.appid})))
 
     def decrypt_message(self, request):
         return self.parent.decrypt_message(request)

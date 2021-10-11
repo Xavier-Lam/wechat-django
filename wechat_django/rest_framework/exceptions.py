@@ -1,5 +1,5 @@
 try:
-    from rest_framework import NotAuthenticated, PermissionDenied
+    from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 except ImportError:
     from django.utils.translation import gettext_lazy as _
 

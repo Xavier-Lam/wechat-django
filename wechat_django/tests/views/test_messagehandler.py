@@ -15,7 +15,7 @@ from wechat_django.models.apps.base import Application
 from wechat_django.models.apps.mixins import MessagePushApplicationMixin
 from wechat_django.views.messagehandler import (AuthorizerHandler, Handler,
                                                 MessageResponse)
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
@@ -77,15 +77,20 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
                                     wechat_app=self.officialaccount,
                                     data=raw_message,
                                     QUERY_STRING=urlencode(query))
+        request = handler.initialize_request(
+            request, app_name=self.officialaccount.name)
         handler.initial(request)
         self.assertEqual(request.user.openid, "sender")
         self.officialaccount.users.get(openid="sender")
         self.assertRaises(BadMessageRequest, lambda: handler.initial(request))
+
         request = self.make_request("POST", path="/",
                                     content_type="text/plain",
                                     wechat_app=self.miniprogram,
                                     data=raw_message,
                                     QUERY_STRING=urlencode(query))
+        request = handler.initialize_request(
+            request, app_name=self.officialaccount.name)
         handler.initial(request)
         self.assertEqual(request.user.openid, "sender")
         self.miniprogram.users.get(openid="sender")

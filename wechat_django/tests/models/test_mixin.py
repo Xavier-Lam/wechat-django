@@ -5,7 +5,7 @@ from django.urls.base import reverse
 
 from wechat_django.enums import WeChatOAuthScope
 from wechat_django.utils.wechatpy import WeChatOAuth
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class ModelMixinTestCase(WeChatDjangoTestCase):

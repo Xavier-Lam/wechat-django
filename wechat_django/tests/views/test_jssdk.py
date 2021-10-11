@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from django.urls import reverse
 
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class ViewJSSDKTestCase(WeChatDjangoTestCase):

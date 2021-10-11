@@ -1,2 +1,2 @@
 # flake8: noqa
-from . import jssdk, messagehandler, oauth
+from . import jssdk, messagehandler, oauth, thirdpartyplatform

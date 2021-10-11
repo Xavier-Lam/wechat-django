@@ -2,7 +2,7 @@ from django import forms
 
 from wechat_django.admin.app.base import EncryptedField
 from wechat_django.utils.crypto import crypto
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class AdminApplicationBaseTestCase(WeChatDjangoTestCase):

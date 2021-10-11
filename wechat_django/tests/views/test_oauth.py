@@ -8,8 +8,8 @@ from django.urls.conf import path
 from wechat_django.authentication import OAuthCodeSessionAuthentication
 from wechat_django.oauth import WeChatOAuthView
 from wechat_django.utils.wechatpy import ComponentOAuth, WeChatOAuth
-from .base import WeChatDjangoTestCase
-from .urls import urlpatterns
+from ..base import WeChatDjangoTestCase
+from ..urls import urlpatterns
 
 
 class TestView(WeChatOAuthView):
@@ -28,7 +28,7 @@ urlpatterns += [
 ]
 
 
-class WeChatOAuthTestCase(WeChatDjangoTestCase):
+class ViewOAuthTestCase(WeChatDjangoTestCase):
     @override_settings(ROOT_URLCONF=__name__)
     def test_oauth2_flow(self):
         """测试完整流程"""

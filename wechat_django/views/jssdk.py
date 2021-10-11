@@ -60,4 +60,4 @@ class JSSDKConfig(WeChatView):
             msg = "JSAPI config error: %s" % exc
             return HttpResponse('console.error("' + msg + '");',
                                 content_type="application/javascript")
-        super().handle_exception(exc)
+        return super().handle_exception(exc)

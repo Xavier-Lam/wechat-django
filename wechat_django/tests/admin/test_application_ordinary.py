@@ -2,7 +2,7 @@ from django.urls.base import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from wechat_django.models import apps
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class AdminOrdinaryApplicationTestCase(WeChatDjangoTestCase):

@@ -1,7 +1,7 @@
 from wechat_django.enums import AppType
 
 from wechat_django.models import apps
-from .base import WeChatDjangoTestCase
+from ..base import WeChatDjangoTestCase
 
 
 class ModelApplicationTestCase(WeChatDjangoTestCase):
