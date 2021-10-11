@@ -44,7 +44,9 @@ except ImportError:
             authentication will instead be performed lazily, the first time
             either `request.user` or `request.auth` is accessed.
             """
-            for authenticator in self.get_authenticators():
+            request._authenticator = None
+            request.authenticators = self.get_authenticators()
+            for authenticator in request.authenticators:
                 user_auth_tuple = authenticator.authenticate(request)
                 if user_auth_tuple is not None:
                     request._authenticator = authenticator

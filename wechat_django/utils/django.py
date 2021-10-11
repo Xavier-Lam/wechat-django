@@ -1,15 +1,5 @@
 from functools import partial
 
-from django.conf import settings
-
-from wechat_django import settings as default_settings
-
-
-def get_setting(key, default=None):
-    if hasattr(settings, "WECHAT_DJANGO_" + key):
-        return getattr(settings, "WECHAT_DJANGO_" + key)
-    return getattr(default_settings, key, default)
-
 
 ALLOWED_ATTRS = [
     "admin_order_field",

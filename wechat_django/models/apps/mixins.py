@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 from django.db import models as m
 from django.urls import reverse
 from django.utils import timezone as tz
@@ -151,12 +152,14 @@ class OAuthApplicationMixin(m.Model):
             elif self.oauth_url:
                 base_url = self.oauth_url
             else:
-                base_url = reverse("wechat_django:post_oauth",
+                base_url = reverse("wechat_django:oauth_proxy",
                                    kwargs={"app_name": self.name})
-            redirect_url = "{0}?{1}".format(base_url, {"redirect_uri": next})
-        return self.oauth.authorize_url(
-            redirect_uri=request.build_abosulte_uri(redirect_url),
-            scopes=scope or self.DEFAULT_SCOPES,
+            base_url = request.build_absolute_uri(base_url)
+            redirect_url = "{0}?{1}".format(base_url,
+                                            urlencode({"redirect_uri": next}))
+        return self.oauth.get_authorize_url(
+            redirect_uri=redirect_url,
+            scope=scope or self.DEFAULT_SCOPES,
             state=state
         )
 
@@ -178,11 +181,14 @@ class OAuthApplicationMixin(m.Model):
             update.update({
                 "synchronized_at": tz.now(),
                 "avatar_url": user_info.pop("headimgurl"),
-                "language": user_info.pop("language")
+                "nickname": user_info.pop("nickname"),
+                "unionid": user_info.pop("unionid", None),
+                "language": user_info.pop("language", None)
             })
             if "remark" in user_info:
                 update["remark"] = user_info.pop("remark")
             update["ext_info"] = user_info
         user, created = self.users.update_or_create(
             openid=data["openid"], defaults=update)
+        user.created = created
         return user

@@ -1,37 +1,47 @@
+from django.core.exceptions import SuspiciousOperation
 from django.http.response import HttpResponseRedirect
+from django.utils.translation import ugettext_lazy as _
 
 from wechat_django import signals
 from wechat_django.authentication import OAuthCodeSessionAuthentication
 from wechat_django.core.view import WeChatView
 from wechat_django.models.apps.mixins import OAuthApplicationMixin
+from wechat_django.rest_framework.exceptions import NotAuthenticated
 from wechat_django.rest_framework.permissions import IsAuthenticated
 from wechat_django.sites import default_site
 
 
 @default_site.register
-class PostOAuthView(WeChatView):
+class OAuthProxyView(WeChatView):
     authentication_classes = (OAuthCodeSessionAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     include_application_classes = (OAuthApplicationMixin,)
     url_pattern = r"^oauth/$"
-    url_name = "post_oauth"
+    url_name = "oauth_proxy"
 
     def initialize_request(self, request, *args, **kwargs):
-        request.GET["redirect_uri"]
+        if "redirect_uri" not in request.GET:
+            raise SuspiciousOperation(_("Missing redirect_uri"))
         return super().initialize_request(request, *args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
-        signals.post_oauth.send(request.wechat_app,
-                                user=request.user,
-                                scopes=request.GET["scope"].split(","),
-                                state=request.GET["state"],
-                                request=request)
+        signals.post_oauth.send_robust(request.wechat_app,
+                                       user=request.user,
+                                       scopes=request.GET["scope"].split(","),
+                                       state=request.GET["state"],
+                                       request=request)
 
     def get(self, request, *args, **kwargs):
         # 登录用户
-        request.session["session_key"] = request.user.openid
+        for authenticator in request.authenticators:
+            if isinstance(authenticator, OAuthCodeSessionAuthentication):
+                sk = authenticator.get_session_key(request.wechat_app)
+                request.session[sk] = request.user.openid
+                break
+        else:
+            raise NotAuthenticated
         return self.make_response(redirect_uri=request.GET["redirect_uri"],
                                   scope=request.GET["scope"],
                                   state=request.GET["state"],
@@ -47,7 +57,7 @@ class PostOAuthView(WeChatView):
         url = app.build_oauth_url(
             request,
             next=request.GET["redirect_uri"],
-            scopes=request.GET.get("scope"),
+            scope=request.GET.get("scope"),
             state=request.GET.get("state")
         )
         return HttpResponseRedirect(url)

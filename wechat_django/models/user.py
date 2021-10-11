@@ -43,6 +43,20 @@ class WeChatUser(m.Model):
         unique_together = (("app", "openid"), ("unionid", "app"),
                            ("app", "alias"))
 
+    is_staff = False
+
+    @property
+    def is_active(self):
+        return bool(self.pk)
+
+    @property
+    def is_anonymous(self):
+        return not self.pk
+
+    @property
+    def is_authenticated(self):
+        return bool(self.pk)
+
     @property
     def union_users(self):
         return self.__class__.objects.filter(unionid=self.unionid)

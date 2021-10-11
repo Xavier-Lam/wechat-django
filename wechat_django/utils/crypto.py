@@ -3,7 +3,7 @@ from django.utils.functional import SimpleLazyObject
 
 from wechatpy.crypto.base import WeChatCipher
 
-from .django import get_setting
+from wechat_django.core import settings
 
 
 class Crypto:
@@ -52,7 +52,7 @@ class Crypto:
 
 class DefaultCrypto(Crypto):
     def __init__(self):
-        key = get_setting("SECRET_KEY")
+        key = settings.get("SECRET_KEY")
         key and super().__init__(key)
 
     def encrypt(self, value, raw=False):

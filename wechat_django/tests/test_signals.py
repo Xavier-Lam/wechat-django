@@ -213,6 +213,11 @@ class SignalTestCase(WeChatDjangoTestCase):
         app.save()
         message_handlers.clear()
 
+    @patch("wechat_django.signals.post_oauth.send_robust")
+    def test_post_oauth(self, *args):
+        """测试微信OAuth授权成功"""
+        pass
+
     def dummy_receiver(self, **kwargs):
         return patch("{0}.{1}".format(
             dummy_receiver.__module__, dummy_receiver.__name__), **kwargs)

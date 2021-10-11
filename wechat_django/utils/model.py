@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from django.core.cache.backends.base import BaseCache
 from django import forms
+from django.db.models.signals import post_save
 
 from .django import decriptor2contributor
 
@@ -50,11 +51,15 @@ class CacheFieldDescriptor(ModelFieldMixin):
         return self.get_cache(obj).get(self.get_key(obj), self.default)
 
     def __set__(self, obj, value):
-        self.get_cache(obj).set(
-            self.get_key(obj),
-            value,
-            self.expires_in
-        )
+        if not obj.pk:
+            # 新增时延迟设置
+            def delay_create(instance, created, **kwargs):
+                if instance is obj and created:
+                    self.do_set(obj, value)
+                    post_save.disconnect(delay_create, sender=obj.__class__)
+            post_save.connect(delay_create, sender=obj.__class__)
+        else:
+            self.do_set(obj, value)
 
     def __delete__(self, obj):
         self.get_cache(obj).delete(self.get_key(obj))
@@ -62,6 +67,13 @@ class CacheFieldDescriptor(ModelFieldMixin):
     def __set_name__(self, owner, name):
         self._owner = owner
         self.name = name
+
+    def do_set(self, obj, value):
+        self.get_cache(obj).set(
+            self.get_key(obj),
+            value,
+            self.expires_in
+        )
 
     def get_key(self, obj):
         # TODO: 确保pk存在方可调用

@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from wechat_django.authentication import OAuthSessionAuthentication
 from wechat_django.core.view import WeChatViewMixin
 from wechat_django.rest_framework.exceptions import NotAuthenticated
+from wechat_django.rest_framework.permissions import IsAuthenticated
 from wechat_django.rest_framework.views import APIView
 
 
@@ -54,8 +55,9 @@ class WeChatOAuthViewMixin(WeChatViewMixin):
                 state = self.state
 
         url = request.wechat_app.build_oauth_url(
+            request,
             next=redirect_uri,
-            scopes=scopes or self.scopes,
+            scope=scopes or self.scopes,
             state=state
         )
         return self.unauthorized_response(url, request)
@@ -75,20 +77,21 @@ class WeChatOAuthViewMixin(WeChatViewMixin):
     @classmethod
     def as_view(cls, **initKwargs):
         # 检查属性正确性
-        app_name = initKwargs.pop("app_name", cls.app_pname)
-        assert app_name and isinstance(app_name, str), _("Incorrect appname")
-        initKwargs["app_name"] = app_name
+        app_name = initKwargs.pop("wechat_app_name", cls.wechat_app_name)
+        assert app_name and isinstance(app_name, str),\
+            _("Incorrect wechat_app_name")
+        initKwargs["wechat_app_name"] = app_name
 
         # 对于必须授权的请求 在permissions中添加WeChatAuthenticated
         required = initKwargs.pop("wechat_oauth_required",
                                   cls.wechat_oauth_required)
-        initKwargs["required"] = required
+        initKwargs["wechat_oauth_required"] = required
 
         # 重新处理permission_classes
         permission_classes = initKwargs.pop("permission_classes",
                                             cls.permission_classes)
-        if required and NotAuthenticated not in permission_classes:
-            permission_classes = [NotAuthenticated] + list(permission_classes)
+        if required and IsAuthenticated not in permission_classes:
+            permission_classes = [IsAuthenticated] + list(permission_classes)
         initKwargs["permission_classes"] = tuple(permission_classes)
 
         return super().as_view(**initKwargs)
@@ -121,7 +124,11 @@ def wechat_oauth(app_name, scope=None, redirect_uri=None, required=True,
     methods = methods or ("GET",)
 
     def decorator(func):
-        kwargs = {"app_name": app_name, "scope": scope, "required": required}
+        kwargs = {
+            "wechat_app_name": app_name,
+            "scopes": scope,
+            "wechat_oauth_required": required
+        }
         if bind:
             attrs = {method.lower(): func for method in methods}
             View = type(str("WeChatOAuthView"), (WeChatOAuthView,), attrs)

@@ -8,7 +8,8 @@ import xmltodict
 
 from wechat_django.enums import AppType
 from wechat_django.messagehandler import reply2send
-from wechat_django.utils.wechatpy import WeChatComponent, WeChatComponentClient
+from wechat_django.utils.wechatpy import (
+    ComponentOAuth, WeChatComponent, WeChatComponentClient)
 from . import mixins
 from .base import Application, StorageProperty
 from .miniprogram import MiniProgramApplicationMixin
@@ -109,3 +110,7 @@ class OfficialAccountAuthorizerApplication(OfficialAccountApplicationMixin,
         proxy = True
         verbose_name = _("Hosted official account application")
         verbose_name_plural = _("Hosted official account applications")
+
+    @cached_property
+    def oauth(self):
+        return ComponentOAuth(self)

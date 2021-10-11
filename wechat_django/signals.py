@@ -2,11 +2,10 @@ from sys import intern
 
 from django.dispatch import Signal
 
-from wechat_django.models.apps.base import Application
+from wechat_django.models import Application
 
 
 def _fix_sender(sender):
-    from wechat_django.models import Application
     if isinstance(sender, Application):
         sender = sender.name
     return sender and intern(sender)

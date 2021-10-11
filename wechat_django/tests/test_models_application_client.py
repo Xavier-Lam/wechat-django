@@ -125,6 +125,47 @@ class ModelApplicationClientTestCase(WeChatDjangoTestCase):
         self.assertIs(self.hosted_officialaccount.client,
                       self.hosted_officialaccount.base_client)
 
+    def test_oauth(self):
+        """测试OAuth"""
+        # 一般应用
+        self.assertIs(self.officialaccount.oauth.app,
+                      self.officialaccount)
+        self.assertEqual(self.officialaccount.oauth.app_id,
+                         self.officialaccount.appid)
+        self.assertEqual(self.officialaccount.oauth.secret, self.APPSECRET)
+
+        # 三方应用
+        self.assertIs(self.hosted_officialaccount.oauth.app,
+                      self.hosted_officialaccount)
+        self.assertEqual(
+            self.hosted_officialaccount.oauth.component.component_appid,
+            self.thirdpartyplatform.appid)
+        self.thirdpartyplatform._access_token = "access_token"
+        self.assertEqual(
+            self.hosted_officialaccount.oauth.component.access_token,
+            "access_token")
+        self.thirdpartyplatform._access_token = "_access_token"
+        self.assertEqual(
+            self.hosted_officialaccount.oauth.component.access_token,
+            "_access_token")
+
+        # 清除测试数据
+        del self.thirdpartyplatform._access_token
+
+    def test_crypto(self):
+        """测试加密对象"""
+        # 一般应用
+        self.assertEqual(self.officialaccount.crypto.app_id,
+                         self.officialaccount.appid)
+        self.assertEqual(self.officialaccount.crypto.token, self.TOKEN)
+        key = to_binary(self.ENCODING_AES_KEY + "=")
+        self.assertEqual(base64.b64decode(key),
+                         self.officialaccount.crypto.key)
+
+        # 托管应用
+        self.assertIs(self.hosted_officialaccount.crypto,
+                      self.hosted_officialaccount.parent.crypto)
+
     def test_wechat_client_access_token(self):
         """测试一般请求客户端Storage"""
         def wechatapi_access_token(token, callback=None):
@@ -322,17 +363,3 @@ class ModelApplicationClientTestCase(WeChatDjangoTestCase):
         # 移除测试数据
         del hosted_miniprogram._access_token
         del hosted_miniprogram.refresh_token
-
-    def test_crypto(self):
-        """测试加密对象"""
-        # 一般应用
-        self.assertEqual(self.officialaccount.crypto.app_id,
-                         self.officialaccount.appid)
-        self.assertEqual(self.officialaccount.crypto.token, self.TOKEN)
-        key = to_binary(self.ENCODING_AES_KEY + "=")
-        self.assertEqual(base64.b64decode(key),
-                         self.officialaccount.crypto.key)
-
-        # 托管应用
-        self.assertIs(self.hosted_officialaccount.crypto,
-                      self.hosted_officialaccount.parent.crypto)

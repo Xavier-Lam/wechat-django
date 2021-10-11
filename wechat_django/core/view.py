@@ -30,10 +30,8 @@ class WeChatViewMixin:
                           self.exclude_application_classes):
                 raise django_response.Http404
         if self.include_application_classes:
-            if isinstance(request.wechat_app,
-                          self.include_application_classes):
-                return
-            else:
+            if not isinstance(request.wechat_app,
+                              self.include_application_classes):
                 raise django_response.Http404
 
     def finalize_response(self, request, response, *args, **kwargs):

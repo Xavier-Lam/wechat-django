@@ -5,7 +5,8 @@ from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
 
 import requests
-from wechatpy import (WeChatClient as BaseWeChatClient,
+from wechatpy import (ComponentOAuth as BaseComponentOAuth,
+                      WeChatClient as BaseWeChatClient,
                       WeChatComponent as BaseWeChatComponent,
                       WeChatOAuth as BaseWeChatOAuth,
                       WeChatPay as BaseWeChatPay)
@@ -139,14 +140,13 @@ class WeChatComponentClient(BaseWeChatComponentClient):
 
 class WeChatOAuth(BaseWeChatOAuth):
     def __init__(self, app):
-        if app.oauth_url:
-            self.AUTHORIZE_URL = app.authorize_url
         super().__init__(app.appid, crypto.decrypt(app.appsecret), "")
+        self.app = app
 
-    def authorize_url(self, redirect_uri, scope, state=""):
+    def get_authorize_url(self, redirect_uri, scope, state=""):
         if not isinstance(scope, str):
             scope = ",".join(scope)
-        return self.AUTHORIZE_URL + "?" + urlencode(dict(
+        return self.app.authorize_url + "?" + urlencode(dict(
             appid=self.app_id,
             redirect_uri=redirect_uri,
             response_type="code",
@@ -155,5 +155,38 @@ class WeChatOAuth(BaseWeChatOAuth):
         )) + "#wechat_redirect"
 
     @property
+    def authorize_url(self):
+        raise NotImplementedError
+
+    @property
     def qrconnect_url(self):
         raise NotImplementedError
+
+
+class ProxyObject:
+    def __init__(self, obj, **map):
+        self._obj = obj
+        self._map = map
+
+    def __getattr__(self, name):
+        return getattr(self._obj, self._map[name])
+
+
+class ComponentOAuth(BaseComponentOAuth):
+    def __init__(self, app):
+        self.component = ProxyObject(app.parent,
+                                     component_appid="appid",
+                                     access_token="access_token")
+        self.app = app
+
+    def get_authorize_url(self, redirect_uri, scope, state=""):
+        if not isinstance(scope, str):
+            scope = ",".join(scope)
+        return self.app.authorize_url + "?" + urlencode(dict(
+            appid=self.app.appid,
+            redirect_uri=redirect_uri,
+            response_type="code",
+            scope=scope,
+            state=state or "",
+            component_appid=self.component.component_appid
+        )) + "#wechat_redirect"
