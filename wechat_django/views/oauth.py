@@ -27,9 +27,10 @@ class OAuthProxyView(WeChatView):
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
+        scopes = tuple(request.GET["scope"].split(","))
         signals.post_oauth.send_robust(request.wechat_app,
                                        user=request.user,
-                                       scopes=request.GET["scope"].split(","),
+                                       scopes=scopes,
                                        state=request.GET["state"],
                                        request=request)
 

@@ -5,7 +5,7 @@ from wechat_django.utils.crypto import crypto
 from ..base import WeChatDjangoTestCase
 
 
-class AdminApplicationBaseTestCase(WeChatDjangoTestCase):
+class ApplicationBaseTestCase(WeChatDjangoTestCase):
     def test_encrypt_field(self):
         """测试EncryptField"""
         class DummyForm(forms.Form):

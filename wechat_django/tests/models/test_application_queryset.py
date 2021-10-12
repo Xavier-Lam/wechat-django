@@ -4,7 +4,7 @@ from wechat_django.models import apps
 from ..base import WeChatDjangoTestCase
 
 
-class ModelApplicationTestCase(WeChatDjangoTestCase):
+class ApplicationQuerySetTestCase(WeChatDjangoTestCase):
     def test_get_ordinary_application(self):
         """测试获取一般app"""
         # 小程序

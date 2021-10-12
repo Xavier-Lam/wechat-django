@@ -6,7 +6,7 @@ from wechat_django.models import apps
 from ..base import WeChatDjangoTestCase
 
 
-class AdminThirdPartyPlatformTestCase(WeChatDjangoTestCase):
+class ThirdPartyPlatformTestCase(WeChatDjangoTestCase):
     def test_thirdpartyplatform_accessibility(self):
         """测试第三方平台app后台可访问性"""
         model = apps.ThirdPartyPlatform

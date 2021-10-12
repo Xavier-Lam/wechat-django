@@ -8,7 +8,7 @@ from wechat_django.views.thirdpartyplatform import ThirdPartyPlatformAuth
 from ..base import WeChatDjangoTestCase
 
 
-class ViewThirdPartyPlatformTestCase(WeChatDjangoTestCase):
+class ThirdPartyPlatformTestCase(WeChatDjangoTestCase):
     def test_authorize_flow(self):
         """测试完整流程"""
         app = self.hosted_officialaccount

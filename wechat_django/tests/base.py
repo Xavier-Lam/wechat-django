@@ -168,11 +168,13 @@ class WeChatDjangoTestCase(TestCase):
             url += "?" + urlencode(query)
         return url
 
-    def make_request(self, method, *args, **kwargs):
+    def make_request(self, method="GET", path="/", *args, **kwargs):
         user = kwargs.pop("user", None)
         wechat_app = kwargs.pop("wechat_app", None)
+        query = kwargs.pop("query", {})
+        kwargs.setdefault("QUERY_STRING", urlencode(query))
         rf = RequestFactory()
-        request = getattr(rf, method.lower())(*args, **kwargs)
+        request = getattr(rf, method.lower())(path, *args, **kwargs)
         SessionMiddleware().process_request(request)
         CommonMiddleware().process_request(request)
         MessageMiddleware().process_request(request)

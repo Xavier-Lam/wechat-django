@@ -18,7 +18,8 @@ from wechat_django.models.apps.thirdpartyplatform import (
     AuthorizerApplication, ThirdPartyPlatform)
 from wechat_django.sites import default_site
 from wechat_django.messagehandler import (
-    builtin_handlers, message_handlers,  MessageHandlerCollection)
+    message_handlers, MessageHandlerCollection)
+from wechat_django.messagehandler.builtins import builtin_handlers
 
 
 class MessageResponse(response.HttpResponse):

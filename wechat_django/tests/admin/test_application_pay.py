@@ -2,7 +2,7 @@ from wechat_django.models import apps
 from ..base import WeChatDjangoTestCase
 
 
-class AdminPayApplicationTestCase(WeChatDjangoTestCase):
+class PayApplicationTestCase(WeChatDjangoTestCase):
     def test_pay_accessibility(self):
         """测试一般商户后台可访问性"""
         model = apps.PayApplication

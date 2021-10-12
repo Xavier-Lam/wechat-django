@@ -6,7 +6,7 @@ from django.utils.functional import empty
 from wechat_django.utils.crypto import crypto, Crypto
 
 
-class UtilCryptoTestCase(TestCase):
+class CryptoTestCase(TestCase):
     def test_crypto(self):
         """测试加解密"""
         # 测试3种不同密钥长度

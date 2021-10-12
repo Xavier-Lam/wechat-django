@@ -6,12 +6,12 @@ from wechatpy import client, WeChatComponent, WeChatPay
 from wechatpy.component import ComponentVerifyTicketMessage
 from wechatpy.utils import to_binary
 
-from wechat_django.messagehandler import thirdpartyplatform_ticket
+from wechat_django.messagehandler.builtins import thirdpartyplatform_ticket
 from wechat_django.models import Application
 from ..base import wechatapi, WeChatDjangoTestCase
 
 
-class ModelApplicationClientTestCase(WeChatDjangoTestCase):
+class ApplicationClientTestCase(WeChatDjangoTestCase):
     def test_session(self):
         """测试会话"""
         VALUE = "value"

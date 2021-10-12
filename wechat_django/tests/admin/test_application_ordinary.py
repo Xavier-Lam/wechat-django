@@ -5,7 +5,7 @@ from wechat_django.models import apps
 from ..base import WeChatDjangoTestCase
 
 
-class AdminOrdinaryApplicationTestCase(WeChatDjangoTestCase):
+class OrdinaryApplicationTestCase(WeChatDjangoTestCase):
     def test_ordinary_accessibility(self):
         """测试一般app后台可访问性"""
         model = apps.OrdinaryApplication

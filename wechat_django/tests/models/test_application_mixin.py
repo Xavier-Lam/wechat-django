@@ -8,7 +8,7 @@ from wechat_django.utils.wechatpy import WeChatOAuth
 from ..base import WeChatDjangoTestCase
 
 
-class ModelMixinTestCase(WeChatDjangoTestCase):
+class ApplicationMixinTestCase(WeChatDjangoTestCase):
     def test_oauth_auth(self):
         """测试oauth的auth方法"""
         # 测试base scope

@@ -20,7 +20,7 @@ class WeChatUser(m.Model):
     avatar_url = m.URLField(_("Avatar URL"), max_length=256, null=True)
     language = m.CharField(_("Language"), max_length=24, null=True)
 
-    ext_info = JSONField(_("Extension information"))
+    ext_info = JSONField(_("Extension information"), default={})
 
     remark = m.CharField(_("WeChat remark"), max_length=30, blank=True,
                          null=True)
@@ -61,6 +61,11 @@ class WeChatUser(m.Model):
     def union_users(self):
         return self.__class__.objects.filter(unionid=self.unionid)
 
+    def __getattr__(self, name):
+        if name not in self.ext_info:
+            raise AttributeError
+        return self.ext_info[name]
+
     @classmethod
     def make_kwargs(cls, **kwargs):
         allows = ("unionid", "nickname", "language", "access_token",
@@ -68,6 +73,7 @@ class WeChatUser(m.Model):
         alias = {
             "headimgurl": "avatar_url",
         }
+        # TODO: extinfo需要partial update
         rv = {"ext_info": {}}
         for k, v in kwargs.items():
             if k in allows:

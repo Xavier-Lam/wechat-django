@@ -28,7 +28,7 @@ urlpatterns += [
 ]
 
 
-class ViewOAuthTestCase(WeChatDjangoTestCase):
+class OAuthTestCase(WeChatDjangoTestCase):
     @override_settings(ROOT_URLCONF=__name__)
     def test_oauth2_flow(self):
         """测试完整流程"""

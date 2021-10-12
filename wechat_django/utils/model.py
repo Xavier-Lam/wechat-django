@@ -48,10 +48,11 @@ class CacheFieldDescriptor(ModelFieldMixin):
         super().__init__(verbose_name, **kwargs)
 
     def __get__(self, obj, objtype):
-        return self.get_cache(obj).get(self.get_key(obj), self.default)
+        if not obj._state.adding:
+            return self.get_cache(obj).get(self.get_key(obj), self.default)
 
     def __set__(self, obj, value):
-        if not obj.pk:
+        if obj._state.adding:
             # 新增时延迟设置
             def delay_create(instance, created, **kwargs):
                 if instance is obj and created:
@@ -62,7 +63,8 @@ class CacheFieldDescriptor(ModelFieldMixin):
             self.do_set(obj, value)
 
     def __delete__(self, obj):
-        self.get_cache(obj).delete(self.get_key(obj))
+        if not obj._state.adding:
+            self.get_cache(obj).delete(self.get_key(obj))
 
     def __set_name__(self, owner, name):
         self._owner = owner
@@ -76,7 +78,7 @@ class CacheFieldDescriptor(ModelFieldMixin):
         )
 
     def get_key(self, obj):
-        # TODO: 确保pk存在方可调用
+        assert obj.pk
         return "cachefield:{label}:{model}:{pk}:{key}".format(
             label=self._owner._meta.app_label,
             model=self._owner._meta.model_name,

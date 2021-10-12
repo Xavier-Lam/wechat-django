@@ -26,7 +26,7 @@ class DummyUtilTestCaseModel(f.FakeModel):
 
 
 @DummyUtilTestCaseModel.fake_me
-class UtilModelTestCase(TestCase):
+class ModelTestCase(TestCase):
     def test_model_property(self):
         """测试JsonField衍生出的property"""
         model = DummyUtilTestCaseModel.objects.create()
@@ -99,6 +99,31 @@ class UtilModelTestCase(TestCase):
         model = DummyUtilTestCaseModel.objects.get(pk=model.pk)
         self.assertIsNone(model.c)
         self.assertIsNone(cache.get(key))
+
+        # 测试延迟新增
+        model = DummyUtilTestCaseModel.objects.create(c=DEFAULT)
+        key = "cachefield:{label}:{model}:{pk}:{key}".format(
+            label=model._meta.app_label,
+            model=model._meta.model_name,
+            pk=model.pk,
+            key="c"
+        )
+        self.assertEqual(model.c, DEFAULT)
+        self.assertEqual(cache.get(key), DEFAULT)
+        del model.c
+
+        model = DummyUtilTestCaseModel(c=VALUE)
+        self.assertIsNone(model.c)
+        model.save()
+        key = "cachefield:{label}:{model}:{pk}:{key}".format(
+            label=model._meta.app_label,
+            model=model._meta.model_name,
+            pk=model.pk,
+            key="c"
+        )
+        self.assertEqual(model.c, VALUE)
+        self.assertEqual(cache.get(key), VALUE)
+        del model.c
 
     def test_field_alias(self):
         """测试FieldAlias"""

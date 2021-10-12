@@ -40,7 +40,7 @@ class DummyDjangoTestCaseModel(f.FakeModel):
     attr = contributor(ARG)
 
 
-class UtilDjangoTestCase(TestCase):
+class DjangoTestCase(TestCase):
     @DummyDjangoTestCaseModel.fake_me
     def test_decriptor2contributor(self):
         """测试Descriptor转Contributor"""

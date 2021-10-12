@@ -8,7 +8,7 @@ from wechatpy.utils import to_text
 import xmltodict
 
 from wechat_django.enums import AppType, EncryptStrategy
-from wechat_django.messagehandler import reply2send
+from wechat_django.messagehandler.base import reply2send
 from wechat_django.utils.wechatpy import (
     ComponentOAuth, WeChatComponent, WeChatComponentClient)
 from . import mixins

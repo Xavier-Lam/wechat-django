@@ -18,8 +18,8 @@ from wechat_django.views.messagehandler import (AuthorizerHandler, Handler,
 from ..base import WeChatDjangoTestCase
 
 
-class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
-    def test_response(self):
+class MessageHandlerTestCase(WeChatDjangoTestCase):
+    def test_messageresponse(self):
         """测试MessageResponse"""
         reply1 = replies.TextReply(content="1")
         reply2 = replies.TextReply(content="2")
@@ -82,6 +82,8 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
         handler.initial(request)
         self.assertEqual(request.user.openid, "sender")
         self.officialaccount.users.get(openid="sender")
+        self.assertEqual(request.message.type, "text")
+        self.assertEqual(request.message.content, "content")
         self.assertRaises(BadMessageRequest, lambda: handler.initial(request))
 
         request = self.make_request("POST", path="/",
@@ -94,6 +96,8 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
         handler.initial(request)
         self.assertEqual(request.user.openid, "sender")
         self.miniprogram.users.get(openid="sender")
+        self.assertEqual(request.message.type, "text")
+        self.assertEqual(request.message.content, "content")
 
     def test_echostr(self):
         """测试输出echostr"""
@@ -223,8 +227,8 @@ class ViewMessageHandlerTestCase(WeChatDjangoTestCase):
         self.assertEqual(response.replies[1].content,
                          self.hosted_miniprogram.name)
 
-    def test_request(self):
-        """测试直接请求"""
+    def test_message_handler_flow(self):
+        """测试请求完整流程"""
         # GET请求echo
         query = self.make_query()
         query["echostr"] = "echostr"

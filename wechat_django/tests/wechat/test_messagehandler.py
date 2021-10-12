@@ -1,14 +1,12 @@
-from unittest import mock
-from wechatpy import messages, replies, WeChatComponent
+from wechatpy import messages, replies
 
-from wechat_django.messagehandler import (
-    builtin_handlers, MessageHandler, MessageHandlerCollection,
+from wechat_django.messagehandler.base import (
+    MessageHandler, MessageHandlerCollection,
     MessageMatcher, MessageResponder, reply2send)
-from wechat_django.models.apps.base import Application
 from ..base import TestOnlyException, WeChatDjangoTestCase
 
 
-class WeChatMessageHandlerTestCase(WeChatDjangoTestCase):
+class MessageHandlerTestCase(WeChatDjangoTestCase):
     def test_reply2send(self):
         """测试被动回复转主动"""
         # 空消息转换
@@ -335,102 +333,6 @@ class WeChatMessageHandlerTestCase(WeChatDjangoTestCase):
         replies = message_handler.handle(message, None)
         self.assertEqual(tuple(map(lambda o: int(o.content), replies)),
                          (1, 2))
-
-    def test_builtin_subscribe_handlers(self):
-        """测试内建关注相关处理器"""
-        pass
-
-    def test_builtin_thirdpartyplatform_handlers(self):
-        """测试内建第三方平台相关处理器"""
-        # 测试ticket推送
-        request = self.make_request("POST", path="/",
-                                    wechat_app=self.thirdpartyplatform)
-        xml = """<xml>
-            <AppId>some_appid</AppId>
-            <CreateTime>1413192605</CreateTime>
-            <InfoType>component_verify_ticket</InfoType>
-            <ComponentVerifyTicket>t</ComponentVerifyTicket>
-        </xml>"""
-        message = self.thirdpartyplatform.parse_message(xml)
-        result = builtin_handlers.handle(message, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].render(), "success")
-        thirdpartyplatform = Application.objects.get(
-            name=self.thirdpartyplatform.name)
-        self.assertEqual(thirdpartyplatform.verify_ticket, "t")
-
-        # 测试授权新增
-        xml = """<xml>
-            <AppId>appid</AppId>
-            <CreateTime>1413192760</CreateTime>
-            <InfoType>authorized</InfoType>
-            <AuthorizerAppid>hosted_officialaccount_appid</AuthorizerAppid>
-            <AuthorizationCode>code1</AuthorizationCode>
-            <AuthorizationCodeExpiredTime>0</AuthorizationCodeExpiredTime>
-            <PreAuthCode>pre_code</PreAuthCode>
-        </xml>"""
-        message = self.thirdpartyplatform.parse_message(xml)
-        auth_result = {
-            "authorization_info": {
-                "authorizer_appid": "hosted_miniprogram_appid",
-                "authorizer_access_token": "access_token1",
-                "authorizer_refresh_token": "refresh_token1"
-            }
-        }
-        with mock.patch.object(WeChatComponent, "_query_auth",
-                               return_value=auth_result):
-            result = builtin_handlers.handle(message, request)
-            self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].render(), "success")
-            WeChatComponent._query_auth.assert_called_once_with("code1")
-        app = Application.objects.get(name=self.hosted_miniprogram.name)
-        self.assertEqual(app.access_token, "access_token1")
-        self.assertEqual(app.refresh_token, "refresh_token1")
-
-        # 测试授权变更
-        xml = """<xml>
-            <AppId>appid</AppId>
-            <CreateTime>1413192760</CreateTime>
-            <InfoType>updateauthorized</InfoType>
-            <AuthorizerAppid>hosted_officialaccount_appid</AuthorizerAppid>
-            <AuthorizationCode>code2</AuthorizationCode>
-            <AuthorizationCodeExpiredTime>0</AuthorizationCodeExpiredTime>
-            <PreAuthCode>pre_code</PreAuthCode>
-        </xml>"""
-        message = self.thirdpartyplatform.parse_message(xml)
-        auth_result = {
-            "authorization_info": {
-                "authorizer_appid": "hosted_miniprogram_appid",
-                "authorizer_access_token": "access_token2",
-                "authorizer_refresh_token": "refresh_token2"
-            }
-        }
-        with mock.patch.object(WeChatComponent, "_query_auth",
-                               return_value=auth_result):
-            result = builtin_handlers.handle(message, request)
-            self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].render(), "success")
-            WeChatComponent._query_auth.assert_called_once_with("code2")
-        app = Application.objects.get(name=self.hosted_miniprogram.name)
-        self.assertEqual(app.access_token, "access_token2")
-        self.assertEqual(app.refresh_token, "refresh_token2")
-
-        # 测试授权取消
-        xml = """<xml>
-            <AppId>appid</AppId>
-            <CreateTime>1413192760</CreateTime>
-            <InfoType>unauthorized</InfoType>
-            <AuthorizerAppid>hosted_miniprogram_appid</AuthorizerAppid>
-        </xml>"""
-        message = self.thirdpartyplatform.parse_message(xml)
-        result = builtin_handlers.handle(message, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].render(), "success")
-        app = Application.objects.get(name=self.hosted_miniprogram.name)
-        self.assertIsNone(app._access_token)
-        self.assertIsNone(app.refresh_token)
-
-        del thirdpartyplatform.verify_ticket
 
     def create_handler(self, result=None, exc=None):
         if exc:

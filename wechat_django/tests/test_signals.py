@@ -4,11 +4,13 @@ from urllib.parse import urlencode
 
 from django.urls import reverse
 from wechatpy.utils import WeChatSigner, random_string
-from wechat_django.enums import EncryptStrategy
+from wechat_django.enums import EncryptStrategy, WeChatOAuthScope
 
-from wechat_django.models.apps.mixins import MessagePushApplicationMixin
+from wechat_django.models.apps.mixins import (
+    MessagePushApplicationMixin, OAuthApplicationMixin)
 from wechat_django import signals
 from wechat_django.messagehandler import message_handlers
+from wechat_django.views.oauth import OAuthProxyView
 from .base import TestOnlyException, WeChatDjangoTestCase
 
 
@@ -216,7 +218,30 @@ class SignalTestCase(WeChatDjangoTestCase):
     @patch("wechat_django.signals.post_oauth.send_robust")
     def test_post_oauth(self, *args):
         """测试微信OAuth授权成功"""
-        pass
+        app = self.officialaccount
+        openid = "signals.post_oauth"
+        scope = WeChatOAuthScope.BASE
+        state = "state"
+        request = self.make_request(query={
+            "code": "code",
+            "scope": scope,
+            "state": state,
+            "redirect_uri": ""
+        })
+        user = app.users.create(openid=openid)
+        with patch.object(OAuthApplicationMixin, "auth", return_value=user):
+            view = OAuthProxyView()
+            request = view.initialize_request(request, app_name=app.name)
+            view.initial(request, app_name=app.name)
+
+        signal = signals.post_oauth
+        self.assertEqual(signal.send_robust.call_count, 1)
+        self.assert_called_app(signal, app, robust=True)
+        called_kwargs = self.get_called_kwargs(signal, robust=True)
+        self.assertEqual(called_kwargs["user"].id, user.id)
+        self.assertEqual(called_kwargs["scopes"], (scope,))
+        self.assertEqual(called_kwargs["state"], state)
+        self.assertEqual(called_kwargs["request"].wechat_app.name, app.name)
 
     def dummy_receiver(self, **kwargs):
         return patch("{0}.{1}".format(

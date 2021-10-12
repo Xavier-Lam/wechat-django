@@ -9,7 +9,7 @@ from wechatpy.parser import parse_message
 
 from wechat_django.enums import AppType, EncryptStrategy, WeChatOAuthScope
 from wechat_django.exceptions import AbilityError
-from wechat_django.messagehandler import PlainTextReply, reply2send
+from wechat_django.messagehandler.base import PlainTextReply, reply2send
 from wechat_django.utils.wechatpy import WeChatClient, WeChatOAuth
 from wechat_django.utils.crypto import crypto
 from wechat_django.utils.model import CacheField

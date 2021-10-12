@@ -8,7 +8,7 @@ from django.urls import reverse
 from ..base import WeChatDjangoTestCase
 
 
-class ViewJSSDKTestCase(WeChatDjangoTestCase):
+class JSSDKTestCase(WeChatDjangoTestCase):
     def test_jsconfig(self):
         """测试配置jssdk"""
         self.officialaccount._jsapi_ticket = "ticket"
