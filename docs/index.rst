@@ -7,9 +7,12 @@ WeChat-Django
 =========================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   handlemessage
+   configurations
+   wechatmessage
+   oauth
+   client
 
 
 .. toctree::
@@ -17,6 +20,12 @@ WeChat-Django
 
 
    signals
+
+
+.. toctree::
+   :maxdepth: 3
+
+   ref/index
 
 
 

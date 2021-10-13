@@ -1,10 +1,10 @@
 class AbilityError(NotImplementedError):
-    """应用能力缺失"""
+    """This application do not have ability to do something"""
 
 
 class BadMessageRequest(ValueError):
-    """推送消息请求异常"""
+    """Received an abnormal message in message handler"""
 
 
 class JSAPIError(ValueError):
-    """JSAPI请求错误"""
+    """An error occurred when using WeChat's JSAPI"""

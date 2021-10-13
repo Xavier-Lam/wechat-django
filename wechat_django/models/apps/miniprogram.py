@@ -17,6 +17,9 @@ class MiniProgramApplicationMixin(m.Model):
 
     @cached_property
     def client(self):
+        """
+        :returns: wechatpy.client.api.WeChatWxa
+        """
         return self.base_client.wxa
 
     def save(self, *args, **kwargs):
@@ -34,6 +37,9 @@ class MiniProgramApplication(MiniProgramApplicationMixin,
         verbose_name_plural = _("Miniprogram applications")
 
     def auth(self, code):
+        """
+        Validate user’s code got from wx.login and return an User instance
+        """
         data = self.client.code_to_session(code)
         update = {
             "unionid": data.get("unionid"),
@@ -46,6 +52,8 @@ class MiniProgramApplication(MiniProgramApplicationMixin,
 
     def decrypt_data(self, session_key, data, iv):
         """
+        Decrypt encypted data
+
         :raises: ValueError
         """
         crypto = WeChatWxaCrypto(session_key, iv, self.appid)
@@ -53,6 +61,8 @@ class MiniProgramApplication(MiniProgramApplicationMixin,
 
     def validate_data(self, session_key, data, sign):
         """
+        Validate data sent by client
+
         :raises: wechatpy.exceptions.InvalidSignatureException
         """
         check_wxa_signature(session_key, data, sign)

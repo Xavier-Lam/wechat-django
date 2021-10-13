@@ -15,6 +15,7 @@
 - [配置](#配置)
   - [核心配置](#核心配置)
   - [功能启用](#功能启用)
+  - [其他配置项](#其他配置项)
 - [快速上手](#快速上手)
   - [获取应用实例](#获取应用实例)
   - [主动调用微信接口](#主动调用微信接口)
@@ -54,6 +55,11 @@
 | WECHAT_DJANGO_ENABLE_MERCHANT | True | 是否开启微信支付服务商功能 |
 | WECHAT_DJANGO_ENABLE_THIRDPARTYPLATFORM | True | 是否开启第三方平台功能 |
 | WECHAT_DJANGO_ENABLE_WECHATPAY | True | 是否开启微信支付功能 |
+
+### 其他配置项
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| WECHAT_DJANGO_OAUTH_LOGIN_HANDLER | "wechat_django.oauth.oauth_login" | 微信网页授权默认登录处理器 |
 
 
 ## 快速上手

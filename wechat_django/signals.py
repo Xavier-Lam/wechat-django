@@ -41,14 +41,120 @@ class WeChatDjangoSignal(Signal):
 
 message_received = WeChatDjangoSignal((
     "wechat_app", "message", "request"))
+"""
+The message handler received a message
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` received the message
+
+``message``
+    The message received by handler, which is a
+    :class:`~wechatpy.messages.BaseMessage` or a
+    :class:`~wechatpy.component.BaseComponentMessage` instance
+
+``request``
+    The current :class:`~django.http.HttpRequest`
+"""
+
 message_replied = WeChatDjangoSignal((
     "wechat_app", "reply", "message", "response_content"))
+"""
+The message handler has replied a message to client
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` received the message
+
+``reply``
+    The :class:`~wechatpy.replies.BaseReply` sent to client
+
+``message``
+    The message received by handler, which is a
+    :class:`~wechatpy.messages.BaseMessage` or a
+    :class:`~wechatpy.component.BaseComponentMessage` instance
+
+``request``
+    The current :class:`~django.http.HttpRequest`
+"""
+
 message_handle_failed = WeChatDjangoSignal((
     "wechat_app", "message", "exc", "request"))
+"""
+An error occurred when handling a message
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` received the message
+
+``message``
+    The message received by handler, which is a
+    :class:`~wechatpy.messages.BaseMessage` or a
+    :class:`~wechatpy.component.BaseComponentMessage` instance
+
+``exc``
+    The raised exception
+
+``request``
+    The current :class:`~django.http.HttpRequest`
+"""
+
 message_sent = WeChatDjangoSignal(("wechat_app", "reply", "message"))
+"""
+The message handler has sent a message to client
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` received the message
+
+``reply``
+    The :class:`~wechatpy.replies.BaseReply` sent to client by calling custom
+    message api
+
+``message``
+    The message received by handler, which is a
+    :class:`~wechatpy.messages.BaseMessage` or a
+    :class:`~wechatpy.component.BaseComponentMessage` instance
+"""
+
 message_send_failed = WeChatDjangoSignal((
     "wechat_app", "reply", "message", "exc", "request"))
+"""
+An error occurred when sending a message
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` received the message
+
+``reply``
+    The :class:`~wechatpy.replies.BaseReply` sent to client by calling custom
+    message api
+
+``message``
+    The message received by handler, which is a
+    :class:`~wechatpy.messages.BaseMessage` or a
+    :class:`~wechatpy.component.BaseComponentMessage` instance
+
+``exc``
+    The raised exception
+
+``request``
+    The current :class:`~django.http.HttpRequest`
+"""
 
 
 post_oauth = WeChatDjangoSignal((
     "wechat_app", "user", "scopes", "state", "request"))
+"""
+Webpage authorize successfully
+
+``wechat_app``
+    The :class:`~wechat_django.models.apps.Application` instance
+
+``user``
+    The :class:`~wechat_django.models.User` who granted permissions to us
+
+``scopes``
+    OAuth2 scope `tuple`
+
+``state``
+    OAuth2 state
+
+``request``
+    The current :class:`~django.http.HttpRequest`
+"""

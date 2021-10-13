@@ -37,5 +37,5 @@ class WeChatSite:
         return cls.as_view()
 
 
-default_site = SimpleLazyObject(WeChatSite)
-"""默认微信站点,适用于一般状况"""
+default_site = SimpleLazyObject(WeChatSite)  # type: WeChatSite
+"""The default site for WeChat-Django."""

@@ -29,10 +29,6 @@ class OAuthSessionAuthentication(OAuthAuthentication):
             user = request.wechat_app.users.get(openid=openid)
             return user, user.openid
 
-    def set_login(self, request, user, token):
-        session_key = self.get_session_key(request.wechat_app)
-        request.session[session_key] = user.openid
-
     def get_session_key(self, app):
         return "app:{0}:session".format(app.name)
 
@@ -44,7 +40,6 @@ class OAuthCodeSessionAuthentication(OAuthSessionAuthentication):
             return None
         scopes = request.GET["scope"]
         user = self.get_user(request.wechat_app, code, scopes)
-        self.set_login(request, user, user.access_token)
         return user, user.openid
 
     def get_user(self, app, code, scopes):

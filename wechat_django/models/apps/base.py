@@ -31,6 +31,17 @@ class StorageProperty(ModelPropertyDescriptor):
 
 
 class Application(m.Model):
+    """
+    The base class of all WeChat applications, you can use this class to
+    achieve an application instance.
+
+    .. code-block:: python
+
+        from wechat_django.models import Application
+
+        app = Application.objects.get(name="appname")
+    """
+
     title = m.CharField(_("Title"), max_length=16, null=False,
                         help_text=_("The human-readable name of the "
                                     "application"))
@@ -77,6 +88,7 @@ class Application(m.Model):
 
     @cached_property
     def session(self):
+        """The storage used for store tokens"""
         return ApplicationStorage(self)
 
     @classmethod
@@ -87,6 +99,9 @@ class Application(m.Model):
 
     @classmethod
     def get_class_by_type(cls, app_type):
+        """
+        Get derived Application class according to :attr:`.type`
+        """
         import wechat_django.models.apps as apps
 
         if app_type == AppType.OFFICIALACCOUNT:
@@ -113,6 +128,7 @@ class Application(m.Model):
         return cls
 
     def logger(self, name):
+        """Get the logger of current application"""
         return logging.getLogger(name).getChild(self.name)
 
     def __str__(self):

@@ -6,6 +6,7 @@ from .mixins import AccessTokenApplicationMixin, OAuthApplicationMixin
 
 
 class OrdinaryApplication(AccessTokenApplicationMixin, Application):
+    """The default class for ordinary application"""
     class Meta:
         proxy = True
         verbose_name = _("Ordinary application")
@@ -13,6 +14,10 @@ class OrdinaryApplication(AccessTokenApplicationMixin, Application):
 
 
 class WebApplication(OAuthApplicationMixin, OrdinaryApplication):
+    """
+    `The web application
+    <https://developers.weixin.qq.com/doc/oplatform/Website_App/WeChat_Login/Wechat_Login.html>`_
+    """
     DEFAULT_AUTHORIZE_URL = "https://open.weixin.qq.com/connect/qrconnect"
     DEFAULT_SCOPES = WeChatOAuthScope.LOGIN
 

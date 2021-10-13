@@ -10,9 +10,18 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import django
+import os
+
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE",
+                      "wechat_django.tests.settings")
+
+# call django.setup to load installed apps and other stuff
+django.setup()
+
+import wechat_django
 
 
 # -- Project information -----------------------------------------------------
@@ -28,7 +37,14 @@ author = 'Xavier-Lam'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.extlinks',
+    "sphinx.ext.intersphinx",
 ]
+
+extlinks = {
+    'source': ('https://github.com/Xavier-Lam/wechat-django/%s', ''),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,7 +54,7 @@ templates_path = ['_templates']
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'zh-CN'
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -57,3 +73,14 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# Links to Python's docs should reference the most recent version of the 3.x
+# branch, which is located at this URL.
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'django': ('https://docs.djangoproject.com/en/stable',
+               'https://docs.djangoproject.com/en/stable/_objects/')
+}
+
+version = wechat_django.__version__
+release = wechat_django.__version__
