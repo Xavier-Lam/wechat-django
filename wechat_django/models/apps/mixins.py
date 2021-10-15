@@ -222,22 +222,22 @@ class OAuthApplicationMixin(m.Model):
         """
         return WeChatOAuth(self)
 
-    def auth(self, code, scopes):
+    def auth(self, code, scope):
         """
         Validate user's authorization code and return an
         :class:`~wechat_django.models.User` instance
 
         :return: `wechat_django.models.User`
         """
-        if isinstance(scopes, str):
-            scopes = (scopes,)
+        if isinstance(scope, str):
+            scope = (scope,)
 
         data = self.oauth.fetch_access_token(code)
         update = {
             "access_token": data["access_token"],
             "refresh_token": data["refresh_token"]
         }
-        if WeChatOAuthScope.USERINFO in scopes:
+        if WeChatOAuthScope.USERINFO in scope:
             user_info = self.oauth.get_user_info()
             update.update({
                 "synchronized_at": tz.now(),

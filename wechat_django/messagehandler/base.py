@@ -5,11 +5,14 @@ from wechatpy import replies
 
 
 class PlainTextReply(replies.TextReply):
-    """纯文本回复"""
+    """Non-XML text reply"""
     def __init__(self, content):
         super().__init__(content=content)
 
     def render(self):
+        """
+        Return the content string directly instead of return an XML string
+        """
         return self.content
 
 
@@ -22,9 +25,7 @@ def to_reply(reply):
 
 
 def reply2send(reply):
-    """
-    将主动回复生成的reply转换为被动回复的方法及变量
-    """
+    """Translate a positive reply to an active reply"""
     reply = to_reply(reply)
     if isinstance(reply, replies.EmptyReply):
         return None, None
@@ -101,6 +102,12 @@ class MessageResponder:
             self.handler = handler
 
     def handler(self, message, request, *args, **kwargs):
+        """
+        :param message: The message received
+        :type message: wechatpy.messages.BaseMessage
+        :param request: The comming request object
+        :type request: django.http.Request
+        """
         raise NotImplementedError
 
     def __call__(self, message, request, *args, **kwargs):
@@ -166,6 +173,35 @@ class MessageHandlerCollection(list):
     def register(self, *, app_names=None, query=None, matcher=None,
                  weight=None, match_all=False, pass_through=None,
                  ignore_exceptions=False):
+        """
+        Register a message handler
+
+        :param app_names: The names of the applications who receive the
+                          message
+        :param query: Query conditions dict, like
+                      `{"type": "text", "content": "a"}`
+        :param weight: Higher weight means this handler will be matched
+                       earlier
+        :param match_all: True if all messages should be handled by this
+                          handler
+        :param pass_through: True if the message already matched this handler
+                             keep looking for next handler
+        :param ignore_exceptions: True if you want to ignore an exception
+                                  occurred in this handler and do not
+                                  interrupt execution of following code
+
+        Example::
+
+            from wechat_django import message_handlers
+            from wechatpy import create_reply
+
+
+            @message_handlers(app_names="app_name", query={"type": "text"},
+                              pass_through=True)
+            def your_handler(message, request, *args, **kwargs):
+                return create_reply("success", message=message)
+        """
+
         if pass_through is None:
             pass_through = self.DEFAULT_PASSTHROUGH
         weight = self.DEFAULT_WEIGHT if weight is None else weight

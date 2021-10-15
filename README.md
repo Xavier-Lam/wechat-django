@@ -12,10 +12,6 @@
   - [初次安装](#初次安装)
   - [直接加入项目](#直接加入项目)
   - [更新](#更新)
-- [配置](#配置)
-  - [核心配置](#核心配置)
-  - [功能启用](#功能启用)
-  - [其他配置项](#其他配置项)
 - [快速上手](#快速上手)
   - [获取应用实例](#获取应用实例)
   - [主动调用微信接口](#主动调用微信接口)
@@ -41,25 +37,6 @@
 
 1. 运行 **pip install -U wechat-django**
 2. 运行 **python manage.py migrate** 来更新数据库结构
-
-
-## 配置
-### 核心配置
-| 参数 | 默认值 | 说明 |
-| --- | --- | --- |
-| WECHAT_DJANGO_SECRET_KEY | django.conf.settings.SECRET_KEY | 加密微信各密钥(如AppSecret,API_Key等)用密钥,如无需加密,请置为`None`.**注意,该密钥一旦修改,所有已存储密钥将失效**,修改密钥请自行做好密钥迁移工作 |
-
-### 功能启用
-| 参数 | 默认值 | 说明 |
-| --- | --- | --- |
-| WECHAT_DJANGO_ENABLE_MERCHANT | True | 是否开启微信支付服务商功能 |
-| WECHAT_DJANGO_ENABLE_THIRDPARTYPLATFORM | True | 是否开启第三方平台功能 |
-| WECHAT_DJANGO_ENABLE_WECHATPAY | True | 是否开启微信支付功能 |
-
-### 其他配置项
-| 参数 | 默认值 | 说明 |
-| --- | --- | --- |
-| WECHAT_DJANGO_OAUTH_LOGIN_HANDLER | "wechat_django.oauth.oauth_login" | 微信网页授权默认登录处理器 |
 
 
 ## 快速上手

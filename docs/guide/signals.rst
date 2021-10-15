@@ -29,18 +29,21 @@ Message handler signals
 --------------------------
 
 .. autodata:: wechat_django.signals.message_received
+   :annotation:
 
 
 ``message_replied``
 --------------------------
 
 .. autodata:: wechat_django.signals.message_replied
+   :annotation:
 
 
 ``message_handle_failed``
 --------------------------
 
 .. autodata:: wechat_django.signals.message_handle_failed
+   :annotation:
 
 
 ``message_sent``
@@ -48,6 +51,7 @@ Message handler signals
 
 
 .. autodata:: wechat_django.signals.message_sent
+   :annotation:
 
 
 ``message_send_failed``
@@ -55,6 +59,7 @@ Message handler signals
 
 
 .. autodata:: wechat_django.signals.message_send_failed
+   :annotation:
 
 
 Webpage authorization signals
@@ -66,3 +71,4 @@ Webpage authorization signals
 
 
 .. autodata:: wechat_django.signals.post_oauth
+   :annotation:

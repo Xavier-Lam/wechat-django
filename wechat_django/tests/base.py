@@ -134,18 +134,16 @@ class WeChatDjangoTestCase(TestCase):
         superuser.save()
 
     def setUp(self):
-        self.miniprogram = self.get_app("miniprogram")
-        self.officialaccount = self.get_app("officialaccount")
-        self.pay = self.get_app("pay")
-        self.merchant = self.get_app("merchant")
-        self.hosted_pay = self.get_app("hosted_pay")
-        self.thirdpartyplatform = self.get_app("thirdpartyplatform")
-        self.hosted_miniprogram = self.get_app(
-            "thirdpartyplatform.miniprogram")
-        self.hosted_officialaccount = self.get_app(
-            "thirdpartyplatform.officialaccount")
-        self.unknown = self.get_app("unknown")
-        self.webapp = self.get_app("webapp")
+        self.miniprogram = self.get_app("miniprogram")  # type: apps.MiniProgramApplication  # noqa
+        self.officialaccount = self.get_app("officialaccount")  # type: apps.OfficialAccountApplication  # noqa
+        self.pay = self.get_app("pay")  # type: apps.PayApplication  # noqa
+        self.merchant = self.get_app("merchant")  # type: apps.PayMerchant  # noqa
+        self.hosted_pay = self.get_app("hosted_pay")  # type: apps.HostedPayApplication  # noqa
+        self.thirdpartyplatform = self.get_app("thirdpartyplatform")  # type: apps.ThirdPartyPlatform  # noqa
+        self.hosted_miniprogram = self.get_app("thirdpartyplatform.miniprogram")  # type: apps.MiniProgramAuthorizerApplication  # noqa
+        self.hosted_officialaccount = self.get_app("thirdpartyplatform.officialaccount")  # type: apps.OfficialAccountAuthorizerApplication  # noqa
+        self.unknown = self.get_app("unknown")  # type: apps.OrdinaryApplication  # noqa
+        self.webapp = self.get_app("webapp")  # type: apps.WebApplication  # noqa
 
         self.superadmin = User.objects.get(username="superadmin")
 

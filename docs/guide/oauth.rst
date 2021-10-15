@@ -51,7 +51,7 @@ Non-class-based view
 When you are writing a non-class-based view, you can use :func:`~wechat_oauth`
 to decorate your view.
 
-.. autofunction:: wechat_oauth
+.. autodecorator:: wechat_oauth
 
 
 Setup your own authenticator

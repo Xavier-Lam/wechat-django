@@ -139,7 +139,7 @@ An error occurred when sending a message
 
 
 post_oauth = WeChatDjangoSignal((
-    "wechat_app", "user", "scopes", "state", "request"))
+    "wechat_app", "user", "scope", "state", "request"))
 """
 Webpage authorize successfully
 
@@ -149,7 +149,7 @@ Webpage authorize successfully
 ``user``
     The :class:`~wechat_django.models.User` who granted permissions to us
 
-``scopes``
+``scope``
     OAuth2 scope `tuple`
 
 ``state``

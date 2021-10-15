@@ -9,7 +9,7 @@ Core configuartions
 WECHAT_DJANGO_SECRET_KEY
 +++++++++++++++++++++++++++
 
-* Default: django.conf.settings.SECRET_KEY
+* Default: `django.conf.settings.SECRET_KEY`
 
 The key for secret keys (such as `AppSecret`, `API_KEY`) encrypting when
 persisted, if you don't want to encrypt your keys, set the value to `None`

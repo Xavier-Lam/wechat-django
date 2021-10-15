@@ -6,3 +6,4 @@ Models
    :maxdepth: 1
 
    applications
+   user

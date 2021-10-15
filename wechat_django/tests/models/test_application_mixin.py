@@ -13,8 +13,8 @@ class ApplicationMixinTestCase(WeChatDjangoTestCase):
         """测试oauth的auth方法"""
         # 测试base scope
         code = "code"
-        openid = "ModelMixinTestCase_test_oauth"
-        scopes = WeChatOAuthScope.BASE
+        openid = "ModelMixinTestCase_test_oauth_auth"
+        scope = WeChatOAuthScope.BASE
         access_token = "ACCESS_TOKEN"
         refresh_token = "REFRESH_TOKEN"
         data = {
@@ -22,11 +22,11 @@ class ApplicationMixinTestCase(WeChatDjangoTestCase):
             "expires_in": 7200,
             "refresh_token": refresh_token,
             "openid": openid,
-            "scope": scopes
+            "scope": scope
         }
         with patch.object(WeChatOAuth, "fetch_access_token",
                           return_value=data):
-            user = self.officialaccount.auth(code, scopes)
+            user = self.officialaccount.auth(code, scope)
             WeChatOAuth.fetch_access_token.assert_called_once_with(code)
             self.assertTrue(user.created)
             self.assertEqual(user.app_id, self.officialaccount.id)
@@ -35,7 +35,7 @@ class ApplicationMixinTestCase(WeChatDjangoTestCase):
             self.assertEqual(user.refresh_token, refresh_token)
 
         # 测试userinfo scope
-        scopes = WeChatOAuthScope.USERINFO
+        scope = WeChatOAuthScope.USERINFO
         access_token = "ACCESS_TOKEN2",
         refresh_token = "REFRESH_TOKEN2"
         data = {
@@ -43,7 +43,7 @@ class ApplicationMixinTestCase(WeChatDjangoTestCase):
             "expires_in": 7200,
             "refresh_token": refresh_token,
             "openid": openid,
-            "scope": scopes
+            "scope": scope
         }
         userinfo_data = {
             "openid": openid,
@@ -61,7 +61,7 @@ class ApplicationMixinTestCase(WeChatDjangoTestCase):
             patch.object(
                 WeChatOAuth, "get_user_info",
                 return_value=userinfo_data.copy()):
-            user = self.officialaccount.auth(code, scopes)
+            user = self.officialaccount.auth(code, scope)
             WeChatOAuth.fetch_access_token.assert_called_once_with(code)
             self.assertFalse(user.created)
             self.assertEqual(user.app_id, self.officialaccount.id)

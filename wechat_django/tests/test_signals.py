@@ -239,7 +239,7 @@ class SignalTestCase(WeChatDjangoTestCase):
         self.assert_called_app(signal, app, robust=True)
         called_kwargs = self.get_called_kwargs(signal, robust=True)
         self.assertEqual(called_kwargs["user"].id, user.id)
-        self.assertEqual(called_kwargs["scopes"], (scope,))
+        self.assertEqual(called_kwargs["scope"], (scope,))
         self.assertEqual(called_kwargs["state"], state)
         self.assertEqual(called_kwargs["request"].wechat_app.name, app.name)
 

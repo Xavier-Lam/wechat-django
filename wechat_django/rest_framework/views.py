@@ -52,6 +52,10 @@ except ImportError:
                     request._authenticator = authenticator
                     request.user, request.auth = user_auth_tuple
                     return
+            else:
+                from django.contrib.auth.models import AnonymousUser
+
+                request.user, request.auth = AnonymousUser(), None
 
         def check_permissions(self, request):
             """

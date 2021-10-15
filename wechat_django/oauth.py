@@ -16,56 +16,72 @@ class WeChatOAuthViewMixin(WeChatViewMixin):
     oauth_required = True
     """If true, this view is accessible only when authorized"""
 
-    scopes = None
+    scope = None
     """The OAuth2 scope parameter"""
-
-    _redirect_uri = ""
 
     state = ""
     """The OAuth2 state parameter"""
 
-    authentication_classes = (OAuthSessionAuthentication,)
+    _redirect_uri = None
 
     @property
     def redirect_uri(self):
         """Redirect callback URL after authorization."""
         request = self.request
         return request.build_absolute_uri(
-            # 优先已配置的redirect_uri
+            # 优先取配置的
             self._redirect_uri
             # ajax page取referrer
             or (request.is_ajax() and request.META.get("HTTP_REFERER"))
-            # 使用当前url
-            or None
-        )
+            # 否则取当前地址
+            or None)
 
     @redirect_uri.setter
     def redirect_uri(self, value):
         self._redirect_uri = value
 
-    def wechat_authentication(self, request, redirect_uri=None, scopes=None,
+    authentication_classes = (OAuthSessionAuthentication,)
+
+    def __init__(self, **initKwargs):
+        # 检查属性正确性
+        app_name = initKwargs.pop("wechat_app_name", self.wechat_app_name)
+        assert app_name and isinstance(app_name, str),\
+            _("Incorrect wechat_app_name")
+        initKwargs["wechat_app_name"] = app_name
+
+        # 对于必须授权的请求 在permissions中添加WeChatAuthenticated
+        required = initKwargs.pop("oauth_required", self.oauth_required)
+        initKwargs["oauth_required"] = required
+
+        # 重新处理permission_classes
+        permission_classes = initKwargs.pop("permission_classes",
+                                            self.permission_classes)
+        if required and IsAuthenticated not in permission_classes:
+            permission_classes = [IsAuthenticated] + list(permission_classes)
+        initKwargs["permission_classes"] = tuple(permission_classes)
+
+        super().__init__(**initKwargs)
+
+    def wechat_authentication(self, request, redirect_uri=None, scope=None,
                               state=""):
         """
         Called when a WeChat webpage authorization is required, returns a
         :class:`~django.http.HttpResponse` to client.
         """
         redirect_uri = redirect_uri or self.redirect_uri
+        scope = scope or self.scope
         state = state or self.state
 
-        url = self.get_redirect_uri(request, redirect_uri, scopes, state)
+        url = self.get_redirect_uri(request, redirect_uri, scope, state)
         return self.unauthorized_response(url, request)
 
-    def get_redirect_uri(self, request, redirect_uri, scopes, state):
+    def get_redirect_uri(self, request, redirect_uri, scope, state):
         """
         Get the redirect uri parameter sent to WeChat, in most case, it
         returns the proxy page's url.
         """
         return request.wechat_app.build_oauth_url(
-            request,
-            next=redirect_uri,
-            scope=scopes or self.scopes,
-            state=state
-        )
+            request, next=redirect_uri, scope=scope, state=state)
 
     def unauthorized_response(self, url, request):
         """
@@ -82,27 +98,6 @@ class WeChatOAuthViewMixin(WeChatViewMixin):
 
     def get_app_name(self, request, *args, **kwargs):
         return self.wechat_app_name
-
-    @classmethod
-    def as_view(cls, **initKwargs):
-        # 检查属性正确性
-        app_name = initKwargs.pop("wechat_app_name", cls.wechat_app_name)
-        assert app_name and isinstance(app_name, str),\
-            _("Incorrect wechat_app_name")
-        initKwargs["wechat_app_name"] = app_name
-
-        # 对于必须授权的请求 在permissions中添加WeChatAuthenticated
-        required = initKwargs.pop("oauth_required", cls.oauth_required)
-        initKwargs["oauth_required"] = required
-
-        # 重新处理permission_classes
-        permission_classes = initKwargs.pop("permission_classes",
-                                            cls.permission_classes)
-        if required and IsAuthenticated not in permission_classes:
-            permission_classes = [IsAuthenticated] + list(permission_classes)
-        initKwargs["permission_classes"] = tuple(permission_classes)
-
-        return super().as_view(**initKwargs)
 
 
 class WeChatOAuthView(WeChatOAuthViewMixin, APIView):
@@ -144,10 +139,9 @@ def wechat_oauth(app_name, methods="GET", unauthorized_response=None,
     view_cls = view_cls or WeChatOAuthView
 
     def create_view(func):
-        attrs = {}
+        func = func if bind else staticmethod(func)
         initKwargs = {"wechat_app_name": app_name}
-        if bind:
-            attrs.update({method.lower(): func for method in methods})
+        attrs = {method.lower(): func for method in methods}
         if unauthorized_response is not None:
             attrs["unauthorized_response"] = unauthorized_response\
                 if not isinstance(unauthorized_response, HttpResponse)\
@@ -160,15 +154,8 @@ def wechat_oauth(app_name, methods="GET", unauthorized_response=None,
             else:
                 initKwargs[attr] = value
 
-        if attrs:
-            View = type(view_cls.__name__, (view_cls,), attrs)
-        else:
-            View = view_cls
-        view = View.as_view(**kwargs)
-        if not bind:
-            for method in methods:
-                setattr(view, method.lower(), func)
-        return view
+        cls = type(view_cls.__name__, (view_cls,), attrs)
+        return cls.as_view(**initKwargs)
 
     return create_view
 

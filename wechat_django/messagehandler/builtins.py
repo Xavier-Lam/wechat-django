@@ -18,7 +18,7 @@ def subscribe_matcher(message, request, *args, **kwargs):
 
 @builtin_handlers(matcher=subscribe_matcher)
 def subscribe(message, request, *args, **kwargs):
-    """处理关注与取消关注"""
+    """Handle subscribe and unsubscribe events"""
     # 关注事件
     if message.event in ("subscribe", "subscribe_scan"):
         # 首次订阅
@@ -42,7 +42,7 @@ def thirdpartyplatform_ticket_matcher(message, request, *args, **kwargs):
 
 @builtin_handlers(matcher=thirdpartyplatform_ticket_matcher)
 def thirdpartyplatform_ticket(message, request, *args, **kwargs):
-    """接收第三方平台ticket"""
+    """Receive third party platform tickets"""
     request.wechat_app.session.set("component_verify_ticket",
                                    message.verify_ticket)
     return PlainTextReply("success")
@@ -55,7 +55,7 @@ def thirdpartyplatform_authorize_matcher(message, request, *args, **kwargs):
 
 @builtin_handlers(matcher=thirdpartyplatform_authorize_matcher)
 def thirdpartyplatform_authorize(message, request, *args, **kwargs):
-    """接收第三方平台授权变更"""
+    """Receive third party platform authorization status change events"""
     request.wechat_app.query_auth(message.authorization_code)
     return PlainTextReply("success")
 
@@ -67,7 +67,7 @@ def thirdpartyplatform_unauthorize_matcher(message, request, *args, **kwargs):
 
 @builtin_handlers(matcher=thirdpartyplatform_unauthorize_matcher)
 def thirdpartyplatform_unauthorize(message, request, *args, **kwargs):
-    """第三方平台取消授权"""
+    """Handle third party platform authorization cancelled events"""
     app = request.wechat_app.children.get(appid=message.authorizer_appid)
     del app._access_token
     del app.refresh_token

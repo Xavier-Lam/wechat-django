@@ -4,4 +4,6 @@ from .base import MessageHandlerCollection
 
 
 message_handlers = SimpleLazyObject(MessageHandlerCollection)  # type: MessageHandlerCollection  # noqa
-"""The default message handler, it can counter most cases."""
+"""
+The default message handler, it can cope with most cases.
+"""

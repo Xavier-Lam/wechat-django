@@ -38,9 +38,9 @@ class OAuthCodeSessionAuthentication(OAuthSessionAuthentication):
         code = request.GET["code"]
         if not code:
             return None
-        scopes = request.GET["scope"]
-        user = self.get_user(request.wechat_app, code, scopes)
+        scope = request.GET["scope"]
+        user = self.get_user(request.wechat_app, code, scope)
         return user, user.openid
 
-    def get_user(self, app, code, scopes):
-        return app.auth(code, scopes)
+    def get_user(self, app, code, scope):
+        return app.auth(code, scope)

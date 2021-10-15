@@ -23,6 +23,7 @@ class WeChatDjangoConfig(AppConfig):
                           admin.app.payapplication.PayMerchantAdmin)
             site.register(models.apps.HostedPayApplication,
                           admin.app.payapplication.HostedPayAdmin)
+
         if settings.get("ENABLE_THIRDPARTYPLATFORM"):
             default_site.register(views.messagehandler.AuthorizerHandler)
             default_site.register(
@@ -35,6 +36,7 @@ class WeChatDjangoConfig(AppConfig):
             site.register(
                 models.apps.AuthorizerApplication,
                 admin.app.thirdpartyplatform.AuthorizerApplicationAdmin)
+
         if settings.get("ENABLE_WECHATPAY"):
             site.register(models.apps.PayApplication,
                           admin.app.payapplication.PayApplicationAdmin)
