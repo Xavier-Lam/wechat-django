@@ -12,3 +12,4 @@ User Guide
    thirdpartyplatform
    configurations
    signals
+   restframework

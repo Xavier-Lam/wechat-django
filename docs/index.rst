@@ -10,17 +10,22 @@ WeChat-Django
 extension for WeChat applications relies on
 `wechatpy <https://github.com/wechatpy/wechatpy>`_.
 
-It provides following functions:
+It provides the following functions:
 
-* Receive and handling
+* Handling
   `messages <https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html>`_
   sent by WeChat server
 * Host a
   `WeChat web application <https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html>`_
-* Calling WeChat APIs
+* Call WeChat APIs
 * Host a
   `third party platform <https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/2.0/product/Third_party_platform_appid.html>`_
 * A builtin admin
+
+
+It is a complete different version and incompatitble with the former one
+(v0.3), you can check out :doc:`oldversion` chapter to find out what the
+differences are.
 
 
 Contents
@@ -50,6 +55,7 @@ Contents
    :maxdepth: 1
 
    contributing
+   oldversion
    changelog
 
 

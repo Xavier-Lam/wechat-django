@@ -88,7 +88,8 @@ html_static_path = ['_static']
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'django': ('https://docs.djangoproject.com/en/stable',
-               'https://docs.djangoproject.com/en/stable/_objects/')
+               'https://docs.djangoproject.com/en/stable/_objects/'),
+    'wechatpy': ('http://docs.wechatpy.org/zh_CN/stable', None)
 }
 
 version = wechat_django.__version__

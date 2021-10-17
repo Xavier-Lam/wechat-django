@@ -37,8 +37,7 @@ redirecting to the WeChat's authentication page.
 
 After user has granted permissions, the request will turn to our proxy page,
 in which we exchange the authorized code to openid and access token, and set
-the openid to django's builtin
-`session <https://docs.djangoproject.com/en/stable/topics/http/sessions/>`_.
+the openid to django's builtin :doc:`session <django:topics/http/sessions>`.
 
 Finally, we will return to the origin page user visited, now the request is
 authorized, you can access current user now.
@@ -57,7 +56,7 @@ to decorate your view.
 Setup your own authenticator
 ----------------------------------
 
-In most case, you will have your own user model in your business instead use
+In most cases, you will have your own user model in your business instead use
 our :class:`~wechat_django.models.User` class directly. You need to write and
 use your own
 `Authenticator <https://www.django-rest-framework.org/api-guide/authentication/>`_.
@@ -68,7 +67,7 @@ override the
 :func:`~wechat_django.authentication.OAuthSessionAuthentication.authenticate`
 method.
 
-In the override, you need call the parent authenticate first to get the
+In the override, you need to call the parent authenticate first to get the
 wechat_user instance, then using the instance to get your user instance.
 
 .. code-block:: python
@@ -92,7 +91,7 @@ wechat_user instance, then using the instance to get your user instance.
 
 In your view declaration, replace the
 :attr:`~wechat_django.oauth.WeChatOAuthView.authentication_classes` attribute
-with the authenticator you written.
+with the authenticator you have written.
 
 .. code-block:: python
 
@@ -111,7 +110,7 @@ By default, WeChat-Django automaticly response a `302 Found` to client, which
 will eventually return to current page. But when the request comes from an
 ajax request, it will not work properly. In this case, you should override the
 :func:`~wechat_django.oauth.WeChatOAuthViewMixin.unauthorized_response` method
-to custom the response send to client.
+to customise the response sends to client.
 
 .. code-block:: python
 
@@ -128,9 +127,9 @@ to custom the response send to client.
 Replace the default session
 ----------------------------------
 
-We use django's session to store user credential. Sometimes, you may need an
-alternative option to replace the default session, such as you interact with
-your client by using a token on request header instead of cookies.
+We use django's session to store user credentials. Sometimes, you may need an
+alternative option to replace the default session, such as when you interact
+with your client by using a token on request header instead of cookies.
 
 Write your own oauth login handler by replicate :func:`oauth_login`, and
 change the :ref:`WECHAT-DJANGO-OAUTH-LOGIN-HANDLER` setting to your login

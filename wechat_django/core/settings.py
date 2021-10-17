@@ -9,6 +9,7 @@ ENABLE_WECHATPAY = True
 
 SECRET_KEY = settings.SECRET_KEY
 
+CAN_DELETE_APPLICATION = True
 OAUTH_LOGIN_HANDLER = "wechat_django.oauth.oauth_login"
 
 

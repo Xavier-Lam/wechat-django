@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from wechat_django.core import settings
 from wechat_django.enums import AppType
 from wechat_django.models.apps import Application
 from wechat_django.utils.crypto import crypto
@@ -195,6 +196,11 @@ class BaseApplicationAdmin(admin.ModelAdmin):
     @property
     def query_app_types(self):
         return self.allowed_app_types
+
+    def has_delete_permission(self, request, obj=None):
+        if not settings.get("CAN_DELETE_APPLICATION"):
+            return False
+        return super().has_delete_permission(request, obj=obj)
 
 
 class HostApplicationAdmin(BaseApplicationAdmin):

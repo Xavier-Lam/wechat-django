@@ -41,6 +41,19 @@ WECHAT_DJANGO_ENABLE_WECHATPAY            True            WeChat Pay
 General settings
 ------------------------
 
+.. _WECHAT-DJANGO-CAN-DELETE-APPLICATION:
+
+``WECHAT_DJANGO_CAN_DELETE_APPLICATION``
+++++++++++++++++++++++++++++++++++++++++++
+
+* Default: ``True``
+
+Sometimes the WeChat applications are too important for your project to delete
+them, leave the option to `False`, so that no one can delete applications
+from admin site.
+
+
+
 .. _WECHAT-DJANGO-OAUTH-LOGIN-HANDLER:
 
 ``WECHAT_DJANGO_OAUTH_LOGIN_HANDLER``
