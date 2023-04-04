@@ -24,10 +24,10 @@ class Article(WeChatModel):
     content_source_url = m.CharField(
         _("content source url"), max_length=256)
 
-    need_open_comment = m.NullBooleanField(
-        _("need open comment"), default=None)
-    only_fans_can_comment = m.NullBooleanField(
-        _("only fans can comment"), default=None)
+    need_open_comment = m.BooleanField(
+        _("need open comment"), null=True, default=None)
+    only_fans_can_comment = m.BooleanField(
+        _("only fans can comment"), null=True, default=None)
 
     index = m.PositiveSmallIntegerField(_("index"))
     _thumb_url = m.CharField(

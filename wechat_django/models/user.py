@@ -63,7 +63,7 @@ class WeChatUser(WeChatModel):
     country = m.CharField(_("country"), max_length=24, null=True)
     language = m.CharField(_("language"), max_length=24, null=True)
 
-    subscribe = m.NullBooleanField(_("is subscribed"), null=True)
+    subscribe = m.BooleanField(_("is subscribed"), null=True)
     subscribe_time = m.IntegerField(_("subscribe time"), null=True)
     subscribe_scene = m.CharField(
         _("subscribe scene"), max_length=32, null=True,

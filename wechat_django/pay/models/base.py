@@ -51,7 +51,7 @@ class PayDateTimeField(m.DateTimeField):
         return tz.make_aware(dt, cls._tz)
 
 
-class PayBooleanField(m.NullBooleanField):
+class PayBooleanField(m.BooleanField):
     def to_python(self, value):
         if value in (True, "Y"):
             return True
