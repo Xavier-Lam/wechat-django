@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import jsonfield.fields
+import django.db.models.fields
 import wechat_django.pay.models.base
 
 from wechat_django.models.permission import upgrade_perms, downgrade_perms
@@ -40,10 +40,10 @@ class Migration(migrations.Migration):
                 ('openid', models.CharField(max_length=128, null=True, verbose_name='openid')),
                 ('sub_openid', models.CharField(max_length=128, null=True, verbose_name='sub openid')),
                 ('receipt', models.CharField(choices=[(None, 'NONE'), ('Y', 'TRUE')], default=None, max_length=8, null=True, verbose_name='recept')),
-                ('scene_info', jsonfield.fields.JSONField(max_length=256, null=True, verbose_name='scene_info')),
+                ('scene_info', models.JSONField(max_length=256, null=True, verbose_name='scene_info')),
                 ('comment', models.TextField(blank=True, verbose_name='comment')),
-                ('ext_info', jsonfield.fields.JSONField(default=dict, editable=False)),
-                ('_call_args', jsonfield.fields.JSONField(db_column='call_args', default=dict, editable=False, null=True)),
+                ('ext_info', models.JSONField(default=dict, editable=False)),
+                ('_call_args', models.JSONField(db_column='call_args', default=dict, editable=False, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
             ],
@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
                 ('detail', models.TextField(max_length=8192, null=True, verbose_name='detail')),
                 ('is_subscribe', wechat_django.pay.models.base.PayBooleanField(null=True, verbose_name='is_subscribe')),
                 ('sub_is_subscribe', wechat_django.pay.models.base.PayBooleanField(null=True, verbose_name='sub_is_subscribe')),
-                ('ext_info', jsonfield.fields.JSONField(default=dict, editable=False)),
+                ('ext_info', models.JSONField(default=dict, editable=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
                 ('order', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='result', to='wechat_django_pay.UnifiedOrder')),

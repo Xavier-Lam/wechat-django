@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import jsonfield.fields
+import django.db.models.fields
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('type', models.PositiveSmallIntegerField()),
-                ('auth', jsonfield.fields.JSONField(default={})),
+                ('auth', models.JSONField(default={})),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sessions', to='wechat_django.WeChatUser')),
