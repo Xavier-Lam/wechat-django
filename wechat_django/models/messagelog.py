@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models as m
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from jsonfield import JSONField
+from django.db.models import JSONField
 from wechatpy.events import BaseEvent
 
 from ..utils.model import enum2choices

@@ -7,7 +7,7 @@ from django.db import models as m
 from django.dispatch import receiver
 from django.utils import timezone as tz
 from django.utils.translation import gettext_lazy as _
-from jsonfield import JSONField
+from django.db.models import JSONField
 from wechatpy.pay.utils import get_external_ip
 
 from wechat_django.models import WeChatModel
