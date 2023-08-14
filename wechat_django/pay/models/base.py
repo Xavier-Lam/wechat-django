@@ -5,6 +5,8 @@ from django.db import models as m
 from django.utils import timezone as tz
 import six
 
+import pytz
+
 from wechat_django.models.base import create_shortcut
 from . import WeChatPay
 
@@ -14,7 +16,7 @@ paymethod = create_shortcut(WeChatPay)
 
 class PayDateTimeField(m.DateTimeField):
     _format = "%Y%m%d%H%M%S"
-    _tz = tz.pytz.timezone("Asia/Shanghai")
+    _tz = pytz.timezone("Asia/Shanghai")
 
     def to_python(self, value):
         try:

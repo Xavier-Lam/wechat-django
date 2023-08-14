@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import pytz
+
 from uuid import uuid4
 
 from django.utils import timezone as tz
@@ -66,7 +68,7 @@ class OrderTestCase(WeChatPayTestCase):
         full = self.full_example
         full["openid"] = "openid"
         # 将时间转换为字符串
-        timezone = tz.pytz.timezone("Asia/Shanghai")
+        timezone = pytz.timezone("Asia/Shanghai")
         timeformat = "%Y%m%d%H%M%S"
         request = self.rf().get("/")
         order = self.app.pay.create_order(request=request, **full)
