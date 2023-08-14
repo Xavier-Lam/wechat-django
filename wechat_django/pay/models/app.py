@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models as m
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from wechat_django.models import WeChatApp
 from wechat_django.utils.func import Static

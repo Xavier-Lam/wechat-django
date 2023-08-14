@@ -5,7 +5,7 @@ import re
 
 from django.db import models as m, transaction
 from django.utils import timezone as tz
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.functional import cached_property
 from wechatpy.constants import WeChatErrorCode
 from wechatpy.exceptions import WeChatClientException

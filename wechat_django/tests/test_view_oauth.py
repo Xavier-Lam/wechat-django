@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 
-from django.conf.urls import url
+from django.urls import re_path as url
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import response
 from django.test import RequestFactory

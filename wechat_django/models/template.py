@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from ..constants import AppType
 from ..exceptions import WeChatAbilityError

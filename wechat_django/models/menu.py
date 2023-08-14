@@ -5,7 +5,7 @@ from hashlib import md5
 import json
 
 from django.db import models as m, transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.model import enum2choices

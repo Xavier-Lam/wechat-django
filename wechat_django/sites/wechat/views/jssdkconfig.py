@@ -8,7 +8,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.http.response import Http404, HttpResponse
 from django.shortcuts import render
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from wechatpy.exceptions import WeChatClientException
 
 from wechat_django.constants import AppType

@@ -5,7 +5,7 @@ import re
 
 from django.db import models as m
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
 
 from ..utils.model import enum2choices, model_fields
