@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import response
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from wechatpy.exceptions import InvalidSignatureException
 
 from wechat_django.sites.wechat import default_site, WeChatView

@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from functools import wraps
 
-from django.conf.urls import include, url
+from django.conf.urls import include
+from django.urls import re_path as url
 from django.contrib import admin
 from django.http import response
 from django.urls import NoReverseMatch, resolve, Resolver404, reverse

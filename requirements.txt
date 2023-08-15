@@ -1,5 +1,5 @@
-Django>=1.11
+Django>=3.2
 django-object-tool>=0.0.9
-jsonfield>=2.0.2,<3.0.0
+pytz
 requests>=2.4.3
 wechatpy>=1.8.3

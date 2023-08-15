@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import jsonfield.fields
+import django.db.models.fields
 
 
 class Migration(migrations.Migration):
@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=16, verbose_name='name')),
                 ('menuid', models.IntegerField(blank=True, null=True, verbose_name='menuid')),
                 ('type', models.CharField(blank=True, choices=[('click', 'CLICK'), ('miniprogram', 'MINIPROGRAM'), ('view', 'VIEW')], max_length=20, null=True, verbose_name='type')),
-                ('content', jsonfield.fields.JSONField()),
+                ('content', models.JSONField()),
                 ('weight', models.IntegerField(default=0, verbose_name='weight')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
@@ -103,7 +103,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('msg_id', models.BigIntegerField(null=True, verbose_name='msgid')),
                 ('type', models.CharField(choices=[('event', 'EVENT'), ('image', 'IMAGE'), ('link', 'LINK'), ('location', 'LOCATION'), ('shortvideo', 'SHORTVIDEO'), ('text', 'TEXT'), ('video', 'VIDEO'), ('voice', 'VOICE')], max_length=24, verbose_name='message type')),
-                ('content', jsonfield.fields.JSONField(verbose_name='content')),
+                ('content', models.JSONField(verbose_name='content')),
                 ('direct', models.BooleanField(default=False, verbose_name='direct')),
                 ('raw', models.TextField(blank=True, default=None, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
@@ -119,7 +119,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('type', models.CharField(choices=[('custom', 'CUSTOM'), ('forward', 'FORWARD'), ('image', 'IMAGE'), ('music', 'MUSIC'), ('news', 'NEWS'), ('text', 'TEXT'), ('video', 'VIDEO'), ('voice', 'VOICE')], db_column='type', max_length=16, verbose_name='type')),
-                ('_content', jsonfield.fields.JSONField(db_column='content', default=dict)),
+                ('_content', models.JSONField(db_column='content', default=dict)),
                 ('weight', models.IntegerField(default=0, verbose_name='weight')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created_at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated_at')),
@@ -136,7 +136,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('type', models.CharField(choices=[('all', 'ALL'), ('contain', 'CONTAIN'), ('equal', 'EQUAL'), ('event', 'EVENT'), ('eventkey', 'EVENTKEY'), ('msg_type', 'MSGTYPE'), ('regex', 'REGEX')], max_length=16, verbose_name='type')),
-                ('_content', jsonfield.fields.JSONField(blank=True, db_column='content')),
+                ('_content', models.JSONField(blank=True, db_column='content')),
                 ('weight', models.IntegerField(default=0, verbose_name='weight')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created_at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated_at')),
@@ -162,8 +162,8 @@ class Migration(migrations.Migration):
                 ('encoding_aes_key', models.CharField(blank=True, max_length=43, null=True, verbose_name='EncodingAESKey')),
                 ('encoding_mode', models.PositiveSmallIntegerField(choices=[(0, 'PLAIN'), (2, 'SAFE')], default=0, verbose_name='encoding mode')),
                 ('flags', models.IntegerField(default=0, verbose_name='flags')),
-                ('ext_info', jsonfield.fields.JSONField(db_column='ext_info', default={})),
-                ('configurations', jsonfield.fields.JSONField(db_column='configurations', default={})),
+                ('ext_info', models.JSONField(db_column='ext_info', default={})),
+                ('configurations', models.JSONField(db_column='configurations', default={})),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
             ],

@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models as m
-from django.utils.translation import ugettext_lazy as _
-from jsonfield import JSONField
+from django.utils.translation import gettext_lazy as _
+from django.db.models import JSONField
 
 from wechat_django.models import WeChatModel
 from wechat_django.utils.model import enum2choices, model_fields

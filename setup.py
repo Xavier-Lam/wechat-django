@@ -3,9 +3,8 @@ from __future__ import unicode_literals
 
 import os
 import re
-from setuptools import find_packages, setup
-import sys
 
+from setuptools import find_packages, setup
 
 package = dict()
 
@@ -24,13 +23,6 @@ with open("requirements.txt") as f:
 
 keywords = ["WeChat", "weixin", "wx", "WeChatPay", "micromessenger", "django",
             "微信", "微信支付"]
-if sys.version_info.major == 2:
-    keywords.remove("微信")
-    keywords.remove("微信支付")
-else:
-    # 将python3的依赖替换为jsonfield2,以解决与高版本django兼容性问题
-    requirements.remove("jsonfield>=2.0.2,<3.0.0")
-    requirements.append("jsonfield2>=3.0.0,<3.1.0")
 
 setup(
     name=package["__title__"],
@@ -50,11 +42,10 @@ setup(
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Environment :: Web Environment",
-        "Framework :: Django :: 1.11",
-        "Framework :: Django :: 2.0",
-        "Framework :: Django :: 2.1",
-        "Framework :: Django :: 2.2",
-        "Framework :: Django :: 3.0",
+        "Framework :: Django :: 3.2",
+        "Framework :: Django :: 4.0",
+        "Framework :: Django :: 4.1",
+        "Framework :: Django :: 4.2",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: Chinese (Simplified)",
@@ -65,12 +56,11 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",

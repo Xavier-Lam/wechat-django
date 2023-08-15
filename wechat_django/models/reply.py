@@ -5,8 +5,8 @@ from copy import deepcopy
 
 from django.db import models as m
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
-from jsonfield import JSONField
+from django.utils.translation import gettext_lazy as _
+from django.db.models import JSONField
 import requests
 from six import text_type
 from wechatpy import replies
