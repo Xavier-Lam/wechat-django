@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import logging
 
 from django.apps import apps
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -71,8 +72,8 @@ class WeChatApp(m.Model):
 
     flags = m.IntegerField(_("flags"), default=0)
 
-    ext_info = JSONField(db_column="ext_info", default={})
-    configurations = JSONField(db_column="configurations", default={})
+    ext_info = JSONField(db_column="ext_info", default=dict, encoder=DjangoJSONEncoder)
+    configurations = JSONField(db_column="configurations", default=dict, encoder=DjangoJSONEncoder)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
@@ -91,7 +92,8 @@ class WeChatApp(m.Model):
         """发送信号的sender"""
         if not self.pk:
             raise AttributeError
-        return Static("{appname}".format(appname=self.name))
+        return self
+        # return Static("{appname}".format(appname=self.name))
 
     class Meta(object):
         verbose_name = _("WeChat app")

@@ -68,3 +68,5 @@ STATIC_URL = '/static/'
 ROOT_URLCONF = "wechat_django.tests.urls"
 
 logging.disable(logging.CRITICAL)
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

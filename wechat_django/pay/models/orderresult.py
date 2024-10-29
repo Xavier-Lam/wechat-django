@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.utils.translation import gettext_lazy as _
 from django.db.models import JSONField
@@ -44,7 +45,7 @@ class UnifiedOrderResult(WeChatModel):
     is_subscribe = PayBooleanField(_("is_subscribe"), null=True)
     sub_is_subscribe = PayBooleanField(_("sub_is_subscribe"), null=True)
 
-    ext_info = JSONField(default=dict, editable=False)
+    ext_info = JSONField(default=dict, editable=False, encoder=DjangoJSONEncoder)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)

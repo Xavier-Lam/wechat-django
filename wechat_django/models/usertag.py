@@ -28,7 +28,7 @@ class UserTag(WeChatModel):
         verbose_name_plural = _("user tags")
 
         unique_together = (("app", "id"), )
-        index_together = (("app", "name"), )
+        indexes = [m.Index(fields=("app", "name"))]
         ordering = ("app", "id")
 
     @property

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.utils.translation import gettext_lazy as _
 import hashlib
@@ -20,7 +21,7 @@ class Session(WeChatModel):
     user = m.ForeignKey(
         WeChatUser, on_delete=m.CASCADE, related_name="sessions", null=False)
     type = m.PositiveSmallIntegerField()
-    auth = JSONField(default={})
+    auth = JSONField(default=dict, encoder=DjangoJSONEncoder)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)

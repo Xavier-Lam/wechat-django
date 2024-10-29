@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import datetime
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.dispatch import receiver
 from django.utils import timezone as tz
@@ -63,13 +64,13 @@ class UnifiedOrder(WeChatModel):
     sub_openid = m.CharField(_("sub openid"), max_length=128, null=True)
     receipt = m.CharField(_("recept"), max_length=8, null=True,
                           default=Receipt.NONE, choices=enum2choices(Receipt))
-    scene_info = JSONField(_("scene_info"), max_length=256, null=True)
+    scene_info = JSONField(_("scene_info"), max_length=256, null=True, encoder=DjangoJSONEncoder, default=dict)
 
     comment = m.TextField(_("comment"), blank=True)
 
-    ext_info = JSONField(default=dict, editable=False)
+    ext_info = JSONField(default=dict, editable=False, encoder=DjangoJSONEncoder)
     _call_args = JSONField(db_column="call_args", default=dict, null=True,
-                           editable=False)
+                           editable=False, encoder=DjangoJSONEncoder)
 
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = m.DateTimeField(_("updated at"), auto_now=True)
@@ -78,7 +79,7 @@ class UnifiedOrder(WeChatModel):
         verbose_name = _("Unified order")
         verbose_name_plural = _("Unified orders")
 
-        index_together = (("pay", "created_at"), )
+        indexes = [m.Index(fields=["pay", "created_at"])]
         unique_together = (("pay", "out_trade_no"),)
 
     @property

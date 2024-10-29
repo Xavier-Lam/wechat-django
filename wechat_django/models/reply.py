@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from copy import deepcopy
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
@@ -30,7 +31,7 @@ class Reply(WeChatModel):
     type = m.CharField(
         _("type"), db_column="type", max_length=16,
         choices=enum2choices(MsgType))
-    _content = JSONField(db_column="content", default=dict)
+    _content = JSONField(db_column="content", default=dict, blank=True, encoder=DjangoJSONEncoder)
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
@@ -56,7 +57,8 @@ class Reply(WeChatModel):
         content = dict()
         for key in content_keys:
             content[key] = kwargs.pop(key)
-        kwargs["_content"] = content
+        if len(args) == 0:
+            kwargs["_content"] = content
         super(Reply, self).__init__(*args, **kwargs)
 
     def send(self, message_info):

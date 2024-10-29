@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from hashlib import md5
 import json
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m, transaction
 from django.utils.translation import gettext_lazy as _
 from django.db.models import JSONField
@@ -43,7 +44,7 @@ class Menu(WeChatModel):
     type = m.CharField(
         _("type"), max_length=20, choices=enum2choices(Event),
         null=True, blank=True)
-    content = JSONField()
+    content = JSONField(default=dict, blank=True, encoder=DjangoJSONEncoder)
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created_at = m.DateTimeField(_("created at"), auto_now_add=True)

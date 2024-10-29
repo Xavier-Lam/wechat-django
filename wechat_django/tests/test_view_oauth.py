@@ -94,7 +94,7 @@ class OAuthTestCase(WeChatTestCase):
         view_cls = WeChatOAuthView(
             appname=self.app.name, redirect_uri=redirect_uri)
         request = rf.get(api)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         view_cls.setup(request)
         request = view_cls.initialize_request(request)
         self.assertEqual(request.wechat.redirect_uri, redirect_uri)
@@ -103,7 +103,7 @@ class OAuthTestCase(WeChatTestCase):
         view_cls = WeChatOAuthView(
             appname=self.app.name, redirect_uri=redirect_uri)
         request = rf.get(api)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         view_cls.setup(request)
         request = view_cls.initialize_request(request)
         self.assertEqual(request.wechat.redirect_uri,
@@ -112,7 +112,7 @@ class OAuthTestCase(WeChatTestCase):
         # 测试模板请求redirect_uri
         view_cls = WeChatOAuthView(appname=self.app.name)
         request = rf.get(redirect_uri)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         view_cls.setup(request)
         request = view_cls.initialize_request(request)
         self.assertEqual(request.wechat.redirect_uri,
@@ -123,7 +123,7 @@ class OAuthTestCase(WeChatTestCase):
         request = rf.post(api, dict(a=1),
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
             HTTP_REFERRER=absolute_uri(redirect_uri))
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         view_cls.setup(request)
         request = view_cls.initialize_request(request)
         self.assertEqual(request.wechat.redirect_uri,
@@ -134,7 +134,7 @@ class OAuthTestCase(WeChatTestCase):
         view_cls = WeChatOAuthView(appname=self.app.name,
                                    redirect_uri=callable_redirect)
         request = rf.get(redirect_uri)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         view_cls.setup(request)
         request = view_cls.initialize_request(request)
         self.assertEqual(request.wechat.redirect_uri,
@@ -223,7 +223,7 @@ class OAuthTestCase(WeChatTestCase):
 
         # 已授权
         session_key = "sessionid"
-        resp = SessionMiddleware().process_response(request, resp)
+        resp = SessionMiddleware(lambda req: None).process_response(request, resp)
         request = self._create_request(url + "?code=123")
         request.COOKIES[session_key] = resp.cookies[session_key].value
         resp = handler.dispatch(request)
@@ -352,5 +352,5 @@ class OAuthTestCase(WeChatTestCase):
 
     def _create_request(self, path, method="get"):
         request = getattr(self.rf(), method)(path)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         return request
