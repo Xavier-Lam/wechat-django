@@ -155,11 +155,13 @@ class WeChatAdminSiteMixin(CustomObjectToolAdminSiteMixin):
         app_id = getattr(request, "app_id", None)
         if app_id:
             # 微信相关模块
+            label = label or WeChatApp._meta.app_label
+            # app = request.app
+            # perm = get_user_permissions(request.user, app, exclude_manage=True, exclude_sub=True)
+            # print(perm)
+            # if perm:
             rv = self._build_wechat_func_dict(request)
-
-            if not label:
-                # 我也不记得为啥要加这个了..
-                return {WeChatApp._meta.app_label: rv}
+            return {label: rv}
         else:
             with self._unregister_wechatadmins():
                 rv = super(WeChatAdminSiteMixin, self)._build_app_dict(

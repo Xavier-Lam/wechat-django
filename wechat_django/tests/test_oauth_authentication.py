@@ -141,5 +141,5 @@ class OAuthAuthenticationTestCase(WeChatTestCase):
 
     def _create_request(self, path):
         request = self.rf().get(path)
-        SessionMiddleware().process_request(request)
+        SessionMiddleware(lambda req: None).process_request(request)
         return request

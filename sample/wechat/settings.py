@@ -27,7 +27,7 @@ SECRET_KEY = '50vdbke9w_rscqhfd%k^ou%z6rkcgvu--w+v7m86!nwfcj)_8z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'wechat_django', #!wechat_django 添加wechat_django
     'wechat_django.pay', #!wechat_django 添加微信支付相关功能
-    'wechat'
+    'wechat',
 ]
 
 MIDDLEWARE = [
@@ -135,15 +135,15 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'handlers': ['console'],
         },
         "wechat.api": { #!wechat_django logging
-            "level": "DEBUG",
+            "level": "WARNING",
             "handlers": ["console"]
         },
         "wechat.handler": {
-            "level": "DEBUG",
+            "level": "WARNING",
             "handlers": ["console"]
         },
         "wechat.oauth": {
@@ -154,3 +154,4 @@ LOGGING = {
 }
 
 SAMPLEAPPNAME = "debug"
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

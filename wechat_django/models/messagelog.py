@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -23,7 +24,7 @@ class MessageLog(WeChatModel):
     type = m.CharField(
         _("message type"), max_length=24,
         choices=enum2choices(Rule.ReceiveMsgType))
-    content = JSONField(_("content"))
+    content = JSONField(_("content"), default=dict, blank=True, encoder=DjangoJSONEncoder)
     direct = m.BooleanField(_("direct"), default=Direct.USER2APP)
 
     raw = m.TextField(null=True, blank=True, default=None)
@@ -34,7 +35,7 @@ class MessageLog(WeChatModel):
         verbose_name = _("message log")
         verbose_name_plural = _("message logs")
 
-        index_together = (("app", "created_at"),)
+        indexes = [m.Index(fields=("app", "created_at"))]
         ordering = ("app", "-created_at")
 
     @classmethod

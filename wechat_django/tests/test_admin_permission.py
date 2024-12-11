@@ -76,7 +76,7 @@ class PermissionTestCase(WeChatTestCase):
             request.app = self.app
             request.app_id = self.app.id
 
-            app_dict = site._build_app_dict(request, "wechat_django")
+            app_dict = site._build_app_dict(request, "wechat_django")["wechat_django"]
             permissions = pm.get_user_permissions(
                 request.user, self.app, exclude_manage=True, exclude_sub=True)
             # 只有子权限是不会拥有菜单权限的 遂去掉子权限

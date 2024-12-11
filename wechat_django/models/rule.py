@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import re
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models as m
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
@@ -34,7 +35,7 @@ class Rule(WeChatModel):
 
     type = m.CharField(
         _("type"), max_length=16, choices=enum2choices(Type))  # 规则类型
-    _content = JSONField(db_column="content", blank=True)  # 规则内容
+    _content = JSONField(db_column="content", blank=True, default=dict, encoder=DjangoJSONEncoder)  # 规则内容
 
     weight = m.IntegerField(_("weight"), default=0, null=False)
     created_at = m.DateTimeField(_("created_at"), auto_now_add=True)
@@ -55,7 +56,8 @@ class Rule(WeChatModel):
         content = dict()
         for key in content_keys:
             content[key] = kwargs.pop(key)
-        kwargs["_content"] = content
+        if len(args) == 0:
+            kwargs["_content"] = content
         super(Rule, self).__init__(*args, **kwargs)
 
     def match(self, message_info):

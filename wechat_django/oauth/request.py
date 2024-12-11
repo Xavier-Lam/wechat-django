@@ -50,7 +50,7 @@ class WeChatOAuthInfo(WeChatInfo):
         request = self.request
         return request.build_absolute_uri(
             self._redirect_uri
-            or (request.is_ajax() and request.META.get("HTTP_REFERER"))
+            or (request.headers.get("X-Requested-With") == "XMLHttpRequest" and request.META.get("HTTP_REFERER"))
             or None
         )
 

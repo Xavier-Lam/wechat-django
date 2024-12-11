@@ -82,9 +82,9 @@ class MessageHandler(WeChatModel):
         verbose_name_plural = _("message handlers")
 
         ordering = ("-weight", "-created_at", "-id")
-        index_together = (
-            ("app", "weight", "created_at"),
-        )
+        indexes = [
+            m.Index(fields=["app", "weight", "created_at"]),
+        ]
 
     @property
     def log_message(self):
